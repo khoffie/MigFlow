@@ -7,11 +7,9 @@ using CSV,DataFrames,DataFramesMeta,Random,Distributions,StatsBase, StatsFuns,
 
 munipop = CSV.read("./data/munis_pop.csv",DataFrame)
 
-munidist = @by(munipop,:municipality,:district = :district[1])
-
 munitotpop = @by(munipop, [:municipality,:age_group], :totpop = sum(:pop))
 muniloc = CSV.read("./data/munis_centroid.csv",DataFrame)
-muniloc = leftjoin(muniloc,munidist; on=:municipality)
+
 
 function simmoves(rn,n,munipop,locs,distmap)
 
@@ -32,10 +30,8 @@ function simmoves(rn,n,munipop,locs,distmap)
             newfrompop = pops[newfrom]
             newto = sample(rn,munis,ws)
             newtopop = pops[newto]
-            if newtopop > newfrompop || rand(rn) < newtopop / newfrompop
-                to,from = newto,newfrom
-                topop,frompop = newtopop,newfrompop
-            end
+            to,from = newto,newfrom
+            topop,frompop = newtopop,newfrompop
             iscaptured = distmap[from] != distmap[to]
             push!(dat,(from = from,to = to, dist = norm(locs[from]-locs[to]),captured=iscaptured,agegroup = age, fromdist = distmap[from], todist=distmap[to]))
         end
@@ -48,7 +44,7 @@ distmap = Dict(muniloc.municipality .=> muniloc.district)
 
 r = Xoshiro(20240709)
 
-movdat = simmoves(r,100000,munipop,locs,distmap)
+movdat = simmoves(r,100_000,munipop,locs,distmap)
 
 p = @df movdat scatter(:dist ./ 1000.0,:captured,xlab="Distance Moved (km)",ylab="Captured Move? (y/n)",
     title="Probability To Detect by Distance",xlim=(0,100))
