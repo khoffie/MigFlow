@@ -82,3 +82,5 @@ display(p)
 
 
 density(movdat[.! movdat.captured,:dist]./1000.0; title="Undetected moves (all districts)",xlab="distance (km)")
+
+CSV.write("simulated_moves.csv",movdat[!,Not(["agegroupcat","fromdistcat","todistcat"])])
