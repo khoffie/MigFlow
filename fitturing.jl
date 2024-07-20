@@ -21,6 +21,7 @@ levels!(ourdat.agegroup,["unter18","18-25","25-30","30-50","50-65","über65"])
 
 meddist = 293.0 ## median distance between districts according to Konstantin's printed report in km
 
+Ndist = length(unique(ourdat.fromdist))
 
 ### A Turing.jl sketch of a model
 
@@ -43,7 +44,7 @@ end
 
 
 fit1 = sample(migration1(ourdat.flows,levelcode.(ourdat.fromdist),levelcode.(ourdat.todist),ourdat.frompop,ourdat.topop,ourdat.distance,
-    ourdat.gdpcfrom, ourdat.gdpcto, levelcode.(ourdat.agegroup),length(unique(ourdat.fromdist)),meddist),
+    ourdat.gdpcfrom, ourdat.gdpcto, levelcode.(ourdat.agegroup),Ndist,meddist),
     NUTS(500,.8), MCMCThreads(), 3, 600)
 
 plot(fit1) |> display()
@@ -87,20 +88,26 @@ end
                         agegroup[i],fromdist[i],todist[i]) for i in 1:length(flows)]
     preds = frompop .* topop .* a ./ 1000.0 .* (1.0 .+ b ./ (dist ./ meddist .+ d0).^c) .* desires
 
-    ins = zeros(typeof(preds[1]),Ndist)
-    outs = zeros(typeof(preds[1]),Ndist)
-    for n in 1:length(preds)
-        ins[todist[i]] += preds[i]
-        outs[fromdist[i]] -= preds[i]
-    end
-    netflows = ins-outs
+    
+    netflows = calcnet(preds,fromdis,todist,Ndist)
     flows ~ arraydist([Poisson(p) for p in preds])
     netactual ~ arraydist(Normal.(netflows,neterr .* netflows))
 end
 
 
+function calcnet(flows,fromdist,todist,Ndist)
+    netflows = zeros(typeof(flows[1]),Ndist)
+    for n in 1:length(flows)
+        netflows[fromdist[n]] -= flows
+        netflows[todist[n]] += flows
+    end
+    netflows
+end
+
+netactual = calcnet(ourdat.flows,levelcode.(ourdat.fromdist),levelcode.(ourdat.todist),Ndist)
+
 fit2 = sample(migration2(ourdat.flows,levelcode.(ourdat.fromdist),levelcode.(ourdat.todist),ourdat.frompop,ourdat.topop,ourdat.distance,
-    ourdat.gdpcfrom, ourdat.gdpcto, levelcode.(ourdat.agegroup), length(unique(ourdat.fromdist)),meddist),
+    ourdat.gdpcfrom, ourdat.gdpcto, levelcode.(ourdat.agegroup), Ndist, meddist,netactual),
     NUTS(500,.8), MCMCThreads(), 3, 600)
 
 ## too many parameters for this plot
