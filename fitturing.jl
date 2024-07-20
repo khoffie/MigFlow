@@ -17,7 +17,10 @@ ourdat.agegroup = categorical(ourdat.agegroup)
 levels!(ourdat.agegroup,["unter18","18-25","25-30","30-50","50-65","über65"])
 
 
-meddist = median(ourdat.distance)
+#meddist = median(ourdat.distance)
+
+meddist = 293.0 ## median distance between districts according to Konstantin's printed report
+
 
 ### A Turing.jl sketch of a model
 
@@ -30,7 +33,7 @@ using Turing
     c ~ Gamma(5.0,1.0/4.0)
     d0 ~ Gamma(5.0,0.10/4.0)
 
-    preds = frompop .* topop .* a ./ 10000.0 .* (1.0 .+ b ./ (dist ./ meddist .+ d0).^c)
+    preds = frompop .* topop .* a ./ 1000.0 .* (1.0 .+ b ./ (dist ./ meddist .+ d0).^c)
     flows ~ arraydist([Poisson(p) for p in preds])
     
 end
@@ -81,7 +84,7 @@ end
     desir6 ~ arraydist([Gamma(5.0,1.0/4.0) for i in 1:Ndist])
     desires = [desir(desir1,desir2,desir3,desir4,desir5,desir6,
                         agegroup[i],fromdist[i],todist[i]) for i in 1:length(flows)]
-    preds = frompop .* topop .* a ./ 10000.0 .* (1.0 .+ b ./ (dist ./ meddist .+ d0).^c) .* desires
+    preds = frompop .* topop .* a ./ 1000.0 .* (1.0 .+ b ./ (dist ./ meddist .+ d0).^c) .* desires
     flows ~ arraydist([Poisson(p) for p in preds])
 end
 
