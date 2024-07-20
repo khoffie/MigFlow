@@ -3,7 +3,7 @@ using CSV,DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random
 
 
 ## read in data, it should have the following columns:
-## flows, fromdist, todist, frompop, topop, distance, gdppcfrom, gdppcto, agegroup
+## flows, fromdist, todist, frompop, topop, distance, gdpcfrom, gdpcto, agegroup
 
 Random.seed!(20240719)
 
