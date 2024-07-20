@@ -69,12 +69,13 @@ function desir(d1,d2,d3,d4,d5,d6,age,from,to)
     end
 end
 
-@model function migration2(flows,fromdist,todist,frompop,topop,distance,gdpcfrom,gdpcto,agegroup,Ndist,meddist)
+@model function migration2(flows,fromdist,todist,frompop,topop,distance,gdpcfrom,gdpcto,agegroup,Ndist,meddist,netactual)
 
     a ~ Gamma(5.0,1.0/4.0)
     b ~ Gamma(3.0,10.0/2.0)
     c ~ Gamma(5.0,1.0/4.0)
     d0 ~ Gamma(5.0,0.10/4.0)
+    neterr ~ Exponential(0.1)
 
     desir1 ~ arraydist([Gamma(5.0,1.0/4.0) for i in 1:Ndist])
     desir2 ~ arraydist([Gamma(5.0,1.0/4.0) for i in 1:Ndist])
@@ -85,7 +86,16 @@ end
     desires = [desir(desir1,desir2,desir3,desir4,desir5,desir6,
                         agegroup[i],fromdist[i],todist[i]) for i in 1:length(flows)]
     preds = frompop .* topop .* a ./ 1000.0 .* (1.0 .+ b ./ (dist ./ meddist .+ d0).^c) .* desires
+
+    ins = zeros(typeof(preds[1]),Ndist)
+    outs = zeros(typeof(preds[1]),Ndist)
+    for n in 1:length(preds)
+        ins[todist[i]] += preds[i]
+        outs[fromdist[i]] -= preds[i]
+    end
+    netflows = ins-outs
     flows ~ arraydist([Poisson(p) for p in preds])
+    netactual ~ arraydist(Normal.(netflows,neterr .* netflows))
 end
 
 
