@@ -26,9 +26,9 @@ using Turing
 @model function migration1(flows,fromdist,todist,frompop,topop,distance,gdpc,agegroup,Ndist,meddist)
 
     a ~ Gamma(5.0,1.0/4.0)
-    b ~ Gamma(5.0,1.0/4.0)
+    b ~ Gamma(3.0,10.0/2.0)
     c ~ Gamma(5.0,1.0/4.0)
-    d0 ~ Gamma(5.0,1.0/4.0)
+    d0 ~ Gamma(5.0,0.10/4.0)
 
     preds = frompop .* topop .* a ./ 1000.0 .* (1.0 .+ b ./ (dist ./ meddist .+ d0).^c)
     flows ~ arraydist([Poisson(p) for p in preds])
@@ -69,9 +69,10 @@ end
 @model function migration2(flows,fromdist,todist,frompop,topop,distance,gdpcfrom,gdpcto,agegroup,Ndist,meddist)
 
     a ~ Gamma(5.0,1.0/4.0)
-    b ~ Gamma(5.0,1.0/4.0)
+    b ~ Gamma(3.0,10.0/2.0)
     c ~ Gamma(5.0,1.0/4.0)
-    d0 ~ Gamma(5.0,1.0/4.0)
+    d0 ~ Gamma(5.0,0.10/4.0)
+
     desir1 ~ arraydist([Gamma(5.0,1.0/4.0) for i in 1:Ndist])
     desir2 ~ arraydist([Gamma(5.0,1.0/4.0) for i in 1:Ndist])
     desir3 ~ arraydist([Gamma(5.0,1.0/4.0) for i in 1:Ndist])
