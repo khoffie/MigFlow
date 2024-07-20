@@ -94,5 +94,5 @@ fit2 = sample(migration2(ourdat.flows,ourdat.fromdist,ourdat.todist,ourdat.fromp
 
 display(fit2)
 
-mainparms2 = fit2[[:a,:b,:c,:d0],:,:]
+mainparms2 = fit2[:,[:a,:b,:c,:d0],:]
 plot(mainparms2) |> display()
