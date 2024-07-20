@@ -36,12 +36,12 @@ using Turing
 end
 
 
-## sample the above model for 2000 samples on 3 parallel chains with NUTS after doing 500 warmups and targeting 80% acceptance
+## sample the above model for 600 samples on 3 parallel chains with NUTS after doing 500 warmups and targeting 80% acceptance
 
 
 fit1 = sample(migration1(ourdat.flows,ourdat.fromdist,ourdat.todist,ourdat.frompop,ourdat.topop,ourdat.distance,
     ourdat.gdpcfrom, ourdat.gdpcto, ourdat.agegroup,length(unique(ourdat.fromdist)),meddist),
-    NUTS(500,.8), MCMCThreads(), 3, 2000)
+    NUTS(500,.8), MCMCThreads(), 3, 600)
 
 plot(fit1) |> display()
 
@@ -87,8 +87,12 @@ end
 
 fit2 = sample(migration2(ourdat.flows,ourdat.fromdist,ourdat.todist,ourdat.frompop,ourdat.topop,ourdat.distance,
     ourdat.gdpcfrom, ourdat.gdpcto, ourdat.agegroup,length(unique(ourdat.fromdist)),meddist),
-    NUTS(500,.8), MCMCThreads(), 3, 2000)
+    NUTS(500,.8), MCMCThreads(), 3, 600)
 
-plot(fit2) |> display()
+## too many parameters for this plot
+#plot(fit2) |> display()
 
 display(fit2)
+
+mainparms2 = fit2[[:a,:b,:c,:d0],:,:]
+plot(mainparms2) |> display()
