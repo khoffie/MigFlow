@@ -8,12 +8,14 @@ To get started download Julia from the julialang site and extract it in your hom
 ```
 $ wget https://julialang-s3.julialang.org/bin/linux/x64/1.10/julia-1.10.4-linux-x86_64.tar.gz
 $ tar zxf julia-1.10.4-linux-x86_64.tar.gz
-$ln -s ~/julia-1.10.4/bin/julia bin/julia
+$ ln -s ~/julia-1.10.4/bin/julia bin/julia
 
 ```
 
 ## Cloning the Repo and linking to your data file
 
+replace <path_to_data_file> with a path to a data file set up like what's described in fitturing.jl in the 
+comments 
 
 ```
 git clone https://github.com/dlakelan/GermanMigration.git
