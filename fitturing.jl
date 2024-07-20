@@ -19,7 +19,7 @@ levels!(ourdat.agegroup,["unter18","18-25","25-30","30-50","50-65","über65"])
 
 #meddist = median(ourdat.distance)
 
-meddist = 293.0 ## median distance between districts according to Konstantin's printed report
+meddist = 293.0 ## median distance between districts according to Konstantin's printed report in km
 
 
 ### A Turing.jl sketch of a model
