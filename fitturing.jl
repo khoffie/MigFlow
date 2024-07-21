@@ -70,7 +70,7 @@ function desir(d1,d2,d3,d4,d5,d6,age,from,to)
     end
 end
 
-@model function migration2(flows,fromdist,todist,frompop,topop,distance,gdpcfrom,gdpcto,agegroup,Ndist,meddist,netactual)
+@model function migration2(flows,fromdist,todist,frompop,topop,distance,gdpcfrom,gdpcto,agegroup,Nages,Ndist,meddist,netactual)
 
     a ~ Gamma(5.0,1.0/4.0)
     b ~ Gamma(3.0,10.0/2.0)
@@ -89,25 +89,29 @@ end
     preds = frompop .* topop .* a ./ 1000.0 .* (1.0 .+ b ./ (dist ./ meddist .+ d0).^c) .* desires
 
     
-    netflows = calcnet(preds,fromdis,todist,Ndist)
+    netflows = calcnet(preds,fromdis,todist,agegroup,Nages,Ndist)
+
     flows ~ arraydist([Poisson(p) for p in preds])
-    netactual ~ arraydist(Normal.(netflows,neterr .* netflows))
+    netactual ~ arraydist(Normal.(netflow,neterr .* netflow))
 end
 
 
-function calcnet(flows,fromdist,todist,Ndist)
-    netflows = zeros(typeof(flows[1]),Ndist)
+function calcnet(flows,fromdist,todist,agegrp,Nages,Ndist)
+
+    netflows = zeros(typeof(flows[1]),(Ndist,Nages))
     for n in 1:length(flows)
-        netflows[fromdist[n]] -= flows
-        netflows[todist[n]] += flows
+        netflows[fromdist[n],agegrp[n]] -= flows
+        netflows[todist[n],agegrp[n]] += flows
     end
     netflows
 end
 
 netactual = calcnet(ourdat.flows,levelcode.(ourdat.fromdist),levelcode.(ourdat.todist),Ndist)
 
+Nages = length(unique(ourdat.agegroup))
+
 fit2 = sample(migration2(ourdat.flows,levelcode.(ourdat.fromdist),levelcode.(ourdat.todist),ourdat.frompop,ourdat.topop,ourdat.distance,
-    ourdat.gdpcfrom, ourdat.gdpcto, levelcode.(ourdat.agegroup), Ndist, meddist,netactual),
+    ourdat.gdpcfrom, ourdat.gdpcto, levelcode.(ourdat.agegroup), Nages, Ndist, meddist,netactual),
     NUTS(500,.8), MCMCThreads(), 3, 600)
 
 ## too many parameters for this plot
