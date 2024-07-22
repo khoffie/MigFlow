@@ -1,5 +1,5 @@
-using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff
-include("model2.jl")
+using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise
+includet("model2.jl")
 Random.seed!(20240719)
 
 ## read in data, it should have the following columns:
@@ -21,13 +21,22 @@ Nages = length(unique(ourdat.agegroup))
 ourdat2 = ourdat[sample(1:nrow(ourdat),1000),:]
 inis = 1 .+ 0.05 .* randn(Ndist)
 
-fit2 = sample(migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat2.todist),ourdat2.frompop,ourdat2.topop,ourdat2.distance, levelcode.(ourdat2.agegroup), Nages, Ndist, meddist,netactual),
-              NUTS(500,.8; adtype=AutoReverseDiff(true)),
-              MCMCThreads(), 600, 3)
+model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat2.todist),ourdat2.frompop,ourdat2.topop,ourdat2.distance, levelcode.(ourdat2.agegroup), Nages, Ndist, meddist,netactual)
 
-# ; init_params = Iterators.repeated(inis)
-## too many parameters for this plot
-#plot(fit2) |> display()
+
+## use optimization to find a good fit
+mapfit2 = maximum_a_posteriori(model2)
+
+initvals = mapfit2.values
+
+@show initvals
+
+## start the sampling at a location biased away from the mode, by increasing all parameters 
+## by a small uniform perturbation (this avoids anything that has to be positive becoming negative)
+
+fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)),
+              MCMCThreads(), 100, 3; init_params = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.10),length(initvals))))
+
 
 display(fit2)
 
