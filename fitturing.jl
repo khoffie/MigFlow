@@ -27,16 +27,20 @@ mapfit2 = maximum_a_posteriori(model2)
 
 initvals = mapfit2.values
 
+println("Optimal values are: ")
 @show initvals
 
-inits_rep = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.10),length(initvals)))
+initvals = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.20),length(initvals)))
+
+println("Perturbed Initial values are:")
+
+@show initvals
 ## start the sampling at a location biased away from the mode, by increasing all parameters 
 ## by a small uniform perturbation (this avoids anything that has to be positive becoming negative)
 
 fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)),
-              MCMCThreads(), 100, 3;
-              init_params = inits_rep)
-
+              MCMCThreads(), 100, 3; 
+              init_params = initvals)
 
 display(fit2)
 

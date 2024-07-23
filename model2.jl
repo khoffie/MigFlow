@@ -14,7 +14,7 @@ function desir(d1,d2,d3,d4,d5,d6,age,from,to)
     end
 end
 
-@model function migration2(flows,fromdist,todist,frompop,topop,distance,agegroup,Nages,Ndist,meddist)
+@model function migration2(flows,fromdist,todist,frompop,topop,distance,agegroup,Nages,Ndist,meddist, netactual)
     a ~ Gamma(5.0,1.0/4.0)
     b ~ Gamma(3.0,10.0/2.0)
     c ~ Gamma(5.0,1.0/4.0)
