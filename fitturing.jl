@@ -1,5 +1,8 @@
-using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise
+using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
+
 includet("model2.jl")
+includet("Rutils.jl")
+
 Random.seed!(20240719)
 
 ## read in data, it should have the following columns:
@@ -16,7 +19,7 @@ Ndist = length(unique(ourdat.fromdist))
 Nages = length(unique(ourdat.agegroup))
 ##length(unique(levelcode.(ourdat.agegroup)))
 
-ourdat2 = ourdat[sample(1:nrow(ourdat),1000),:]
+ourdat2 = ourdat[sample(1:nrow(ourdat),20000),:]
 ## inis = 1 .+ 0.05 .* randn(Ndist)
 ourdat2
 
@@ -32,9 +35,10 @@ model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat
 mapfit2 = maximum_a_posteriori(model2)
 initvals = mapfit2.values
 
+plotdesirability(initvals)
+plotnetmigration(netmigr)
+
 param_values = values(mapfit2.values)
-temp = DataFrame(dist = levels(ourdat2.fromdist), parnames = names(param_values, 1), values = param_values)
-CSV.write("data/opti_vals.csv", temp)
 
 println("Optimal values are: ")
 @show initvals
