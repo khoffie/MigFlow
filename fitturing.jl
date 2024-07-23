@@ -12,16 +12,14 @@ levels!(ourdat.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
 rename!(ourdat, Dict(:dist => :distance))
 
 meddist = median(ourdat.distance)
-meddist = 293.0 ## median distance between districts according to Konstantin's printed report in km
 Ndist = length(unique(ourdat.fromdist))
 Nages = length(unique(ourdat.agegroup))
 ##length(unique(levelcode.(ourdat.agegroup)))
 
-
 ourdat2 = ourdat[sample(1:nrow(ourdat),1000),:]
-inis = 1 .+ 0.05 .* randn(Ndist)
+## inis = 1 .+ 0.05 .* randn(Ndist)
 
-model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat2.todist),ourdat2.frompop,ourdat2.topop,ourdat2.distance, levelcode.(ourdat2.agegroup), Nages, Ndist, meddist,netactual)
+model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat2.todist),ourdat2.frompop,ourdat2.topop,ourdat2.distance, levelcode.(ourdat2.agegroup), Nages, Ndist, meddist)
 
 
 ## use optimization to find a good fit
