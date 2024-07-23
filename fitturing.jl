@@ -29,11 +29,13 @@ initvals = mapfit2.values
 
 @show initvals
 
+inits_rep = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.10),length(initvals)))
 ## start the sampling at a location biased away from the mode, by increasing all parameters 
 ## by a small uniform perturbation (this avoids anything that has to be positive becoming negative)
 
 fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)),
-              MCMCThreads(), 100, 3; init_params = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.10),length(initvals))))
+              MCMCThreads(), 100, 3;
+              init_params = inits_rep)
 
 
 display(fit2)
