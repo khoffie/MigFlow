@@ -18,33 +18,41 @@ Nages = length(unique(ourdat.agegroup))
 
 ourdat2 = ourdat[sample(1:nrow(ourdat),1000),:]
 ## inis = 1 .+ 0.05 .* randn(Ndist)
+ourdat2
 
-netactual = calcnet(ourdat2.flows, ourdat2.fromdist,ourdat2.todist,ourdat2.agegroup,Nages,Ndist)
+netactual = calcnet(ourdat2.flows,
+                    levelcode.(ourdat2.fromdist),
+                    levelcode.(ourdat2.todist),
+                    levelcode.(ourdat2.agegroup),Nages,Ndist)
 
 model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat2.todist),ourdat2.frompop,ourdat2.topop,ourdat2.distance, levelcode.(ourdat2.agegroup), Nages, Ndist, meddist,netactual)
 
 
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2)
-
 initvals = mapfit2.values
+
+param_values = values(mapfit2.values)
+temp = DataFrame(dist = levels(ourdat2.fromdist), parnames = names(param_values, 1), values = param_values)
+CSV.write("data/opti_vals.csv", temp)
 
 println("Optimal values are: ")
 @show initvals
 
-initvals = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.20),length(initvals)))
+initvals2 = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.50),length(initvals)))
 
 println("Perturbed Initial values are:")
 
-@show initvals
+@show initvals2
 ## start the sampling at a location biased away from the mode, by increasing all parameters 
 ## by a small uniform perturbation (this avoids anything that has to be positive becoming negative)
 
 fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)),
               MCMCThreads(), 100, 3; 
-              init_params = initvals)
+              init_params = initvals2)
 
 display(fit2)
 
 mainparms2 = fit2[:,[:a,:b,:c,:d0,:neterr],:]
 plot(mainparms2) |> display()
+
