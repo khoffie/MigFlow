@@ -21,6 +21,10 @@ Nages = length(unique(ourdat.agegroup))
 ourdat2 = ourdat[sample(1:nrow(ourdat),1000),:]
 inis = 1 .+ 0.05 .* randn(Ndist)
 
+
+netactual = calcnet(ourdat2.flows, ourdat2.fromdist,ourdat2.todist,ourdat2.agegroup,Nages,Ndist)
+
+
 model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat2.todist),ourdat2.frompop,ourdat2.topop,ourdat2.distance, levelcode.(ourdat2.agegroup), Nages, Ndist, meddist,netactual)
 
 
