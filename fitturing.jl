@@ -47,7 +47,7 @@ initvals2 = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.50),length(initvals
 
 println("Perturbed Initial values are:")
 
-@show initvals2
+@show iterate(initvals2)[1]
 ## start the sampling at a location biased away from the mode, by increasing all parameters 
 ## by a small uniform perturbation (this avoids anything that has to be positive becoming negative)
 
