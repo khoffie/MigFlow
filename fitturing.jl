@@ -27,15 +27,21 @@ model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2)
 
+
 initvals = mapfit2.values
+initvals = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.20),length(initvals)))
 
 @show initvals
 
 ## start the sampling at a location biased away from the mode, by increasing all parameters 
 ## by a small uniform perturbation (this avoids anything that has to be positive becoming negative)
 
+
+
+
 fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)),
-              MCMCThreads(), 100, 3; init_params = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.10),length(initvals))))
+              MCMCThreads(), 100, 3; 
+              init_params = initvals)
 
 
 display(fit2)
