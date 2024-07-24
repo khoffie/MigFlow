@@ -35,6 +35,7 @@ end
 
     flows ~ arraydist([Poisson(p) for p in preds])
     netactual ~ arraydist(Normal.(netflows,neterr .* abs.(netflows)))
+    return((preds,netflows))
 end
 
 function calcnet(flows,fromdist,todist,agegrp,Nages,Ndist)
