@@ -2,6 +2,7 @@ using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
 using OptimizationOptimJL
 includet("model2.jl")
 includet("Rutils.jl")
+includet("simulateddata.jl")
 
 Random.seed!(20240719)
 
@@ -10,9 +11,11 @@ Random.seed!(20240719)
 
 sims = true
 if sims
-    ourdat = CSV.read("data/simulations.csv",DataFrame)
-    rename!(ourdat,Dict("predict" => "flows"))
-    ourdat.flows = round.(Int32,ourdat.flows)
+#    ourdat = CSV.read("data/simulations.csv",DataFrame)
+#    rename!(ourdat,Dict("predict" => "flows"))
+#    ourdat.flows = round.(Int32,ourdat.flows)
+    ourdat,knowndesir = simdatafromtemplate(Xoshiro(20240725),"data/flowtemplate.csv")
+    rename!(ourdat,Dict(:age_group => :agegroup,:distance => :dist,:flow => :flows))
 else
     ourdat = CSV.read("/home/donkon/Diss/inst/extdata/clean/daniel/FlowData.csv",DataFrame)
 end
@@ -39,11 +42,12 @@ netactual = calcnet(ourdat2.flows,
 
 model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat2.todist),ourdat2.frompop,ourdat2.topop,ourdat2.distance, levelcode.(ourdat2.agegroup), Nages, Ndist, meddist,netactual)
 
-opinit = [[5.0,1.4,2.2,.04,.1] ; ones(Ndist*6)];
+opinit = [[11.0,3.3,1.8,.1,.5] ; ones(Ndist*6)];
+opinit = [[10.40,3.1,1.25,.051,.25] ; repeat(knowndesir,6)];
 
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
-            initial_params = opinit, maxiters = 50, reltol = 1e-3,
+            initial_params = opinit, maxiters = 20, maxtime = 60, reltol = .08,
             lb = zeros(length(opinit)), ub=25*ones(length(opinit)))
 
 initvals = mapfit2.values
