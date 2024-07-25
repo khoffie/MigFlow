@@ -15,11 +15,11 @@ function desir(d1,d2,d3,d4,d5,d6,age,from,to)
 end
 
 @model function migration2(flows,fromdist,todist,frompop,topop,distance,agegroup,Nages,Ndist,meddist, netactual)
-    a ~ Gamma(5.0,1.0/4.0)
-    b ~ Gamma(3.0,10.0/2.0)
+    a ~ Gamma(5.0,10.0/4.0)
+    b ~ Gamma(3.0,1.0/2.0)
     c ~ Gamma(5.0,1.0/4.0)
     d0 ~ Gamma(5.0,0.10/4.0)
-    neterr ~ Exponential(0.1)
+    neterr ~ Gamma(3.0,0.1/2.0)
 
     desir1 ~ arraydist([Gamma(5.0,1.0/4.0) for i in 1:Ndist])
     desir2 ~ arraydist([Gamma(5.0,1.0/4.0) for i in 1:Ndist])
@@ -30,7 +30,11 @@ end
     desires = [desir(desir1,desir2,desir3,desir4,desir5,desir6,
                         agegroup[i],fromdist[i],todist[i]) for i in 1:length(flows)]
     preds = frompop .* topop .* a ./ 1000.0 .* (1.0 .+ b ./ (distance ./ meddist .+ d0).^c) .* desires
-    
+
+    if typeof(a) != Float64
+        @show a.value,b.value,c.value,d0.value,neterr.value
+    end
+    if any(isnan,preds) println("NaN in predictions") end
     netflows = calcnet(preds,fromdist,todist,agegroup,Nages,Ndist)
 
     flows ~ arraydist([Poisson(p) for p in preds])
