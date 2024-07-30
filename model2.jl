@@ -34,9 +34,10 @@ end
     if typeof(a) != Float64
         @show a.value,b.value,c.value,d0.value,neterr.value
     end
-    if any(isnan,preds) println("NaN in predictions") end
+    if any(isnan,preds)
+        println("NaN in predictions")
+    end
     netflows = calcnet(preds,fromdist,todist,agegroup,Nages,Ndist)
-
     flows ~ arraydist([Poisson(p) for p in preds])
     netactual ~ arraydist(Normal.(netflows,neterr .* abs.(netflows)))
     return((preds,netflows))
