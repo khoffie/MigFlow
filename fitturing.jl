@@ -42,8 +42,8 @@ netactual = calcnet(ourdat2.flows,
 
 model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat2.todist),ourdat2.frompop,ourdat2.topop,ourdat2.distance, levelcode.(ourdat2.agegroup), Nages, Ndist, meddist,netactual)
 
-opinit = [[11.0,3.3,1.8,.1,.5] ; ones(Ndist*6)];
-opinit = [[10.40,3.1,1.25,.051,.25] ; repeat(knowndesir,6)];
+nages = 6
+opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages), fill(.5,nages); ones(Ndist*6)];
 
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
@@ -52,8 +52,8 @@ mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(),
 
 initvals = mapfit2.values
 
-plotdesirability(initvals)
-plotnetmigration(netmigr)
+#plotdesirability(initvals)
+#plotnetmigration(netmigr)
 
 param_values = values(mapfit2.values)
 
@@ -62,7 +62,7 @@ println("Optimal values are: ")
 
 initvals2 = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.50),length(initvals)))
 
-initvals2 = Iterators.Repeated(opinit)
+#initvals2 = Iterators.Repeated(opinit)
 
 println("Perturbed Initial values are:")
 
