@@ -1,5 +1,5 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
-using OptimizationOptimJL
+using OptimizationOptimJL, Distributions
 includet("model2.jl")
 includet("Rutils.jl")
 includet("simulateddata.jl")
@@ -48,9 +48,25 @@ opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages), fi
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
             initial_params = opinit, maxiters = 20, maxtime = 60, reltol = .08,
-            lb = zeros(length(opinit)), ub=25*ones(length(opinit)))
+            lb = zeros(length(opinit)), ub=100*ones(length(opinit)))
+mapfit2
+
+## without custom settings
+mapfit_simple = maximum_a_posteriori(model2, adtype = AutoReverseDiff(),
+                                     lb = zeros(length(opinit)),
+                                     ub=25*ones(length(opinit)))
+mapfit_simple
+
+zeros(length(opinit))
+## maybe mle?
+mapfit_mle = maximum_likelihood(model2)
+
+
+netactual
 
 initvals = mapfit2.values
+df = DataFrame(param = names(initvals, 1), estim = values(initvals))
+CSV.write("./data/opti_vals.csv", df)
 
 #plotdesirability(initvals)
 #plotnetmigration(netmigr)
