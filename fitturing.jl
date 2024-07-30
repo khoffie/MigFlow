@@ -9,7 +9,7 @@ Random.seed!(20240719)
 ## read in data, it should have the following columns:
 ## flows, fromdist, todist, frompop, topop, distance, gdpcfrom, gdpcto, agegroup
 
-sims = true
+sims = false
 if sims
 #    ourdat = CSV.read("data/simulations.csv",DataFrame)
 #    rename!(ourdat,Dict("predict" => "flows"))
@@ -47,10 +47,13 @@ opinit = [[10.40,3.1,1.25,.051,.25] ; repeat(knowndesir,6)];
 
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
-            initial_params = opinit, maxiters = 20, maxtime = 60, reltol = .08,
+            initial_params = opinit, maxiters = 200, maxtime = 600, reltol = .08,
             lb = zeros(length(opinit)), ub=25*ones(length(opinit)))
-
+mapfit2
 initvals = mapfit2.values
+
+df = DataFrame(param = names(initvals, 1), estim = values(initvals))
+CSV.write("./data/opti_vals.csv", df)
 
 plotdesirability(initvals)
 plotnetmigration(netmigr)
