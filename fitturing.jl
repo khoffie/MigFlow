@@ -1,5 +1,5 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
-using OptimizationOptimJL
+using OptimizationOptimJL, Distributions
 includet("model2.jl")
 includet("Rutils.jl")
 includet("simulateddata.jl")
@@ -9,7 +9,7 @@ Random.seed!(20240719)
 ## read in data, it should have the following columns:
 ## flows, fromdist, todist, frompop, topop, distance, gdpcfrom, gdpcto, agegroup
 
-sims = false
+sims = true
 if sims
 #    ourdat = CSV.read("data/simulations.csv",DataFrame)
 #    rename!(ourdat,Dict("predict" => "flows"))
