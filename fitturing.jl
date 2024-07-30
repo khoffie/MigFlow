@@ -43,7 +43,7 @@ netactual = calcnet(ourdat2.flows,
 model2 = migration2(ourdat2.flows,levelcode.(ourdat2.fromdist),levelcode.(ourdat2.todist),ourdat2.frompop,ourdat2.topop,ourdat2.distance, levelcode.(ourdat2.agegroup), Nages, Ndist, meddist,netactual)
 
 nages = 6
-opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages), fill(.5,nages); ones(Ndist*nages)];
+opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages), [.5]; ones(Ndist*nages)];
 
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
