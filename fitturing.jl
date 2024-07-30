@@ -54,7 +54,7 @@ mapfit2
 ## without custom settings
 mapfit_simple = maximum_a_posteriori(model2, adtype = AutoReverseDiff(),
                                      lb = zeros(length(opinit)),
-                                     ub=100*ones(length(opinit)))
+                                     ub=25*ones(length(opinit)))
 mapfit_simple
 
 zeros(length(opinit))
