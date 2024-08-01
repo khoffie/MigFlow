@@ -21,7 +21,7 @@ end
     d0 ~ filldist(Gamma(5.0,0.10/4.0),Nages)
     neterr ~ Gamma(3.0,0.1/2.0)
 
-    desir ~ filldist(Gamma(5.0,1.0/4.0),Ndist,Nages)
+    desir ~ filldist(Gamma(400.0,1.0/399.0),Ndist,Nages)
 
     desires = [desir[todist[i],agegroup[i]]/desir[fromdist[i],agegroup[i]] for i in 1:length(flows)]
     preds = [frompop[i] * topop[i] * a[agegroup[i]] / 1000.0 * (1.0 + b[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) * desires[i] for i in 1:length(flows)]
