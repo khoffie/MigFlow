@@ -49,17 +49,17 @@ model2 = migration2(ourdat2.flows, levelcode.(ourdat2.fromdist), levelcode.(ourd
                     levelcode.(ourdat2.agegroup), Nages, Ndist, meddist, netactual)
 
 nages = 6
-opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages); [.5]; 1 .* ones(Ndist*nages)];
-lower = [fill(0,nages); fill(0,nages); fill(0,nages); fill(0,nages); [0]; .7 .* ones(Ndist*nages)]
-upper = [fill(100,nages); fill(20,nages); fill(5,nages); fill(1,nages); [1]; 1.3 .* ones(Ndist*nages)]
+opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages); [.5]; 1 .* 100 .* ones(Ndist*nages)]
+lower = [fill(0,nages); fill(0,nages); fill(0,nages); fill(0,nages); [0]; .7 .* 100 .* ones(Ndist*nages)]
+upper = [fill(20,nages); fill(20,nages); fill(5,nages); fill(1,nages); [1]; 1.3 .* 100 .* ones(Ndist*nages)]
 
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
             initial_params = opinit, maxiters = 20, maxtime = 60, reltol = .08,
             lb = lower, ub = upper)
 mapfit2
-
 initvals = mapfit2.values
+
 df = DataFrame(param = names(initvals, 1), estim = values(initvals))
 CSV.write("./data/opti_vals.csv", df)
 
