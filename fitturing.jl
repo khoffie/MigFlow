@@ -31,6 +31,11 @@ Nages = length(unique(ourdat.agegroup))
 ##length(unique(levelcode.(ourdat.agegroup)))
 
 ourdat2 = ourdat
+ourdat2 = ourdat[ourdat[: , 6] .> 10, :]
+
+sum(ourdat.flows)
+sum(ourdat2.flows)
+
 #ourdat2 = ourdat[sample(1:nrow(ourdat),20000),:]
 ## inis = 1 .+ 0.05 .* randn(Ndist)
 
