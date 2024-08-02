@@ -87,12 +87,13 @@ println("Perturbed Initial values are:")
 ## start the sampling at a location biased away from the mode, by increasing all parameters 
 ## by a small uniform perturbation (this avoids anything that has to be positive becoming negative)
 
-fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)),
-              MCMCThreads(), 100, 3; 
-              init_params = initvals2)
+fit2 = sample(model2, NUTS(500,.8; adtype=AutoReverseDiff(true)),
+              MCMCThreads(), 500, 3; 
+              init_params = opinit)
 
 display(fit2)
 
 mainparms2 = fit2[:,[:a,:b,:c,:d0,:neterr],:]
 plot(mainparms2) |> display()
 
+?sample
