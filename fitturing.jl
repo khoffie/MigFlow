@@ -45,14 +45,14 @@ model2 = migration2(ourdat2.flows, levelcode.(ourdat2.fromdist), levelcode.(ourd
 
 nages = 6
 opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages); [.5]; 1 .* ones(Ndist*nages)];
+lower = [fill(0,nages); fill(0,nages); fill(0,nages); fill(0,nages); [0]; .7 .* ones(Ndist*nages)]
+upper = [fill(100,nages); fill(20,nages); fill(5,nages); fill(1,nages); [1]; 1.3 .* ones(Ndist*nages)]
 
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
             initial_params = opinit, maxiters = 20, maxtime = 60, reltol = .08,
-            lb = 0*ones(length(opinit)), ub=200*ones(length(opinit)))
+            lb = lower, ub = upper)
 mapfit2
-
-?Gamma
 
 initvals = mapfit2.values
 df = DataFrame(param = names(initvals, 1), estim = values(initvals))
@@ -76,10 +76,11 @@ println("Perturbed Initial values are:")
 ## start the sampling at a location biased away from the mode, by increasing all parameters 
 ## by a small uniform perturbation (this avoids anything that has to be positive becoming negative)
 
-fit2 = sample(model2, NUTS(500,.8; adtype=AutoReverseDiff(true)),
-              MCMCThreads(), 500, 3; 
-              init_params = opinit)
-
+fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)),
+              MCMCThreads(), 100, 3; 
+              init_params = opinit, lb = lower, ub = upper)
+fit2
+plot(fit2)
 display(fit2)
 
 mainparms2 = fit2[:,[:a,:b,:c,:d0,:neterr],:]
