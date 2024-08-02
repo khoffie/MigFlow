@@ -44,26 +44,15 @@ model2 = migration2(ourdat2.flows, levelcode.(ourdat2.fromdist), levelcode.(ourd
                     levelcode.(ourdat2.agegroup), Nages, Ndist, meddist, netactual)
 
 nages = 6
-opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages); [.5]; 100 .* ones(Ndist*nages)];
+opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages); [.5]; 1 .* ones(Ndist*nages)];
 
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
             initial_params = opinit, maxiters = 20, maxtime = 60, reltol = .08,
-            lb = 50*ones(length(opinit)), ub=200*ones(length(opinit)))
+            lb = 0*ones(length(opinit)), ub=200*ones(length(opinit)))
 mapfit2
 
-## without custom settings
-mapfit_simple = maximum_a_posteriori(model2, adtype = AutoReverseDiff(),
-                                     lb = zeros(length(opinit)),
-                                     ub=25*ones(length(opinit)))
-mapfit_simple
-
-zeros(length(opinit))
-## maybe mle?
-mapfit_mle = maximum_likelihood(model2)
-
-
-netactual
+?Gamma
 
 initvals = mapfit2.values
 df = DataFrame(param = names(initvals, 1), estim = values(initvals))
