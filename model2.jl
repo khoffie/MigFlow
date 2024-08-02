@@ -15,13 +15,13 @@ function desir(d1,d2,d3,d4,d5,d6,age,from,to)
 end
 
 @model function migration2(flows,fromdist,todist,frompop,topop,distance,agegroup,Nages,Ndist,meddist, netactual)
-    a ~ filldist(Gamma(5.0,10.0/4.0),Nages)
-    b ~ filldist(Gamma(3.0,1.0/2.0),Nages)
-    c ~ filldist(Gamma(5.0,1.0/4.0),Nages)
-    d0 ~ filldist(Gamma(5.0,0.10/4.0),Nages)
-    neterr ~ Gamma(3.0,0.1/2.0)
+    a ~ filldist(Gamma(5.0, 10.0/4.0),Nages)
+    b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
+    c ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
+    d0 ~ filldist(Gamma(5.0, 0.10/4.0),Nages)
+    neterr ~ Gamma(3.0, 0.1/2.0)
 
-    desir ~ filldist(Gamma(400.0,1.0/399.0),Ndist,Nages)
+    desir ~ filldist(Gamma(400.0, 1.0/399.0), Ndist, Nages)
 
     desires = [desir[todist[i],agegroup[i]]/desir[fromdist[i],agegroup[i]] for i in 1:length(flows)]
     preds = [frompop[i] * topop[i] * a[agegroup[i]] / 1000.0 * (1.0 + b[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) * desires[i] for i in 1:length(flows)]
