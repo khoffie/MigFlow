@@ -1,4 +1,5 @@
 library(data.table)
+library(ggplot2)
 library(stringr)
 library(MigStat)
 dt <- fread("~/Documents/GermanMigration/data/opti_vals.csv")
@@ -49,3 +50,30 @@ plt_real + plt_estim
 
 
 dt_plt[, .(mean = mean(value), sd = sd(value)), keyby = variable]
+
+    a ~ filldist(Gamma(5.0, 10.0/4.0),Nages)
+    b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
+    c ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
+    d0 ~ filldist(Gamma(5.0, 0.10/4.0),Nages)
+    neterr ~ Gamma(3.0, 0.1/2.0)
+
+    desir ~ filldist(Gamma(400.0, 1.0/399.0), Ndist, Nages)
+
+
+x <- seq(-100, 100, by = .01)
+dt <- data.table(x = x)
+dt[, a := dgamma(x, shape = 5, scale = 2.5)]
+dt[, b := dgamma(x, shape = 3, scale = .5)]
+dt[, c := dgamma(x, shape = 5, scale = .25)]
+dt[, d0 := dgamma(x, shape = 5, scale = .025)]
+dt[, neterr := dgamma(x, shape = 3, scale = .5)]
+dt[, desir := dgamma(x, shape = 400, scale = 1/399)]
+dtm <- melt(dt, id.vars = "x")
+dtm[value > 0.0001]
+
+
+ggplot(dtm[value > 0.0001], aes(x, value)) +
+    geom_line() +
+    facet_wrap(~variable, scale = "free") +
+    ggtitle("Prior distributions") +
+    theme_minimal()
