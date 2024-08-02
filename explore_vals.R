@@ -83,7 +83,8 @@ ggplot(dtm[value > 0.0001], aes(x, value)) +
 ## dt read from fun_data
 dt[, sum(actual == 0)]
 dt[, sum(actual == 0), keyby = quantile(dist)]
-dt[, dist_q := cut_qs(dist, probs = seq(0, 1, .1))]
+probs <- c(seq(0, 0.9, .1), 0.95, 0.99, 0.995, 0.999, 1)
+dt[, dist_q := cut_qs(dist, probs = probs)]
 
 dt[, .(frac_0 = round(mean(actual == 0), 2)), keyby = dist_q]
 
@@ -98,3 +99,10 @@ ggplot(dt[actual == 0], aes(dist)) +
     ggtitle("Distribution of distance of flows are 0") +
     facet_wrap(~agegroup) +
     theme_minimal()
+
+out <- dt[, .(sum_of_flows = sum(actual), mean_of_flows = mean(actual)), keyby = .(dist_q, agegroup)]
+
+ggplot(melt(out, id.vars = c("dist_q", "agegroup")), aes(dist_q, value)) +
+    geom_col() +
+    ggtitle("Sum of Flows and Mean of flows for different distances") +
+    facet_wrap(vars(agegroup, variable), scale = "free")
