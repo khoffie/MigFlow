@@ -60,14 +60,14 @@ dt_plt[, .(mean = mean(value), sd = sd(value)), keyby = variable]
     desir ~ filldist(Gamma(400.0, 1.0/399.0), Ndist, Nages)
 
 
-x <- seq(-100, 100, by = .01)
+x <- seq(-100, 200, by = .01)
 dt <- data.table(x = x)
 dt[, a := dgamma(x, shape = 5, scale = 2.5)]
 dt[, b := dgamma(x, shape = 3, scale = .5)]
 dt[, c := dgamma(x, shape = 5, scale = .25)]
 dt[, d0 := dgamma(x, shape = 5, scale = .025)]
 dt[, neterr := dgamma(x, shape = 3, scale = .5)]
-dt[, desir := dgamma(x, shape = 400, scale = 1/399)]
+dt[, desir := dgamma(x, shape = 400, scale = 100/399)]
 dtm <- melt(dt, id.vars = "x")
 dtm[value > 0.0001]
 
@@ -76,4 +76,25 @@ ggplot(dtm[value > 0.0001], aes(x, value)) +
     geom_line() +
     facet_wrap(~variable, scale = "free") +
     ggtitle("Prior distributions") +
+    theme_minimal()
+
+
+
+## dt read from fun_data
+dt[, sum(actual == 0)]
+dt[, sum(actual == 0), keyby = quantile(dist)]
+dt[, dist_q := cut_qs(dist, probs = seq(0, 1, .1))]
+
+dt[, .(frac_0 = round(mean(actual == 0), 2)), keyby = dist_q]
+
+dt[, flow_is0 := ifelse(actual == 0, 1, 0)]
+
+ggplot(dt[dist < 100 & actual == 0], aes(dist)) +
+    geom_density() +
+    facet_wrap(~agegroup)
+
+ggplot(dt[actual == 0], aes(dist)) +
+    geom_density() +
+    ggtitle("Distribution of distance of flows are 0") +
+    facet_wrap(~agegroup) +
     theme_minimal()
