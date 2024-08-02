@@ -101,3 +101,12 @@ plot(chain)
 loglikelihood(model2, opinit)
 
 chain[:lp]
+
+
+### variational inference
+fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)), 100,
+              init_params = opinit,
+              lb = lower, ub = upper,
+              verbose = true, progress = true)
+
+appx = vi(model2, ADVI(10, 1000))
