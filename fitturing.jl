@@ -3,55 +3,49 @@ using OptimizationOptimJL, Distributions
 includet("model2.jl")
 includet("Rutils.jl")
 includet("simulateddata.jl")
+includet("debughelpers.jl")
 
 Random.seed!(20240719)
 
-## read in data, it should have the following columns:
-## flows, fromdist, todist, frompop, topop, distance, gdpcfrom, gdpcto, agegroup
-
+munis = CSV.read("./data/munis_pop.csv", DataFrame)
+rename!(munis,Dict(:age_group => :agegroup))
 sims = true
 if sims
-#    ourdat = CSV.read("data/simulations.csv",DataFrame)
-#    rename!(ourdat,Dict("predict" => "flows"))
-#    ourdat.flows = round.(Int32,ourdat.flows)
-    ourdat,knowndesir = simdatafromtemplate(Xoshiro(20240725),"data/flowtemplate.csv")
-    rename!(ourdat,Dict(:age_group => :agegroup,:distance => :dist,:flow => :flows))
+#    dt = CSV.read("data/simulations.csv",DataFrame)
+#    rename!(dt,Dict("predict" => "flows"))
+#    dt.flows = round.(Int32,dt.flows)
+    dt,knowndesir = simdatafromtemplate(Xoshiro(20240725),"data/flowtemplate.csv")
+    rename!(dt,Dict(:age_group => :agegroup,:distance => :dist,:flow => :flows))
 else
-    ourdat = CSV.read("/home/donkon/Diss/inst/extdata/clean/daniel/FlowData.csv",DataFrame)
+    dt = CSV.read("/home/donkon/Diss/inst/extdata/clean/daniel/FlowData.csv",DataFrame)
 end
-ourdat.fromdist = categorical(ourdat.fromdist)
-ourdat.todist = categorical(ourdat.todist)
-ourdat.agegroup = categorical(ourdat.agegroup)
-levels!(ourdat.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
-rename!(ourdat, Dict(:dist => :distance))
+# dt2 = dt
+# dt2 = dt[dt[: , 6] .> 10, :]
+top40 = selectdists(munis, 40)[1:40]
+dt2 = subsetdists(dt, top40)
 
-meddist = median(ourdat.distance)
-Ndist = length(unique(ourdat.fromdist))
-Nages = length(unique(ourdat.agegroup))
-##length(unique(levelcode.(ourdat.agegroup)))
+dt2.fromdist = categorical(dt2.fromdist)
+dt2.todist = categorical(dt2.todist)
+dt2.agegroup = categorical(dt2.agegroup)
+levels!(dt2.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
+rename!(dt2, Dict(:dist => :distance)) 
+meddist = median(dt2.distance)
+Ndist = length(unique(dt2.fromdist))
+Nages = length(unique(dt2.agegroup))
 
-ourdat2 = ourdat
-ourdat2 = ourdat[ourdat[: , 6] .> 10, :]
+netactual = calcnet(dt2.flows,
+                    levelcode.(dt2.fromdist),
+                    levelcode.(dt2.todist),
+                    levelcode.(dt2.agegroup),Nages,Ndist)
 
-sum(ourdat.flows)
-sum(ourdat2.flows)
+model2 = migration2(dt2.flows, levelcode.(dt2.fromdist), levelcode.(dt2.todist),
+                    dt2.frompop, dt2.topop, dt2.distance,
+                    levelcode.(dt2.agegroup), Nages, Ndist, meddist, netactual)
 
-#ourdat2 = ourdat[sample(1:nrow(ourdat),20000),:]
-## inis = 1 .+ 0.05 .* randn(Ndist)
 
-netactual = calcnet(ourdat2.flows,
-                    levelcode.(ourdat2.fromdist),
-                    levelcode.(ourdat2.todist),
-                    levelcode.(ourdat2.agegroup),Nages,Ndist)
-
-model2 = migration2(ourdat2.flows, levelcode.(ourdat2.fromdist), levelcode.(ourdat2.todist),
-                    ourdat2.frompop, ourdat2.topop, ourdat2.distance,
-                    levelcode.(ourdat2.agegroup), Nages, Ndist, meddist, netactual)
-
-nages = 6
-opinit = [fill(11.0,nages); fill(3.3,nages); fill(1.8,nages); fill(.1,nages); [.5]; 1 .* 100 .* ones(Ndist*nages)]
-lower = [fill(0,nages); fill(0,nages); fill(0,nages); fill(0,nages); [0]; .7 .* 100 .* ones(Ndist*nages)]
-upper = [fill(20,nages); fill(20,nages); fill(5,nages); fill(1,nages); [1]; 1.3 .* 100 .* ones(Ndist*nages)]
+opinit = [fill(11.0,Nages); fill(3.3,Nages); fill(1.8,Nages); fill(.1,Nages); [.5]; 1 .* 100 .* ones(Ndist*Nages)]
+lower = [fill(0,Nages); fill(0,Nages); fill(0,Nages); fill(0,Nages); [0]; .7 .* 100 .* ones(Ndist*Nages)]
+upper = [fill(20,Nages); fill(20,Nages); fill(5,Nages); fill(1,Nages); [1]; 1.3 .* 100 .* ones(Ndist*Nages)]
 
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
