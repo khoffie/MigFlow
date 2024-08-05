@@ -20,9 +20,10 @@ subsets the flows data to those that only mention the districts
 in the collection
 """
 function subsetdists(flows,dists)
-    ourflows = flows[flows.fromdist .in dists .&& flows.todist .in dists,:]
-    droplevels!(ourflows.fromdist)
-    droplevels!(ourflows.todist)
+##    ourflows = flows[flows.fromdist.in dists .&& flows.todist.in dists,:]
+    ourflows = flows[in.(flows.fromdist, Ref(dists)) .& in.(flows.todist, Ref(dists)), :]
+    # droplevels!(ourflows.fromdist)
+    # droplevels!(ourflows.todist)
     ourflows
 end
 
