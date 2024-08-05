@@ -47,19 +47,17 @@ opinit = [fill(11.0,Nages); fill(3.3,Nages); fill(1.8,Nages); fill(.1,Nages); [.
 lower = [fill(0,Nages); fill(0,Nages); fill(0,Nages); fill(0,Nages); [0]; .7 .* 100 .* ones(Ndist*Nages)]
 upper = [fill(20,Nages); fill(20,Nages); fill(5,Nages); fill(1,Nages); [1]; 1.3 .* 100 .* ones(Ndist*Nages)]
 
-appx = vi(model2, ADVI(5, 500)) ## takes a long time. Maybe enabling reverseDiff helps? Or bounds?
-
+appx = vi(model2, ADVI(10, 1000))
+rand(appx, 1000)
 ## use optimization to find a good fit
 mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
             initial_params = opinit, maxiters = 20, maxtime = 60, reltol = .08,
             lb = lower, ub = upper)
 mapfit2
 initvals = mapfit2.values
-df = DataFrame(param = names(initvals, 1), estim = values(initvals))
-CSV.write("./data/opti_vals.csv", df)
-
 initvals2 = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.50),length(initvals)))
-
+# df = DataFrame(param = names(initvals, 1), estim = values(initvals))
+# CSV.write("./data/opti_vals.csv", df)
 
 fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)), 100,
               init_params = initvals2,
@@ -79,14 +77,3 @@ chain = sample(model2, Prior(), 30)
 chain
 plot(chain)
 loglikelihood(model2, opinit)
-
-chain[:lp]
-
-
-### variational inference
-fit2 = sample(model2, NUTS(100,.8; adtype=AutoReverseDiff(true)), 100,
-              init_params = opinit,
-              lb = lower, ub = upper,
-              verbose = true, progress = true)
-
-appx = vi(model2, ADVI(10, 1000))
