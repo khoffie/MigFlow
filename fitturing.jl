@@ -47,31 +47,7 @@ opinit = [fill(11.0,Nages); fill(3.3,Nages); fill(1.8,Nages); fill(.1,Nages); [.
 lower = [fill(0,Nages); fill(0,Nages); fill(0,Nages); fill(0,Nages); [0]; .7 .* 100 .* ones(Ndist*Nages)]
 upper = [fill(20,Nages); fill(20,Nages); fill(5,Nages); fill(1,Nages); [1]; 1.3 .* 100 .* ones(Ndist*Nages)]
 
-## use optimization to find a good fit
-mapfit2 = maximum_a_posteriori(model2, LBFGS() ; adtype = AutoReverseDiff(), 
-            initial_params = opinit, maxiters = 20, maxtime = 60, reltol = .08,
-            lb = lower, ub = upper)
-mapfit2
-initvals = mapfit2.values
 
-df = DataFrame(param = names(initvals, 1), estim = values(initvals))
-CSV.write("./data/opti_vals.csv", df)
-
-#plotdesirability(initvals)
-#plotnetmigration(netmigr)
-
-param_values = values(mapfit2.values)
-
-println("Optimal values are: ")
-@show initvals
-
-initvals2 = Iterators.Repeated(initvals .+ rand(Uniform(0.0,.50),length(initvals)))
-
-#initvals2 = Iterators.Repeated(opinit)
-
-println("Perturbed Initial values are:")
-
-@show iterate(initvals2)[1]
 ## start the sampling at a location biased away from the mode, by increasing all parameters 
 ## by a small uniform perturbation (this avoids anything that has to be positive becoming negative)
 
