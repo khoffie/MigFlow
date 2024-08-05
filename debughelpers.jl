@@ -38,7 +38,7 @@ fit itself, and samples from it
 """
 function tryvi(flows,modelfun,nsamps,gradsamps,nsteps)
     modl = modelfun(flows.flows,flows.fromdist,flows.todist,
-        flows.frompop,flows.topop,flows.dist,flows.agegroup,length(levels(flows.agegroup)),
+        flows.frompop,flows.topop,flows.distance,flows.agegroup,length(levels(flows.agegroup)),
         length(levels(flows.fromdist)))
     vifit = vi(modl,ADVI(gradsamps,nsteps))
     samp = rand(vifit,nsamps)
