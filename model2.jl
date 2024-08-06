@@ -19,7 +19,7 @@ end
     b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
     c ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 0.10/4.0),Nages)
-    neterr ~ Gamma(3.0, 0.1/2.0)
+    neterr ~ Gamma(3.0, 2.0/2.0)
 
     desir ~ filldist(Gamma(400.0, 100.0/399.0), Ndist, Nages)
 
