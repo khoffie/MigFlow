@@ -19,3 +19,6 @@ flows[agegroup == "unter18", agegroup := "below18"]
 flows <- flows[agegroup != "all"]
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 
+
+dt_coords <- shp[, .(district = AGS, year, xcoord = x, ycoord = y)][district %notin% c(3159, 5978)]
+fwrite(dt_coords, "~/Documents/GermanMigration/data/district_coords.csv")
