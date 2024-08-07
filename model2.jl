@@ -34,7 +34,8 @@ end
     end
     netflows = calcnet(preds,fromdist,todist,agegroup,Nages,Ndist)
     flows ~ arraydist([Poisson(p) for p in preds])
-    netactual ~ MvNormal(netflows,neterr .* abs.(netflows))
+    netactual ~ arraydist(Normal.(netflows,neterr .* abs.(netflows)))
+##    netactual ~ MvNormal(netflows,neterr .* abs.(netflows))
     return((preds,netflows))
 end
 
