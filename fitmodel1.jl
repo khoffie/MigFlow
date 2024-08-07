@@ -27,6 +27,6 @@ upper = [fill(20,Nages); fill(10,Nages); fill(5,Nages); fill(1,Nages)]
 
 mapfit1 = maximum_a_posteriori(model1, LBFGS() ; adtype = AutoReverseDiff(), 
                                initial_params = opinit, lb = lower, ub = upper,
-                               maxiters = 20, maxtime = 60, reltol = .08)
+                               maxiters = 200, maxtime = 600, reltol = .08)
 mapfit1
 initvals = mapfit1.values
