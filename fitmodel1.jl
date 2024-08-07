@@ -33,4 +33,13 @@ mapfit1
 
 opti_params = DataFrame(names=names(mapfit1.values, 1), values=mapfit1.values.array)
 CSV.write("./data/opti_d0.csv", opti_params)
-serialize("./data/preds.csv", mapfit1)
+
+mlfit1 = maximum_likelihood(model1, LBFGS() ; adtype = AutoReverseDiff(), 
+                               initial_params = opinit, lb = lower, ub = upper,
+                               maxiters = 20, maxtime = 60, reltol = .08)
+
+mapfit1
+
+test = deserialize("./data/preds.csv")
+
+test.values
