@@ -10,7 +10,7 @@
     neterr ~ Gamma(3.0, 2.0/2.0)
 
     
-    desirecoefs ~ MvNormal(zeros(typeof(a[1]), ncoefs),ones(typeof(a[1]), ncoefs)) 
+    desirecoefs ~ MvNormal(zeros(ncoefs),ones(ncoefs)) 
     desfun = Fun(Chebyshev(200000.0 .. 600000.0) * Chebyshev(5e6 .. 6.2e6), desirecoefs)
     
     desires = [exp(desfun(xcoord[todist[i]],ycoord[todist[i]]) -
