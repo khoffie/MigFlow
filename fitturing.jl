@@ -1,5 +1,5 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
-using OptimizationOptimJL, Distributions
+using OptimizationOptimJL, Distributions, ApproxFun, Serialization
 ## includet("Rutils.jl")
 ## includet("simulateddata.jl")
 includet("debughelpers.jl")
@@ -8,6 +8,7 @@ Random.seed!(20240719)
 
 munis = CSV.read("./data/munis_pop.csv", DataFrame)
 rename!(munis,Dict(:age_group => :agegroup))
+coords = CSV.read("./data/district_coords.csv", DataFrame)
 sims = true
 if sims
 #    dt = CSV.read("data/simulations.csv",DataFrame)
@@ -35,5 +36,4 @@ rename!(dt2, Dict(:dist => :distance))
 meddist = median(dt2.distance)
 Ndist = length(unique(dt2.fromdist))
 Nages = length(unique(dt2.agegroup))
-
 
