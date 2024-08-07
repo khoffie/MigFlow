@@ -11,9 +11,8 @@
 
     
     desirecoefs ~ MvNormal(zeros(typeof(a[1]), ncoefs),ones(typeof(a[1]), ncoefs)) 
-##    desirecoefs ~ MvNormal(zeros(Float64, ncoefs),ones(Float64, ncoefs)) 
-    desfun = Fun(Chebyshev(200000.0 .. 600000.0) * Chebyshev(5e6 .. 6.2e6))(desirecoefs)
     desfun = Fun(Chebyshev(200000.0 .. 600000.0) * Chebyshev(5e6 .. 6.2e6), desirecoefs)
+    
     desires = [exp(desfun(xcoord[todist[i]],ycoord[todist[i]]) -
         desfun(xcoord[fromdist[i]],ycoord[fromdist[i]]))
                for i in 1:length(flows)]
