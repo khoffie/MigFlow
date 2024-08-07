@@ -28,5 +28,9 @@ upper = [fill(20,Nages); fill(10,Nages); fill(5,Nages); fill(1,Nages)]
 mapfit1 = maximum_a_posteriori(model1, LBFGS() ; adtype = AutoReverseDiff(), 
                                initial_params = opinit, lb = lower, ub = upper,
                                maxiters = 200, maxtime = 600, reltol = .08)
+
 mapfit1
-initvals = mapfit1.values
+
+opti_params = DataFrame(names=names(mapfit1.values, 1), values=mapfit1.values.array)
+CSV.write("./data/opti_d0.csv", opti_params)
+serialize("./data/preds.csv", mapfit1)
