@@ -21,7 +21,9 @@
     end
     netflows = calcnet(preds,fromdist,todist,agegroup,Nages,Ndist)
     flows ~ arraydist([Poisson(p) for p in preds])
-    netactual ~ MvNormal(netflows,neterr .* abs.(netflows))
+    for c in axes(netflows,2)
+        @views netactual[:,c] ~ MvNormal(netflows[:,c],neterr .* abs.(netflows[:,c]))
+    end
     return((preds,netflows))
 end
 
