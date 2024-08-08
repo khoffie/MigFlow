@@ -2,10 +2,9 @@ includet("model1.jl")
 optis = CSV.read("./data/opti_d0.csv", DataFrame)
 
 model1 = migration1(dt2.flows, levelcode.(dt2.fromdist), levelcode.(dt2.todist),
-                    dt2.frompop, dt2.topop, dt2.distance,
+                    dt2.frompop_ger, dt2.topop, dt2.distance,
                     levelcode.(dt2.agegroup), Nages, Ndist, meddist)
 
-opinit = [fill(11.0,Nages); fill(3.3,Nages); fill(1.8,Nages); fill(.1,Nages)]
 opinit = optis[: , 2]
 lower = [fill(0,Nages); fill(0,Nages); fill(0,Nages); fill(0,Nages)]
 upper = [fill(20,Nages); fill(10,Nages); fill(5,Nages); fill(1,Nages)]
