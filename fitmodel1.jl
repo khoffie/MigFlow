@@ -17,11 +17,9 @@ mapfit1.optim_result
 
 opti_params = DataFrame(names=names(mapfit1.values, 1), values=mapfit1.values.array)
 CSV.write("./data/opti_d0.csv", opti_params)
-serialize("./data/preds.csv", mapfit1)
 
 model1_chain = Chains([optis[: , 2]], optis[: , 1]) 
 dt2[:, "preds"] = generated_quantities(model1, model1_chain)[1]
-
 
 CSV.write("./data/FlowDataPreds.csv", dt2)
 CSV.write("/home/konstantin/Diss/inst/extdata/clean/daniel/FlowDataPreds.csv", dt2)
