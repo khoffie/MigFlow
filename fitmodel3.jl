@@ -66,3 +66,12 @@ function testmod3(dt,optis,dists,meddist)
 
     (fit = mapfit3, dt2 = dt2)
 end
+
+
+
+## try it out:
+
+smallerdists = @subset(dists,dists.density .< median(dists.density))
+
+testmod3(dt,optis,smallerdists,meddist)
+
