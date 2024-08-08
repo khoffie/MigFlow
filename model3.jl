@@ -20,13 +20,10 @@
         (1.0 + b[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) * desires[i]
              for i in 1:length(flows)]
 
-    # if typeof(a[1]) != Float64
-    #     @printf "a1 = %.2f, b1 = %.2f, c1 = %.2f, d0_1 = %.2f, neterr = %.2f", a[1].value, b[1].value, c[1].value, d0[1].value, neterr.value
-    # end
     if typeof(a[1]) != Float64
-        @show a[1].value, b[1].value, c[1].value, d0[1].value, neterr.value
+        @printf "a1 = %.2f, b1 = %.2f, c1 = %.2f, d0_1 = %.2f, neterr = %.2f"  a[1].value b[1].value c[1].value d0[1].value neterr.value
     end
-
+    
     if any(isnan,preds)
         println("NaN in predictions")
     end
