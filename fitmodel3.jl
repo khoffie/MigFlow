@@ -71,7 +71,11 @@ end
 
 ## try it out:
 
+#=
+
 smallerdists = @subset(dists,dists.density .< median(dists.density))
 
 testmod3(dt,optis,smallerdists,meddist)
+
+=#
 
