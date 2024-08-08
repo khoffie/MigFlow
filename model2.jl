@@ -38,12 +38,3 @@ end
 ##    netactual ~ MvNormal(netflows,neterr .* abs.(netflows))
     return((preds,netflows))
 end
-
-function calcnet(flows,fromdist,todist,agegrp,Nages,Ndist)
-    netflows = zeros(typeof(flows[1]),(Ndist,Nages))
-    for n in 1:length(flows)
-        netflows[fromdist[n],agegrp[n]] -= flows[n]
-        netflows[todist[n],agegrp[n]] += flows[n]
-    end
-    netflows
-end
