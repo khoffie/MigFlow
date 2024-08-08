@@ -8,7 +8,7 @@
     c ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 0.10/4.0),Nages)
     neterr ~ Gamma(3.0, 2.0/2.0)
-    kd ~ MvNormal(0.0,0.1*ones(Nages))
+    kd ~ MvNormal(fill(0.0,Nages),0.1*ones(Nages))
 
     ## priors for chebychev polys parameters
     desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 1.0 .* ones(ncoefs*Nages))  
