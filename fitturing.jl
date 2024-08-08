@@ -1,14 +1,11 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
-using OptimizationOptimJL, Distributions, ApproxFun, Serialization
-## includet("Rutils.jl")
-## includet("simulateddata.jl")
+using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta
 includet("debughelpers.jl")
-
 Random.seed!(20240719)
 
 munis = CSV.read("./data/munis_pop.csv", DataFrame)
 rename!(munis,Dict(:age_group => :agegroup))
-coords = CSV.read("./data/district_coords.csv", DataFrame)
+coords_dt = CSV.read("./data/district_coords.csv", DataFrame)
 sims = true
 if sims
 #    dt = CSV.read("data/simulations.csv",DataFrame)
@@ -17,7 +14,7 @@ if sims
     dt,knowndesir = simdatafromtemplate(Xoshiro(20240725),"data/flowtemplate.csv")
     rename!(dt,Dict(:age_group => :agegroup,:distance => :dist,:flow => :flows))
 else
-    dt = CSV.read("./data/FlowDataGermans.csv",DataFrame)
+    dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
 end
 dt2 = dt
 # dt2 = dt[dt[: , 6] .> 10, :]
