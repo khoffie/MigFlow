@@ -1,13 +1,14 @@
 @model function migration3(flows, fromdist, todist,
                            frompop, topop, distance,
                            agegroup, Nages,
-                           xcoord, ycoord,
+                           xcoord, ycoord,density,
                            Ndist, meddist, netactual, ncoefs)
     a ~ filldist(Gamma(5.0, 10.0/4.0),Nages)
     b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
     c ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 0.10/4.0),Nages)
     neterr ~ Gamma(3.0, 2.0/2.0)
+    kd ~ MvNormal(0.0,0.1*ones(Nages))
 
     ## priors for chebychev polys parameters
     desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 1.0 .* ones(ncoefs*Nages))  
@@ -17,8 +18,8 @@
     desfuns = [Fun(Chebyshev(200000.0 .. 600000.0) * Chebyshev(5e6 .. 6.2e6), desirecoefsre[:,i]) for i in 1:Nages]
 
     ## desirability for given age at coordinates as ratio of dest / from
-    desires = [exp(desfuns[agegroup[i]](xcoord[todist[i]],ycoord[todist[i]]) -
-        desfuns[agegroup[i]](xcoord[fromdist[i]],ycoord[fromdist[i]]))
+    desires = [(kd[agegroup[i]]*density[todist[i]] + exp(desfuns[agegroup[i]](xcoord[todist[i]],ycoord[todist[i]]))) /
+                        (kd[agegroup[i]]*density[fromdist[i]] + exp(desfuns[agegroup[i]](xcoord[fromdist[i]],ycoord[fromdist[i]])))
                for i in 1:length(flows)]
     ## indiviudal flows
     preds = [frompop[i] * topop[i] * a[agegroup[i]] / 1000.0 *
