@@ -55,9 +55,9 @@ function testmod3(dt,optis,dists,meddist)
     opts3 = DataFrame(names=names(mapfit3.values, 1), values=mapfit3.values.array, inits = opinit)
 
 
-    density(opts3.values .- opts3.inits)
+    display(density(opts3.values .- opts3.inits))
 
-    opinit
+    @show opinit
     model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
     dt2[:, "preds3"] = generated_quantities(model3, model3_chain)[1][1]
 
