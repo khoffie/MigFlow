@@ -17,7 +17,7 @@ if sims
     dt,knowndesir = simdatafromtemplate(Xoshiro(20240725),"data/flowtemplate.csv")
     rename!(dt,Dict(:age_group => :agegroup,:distance => :dist,:flow => :flows))
 else
-    dt = CSV.read("./data/FlowDataGermans.csv",DataFrame)
+    dt = CSV.read("/home/konstantin/Diss/inst/extdata/clean/daniel/FlowData.csv",DataFrame)
 end
 dt2 = dt
 # dt2 = dt[dt[: , 6] .> 10, :]
