@@ -1,5 +1,5 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
-using OptimizationOptimJL, Distributions, ApproxFun, Serialization
+using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta
 ## includet("Rutils.jl")
 ## includet("simulateddata.jl")
 includet("debughelpers.jl")
