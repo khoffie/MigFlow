@@ -77,5 +77,11 @@ smallerdists = @subset(dists,dists.density .< median(dists.density))
 
 testmod3(dt,optis,smallerdists,meddist)
 
+or run the profiler and we see where the time is being spent:
+
+using StatProfilerHTML
+
+@profilehtml testmod3(dt,optis,smallerdists,meddist)
+
 =#
 
