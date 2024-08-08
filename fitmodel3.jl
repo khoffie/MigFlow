@@ -11,8 +11,10 @@ dists = CSV.read("./data/districts.csv",DataFrame)
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
 function testmod3(dt,optis,dists,meddist)
-
+    
+    droplevels!(dists.distcode)
     dists = @sort(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
+
     distdens = dists.density
     distdens = distdens / maximum(distdens)
     distdens = distdens - mean(distdens)
