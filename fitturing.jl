@@ -17,7 +17,7 @@ if sims
     ourdat,knowndesir = simdatafromtemplate(Xoshiro(20240725),"data/flowtemplate.csv")
     rename!(ourdat,Dict(:age_group => :agegroup,:distance => :dist,:flow => :flows))
 else
-    ourdat = CSV.read("/home/donkon/Diss/inst/extdata/clean/daniel/FlowData.csv",DataFrame)
+    ourdat = CSV.read("~/Diss/inst/extdata/clean/daniel/FlowData.csv",DataFrame)
 end
 ourdat.fromdist = categorical(ourdat.fromdist)
 ourdat.todist = categorical(ourdat.todist)
