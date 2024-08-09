@@ -70,20 +70,20 @@ make_net_plot <- function(net, scales = "free") {
 
 ```{r data}
 
-use_age <- c("18-25", "below18")
-
+age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
+use_age <- age_lvls
 p_out <- "~/Documents/GermanMigration/plots"
 p_in <- "~/Documents/GermanMigration/data"
-
+f_optis <- "opts1greater0.csv"
+f_preds <- "preds1greater0.csv"
 shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
-dt_coefs <- fread(file.path(p_in, "opti_d0_allrows.csv"))
+dt_coefs <- fread(file.path(p_in, f_optis))
 
-dt <- fread(file.path(p_in, "FlowDataPreds1.csv"))
+dt <- fread(file.path(p_in, f_preds))
 dt <- dt[agegroup %in% use_age]
 pop_dt <- dt[, .SD[1], keyby = .(fromdist, agegroup, year)][
   , .(region = fromdist, agegroup, year, pop = frompop_ger)]
 dt <- dt[, .(fromdist, todist, year, agegroup, distance, flows, preds)]
-age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 age_lvls <- intersect(age_lvls, use_age)
 dt[, agegroup := factor(agegroup, levels = age_lvls)]
 setnames(dt, "flows", "actual")
