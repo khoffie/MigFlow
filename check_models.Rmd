@@ -1,0 +1,216 @@
+--- 
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+always_allow_html: true
+---
+
+
+```{r global_knitr, echo = FALSE, eval = TRUE}
+
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE,
+                      results = "hide",
+                      fig.width = 8,
+                      fig.asp = 0.7,
+                      out.width = "120%")
+
+```
+
+```{r fun-pck}
+
+library(data.table)
+library(sf)
+library(ggplot2)
+library(MigStat)
+library(plotR)
+
+calculate_net <- function(dt, col, by, o = "fromdist", d = "todist",
+                           long = FALSE, type = NULL) {
+    dt_in <- dt[, .(inflow = sum(get(col))), keyby = c(d, by)]
+    dt_out <- dt[, .(outflow = sum(get(col))), keyby = c(o, by)]
+    dt_in[dt_out, outflow := i.outflow, on = c(setNames(o, d), by)]
+    dt_in[, net := inflow - outflow]
+    setnames(dt_in, d, "region")
+    if(!is.null(type)) {
+        dt_in[, type := type]
+        id_vars <- c("type", "region", by)
+    }
+    if(is.null(type)) {
+        id_vars <- c("region", by)
+    }
+    if(long == TRUE) {
+        dt_in <- melt(dt_in, id.vars = id_vars)
+    }
+    return(dt_in)
+}
+
+make_map <- function(netm, age) {
+    plt <- ggplot(set_geom(netm[agegroup == age], F)) +
+        geom_sf(aes(fill = value)) +
+        facet_wrap(~variable) +
+        ggtitle(sprintf("Actual and prediction for age group %s", age)) +
+        theme_minimal() 
+    return(plt)
+}
+
+make_net_plot <- function(net, scale = FALSE) {
+    if(scale == TRUE) {
+        x <- "preds_s"
+        y <- "actual_s"
+        main <- "Net migration (400 regions), scaled with sign(x) * log(1 + abs(x))"
+    }
+    if(scale == FALSE) {
+        x <- "preds"
+        y <- "actual"
+        main <- "Net migration (400 regions)"
+    }
+    plt <- ggplot(net, aes(get(x), get(y))) +
+        geom_point(alpha = .5) +
+        facet_wrap(vars(agegroup, year), scales = "free") +
+        theme_minimal() +
+        ylab("Actual") +
+        xlab("Prediction") +
+        ggtitle(main)
+    return(plt)
+}
+
+```
+
+```{r data}
+
+p_out <- "~/Documents/GermanMigration/plots"
+p_in <- "~/Documents/GermanMigration/data"
+
+shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
+dt_coefs <- fread(file.path(p_in, "opti_d0_allrows.csv"))
+dt <- fread(file.path(p_in, "FlowDataPreds1.csv"))
+dt <- dt[, .(fromdist, todist, year, agegroup, distance, flows, preds)]
+
+age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
+dt[, agegroup := factor(agegroup, levels = age_lvls)]
+setnames(dt, "flows", "actual")
+
+dtm <- melt(dt,
+            id.vars = setdiff(colnames(dt), c("preds", "actual")),
+            value.vars = c("preds", "actual"),
+            variable.name = "model")
+
+## probably much easier
+net <- calculate_net(dtm, col = "value", by = c("year", "agegroup", "model"), long = FALSE)
+net <- dcast(net, region + year + agegroup ~ model, value.var = "net")
+net[, actual_s := sign(actual) * log(1 + abs(actual))]
+net[, preds_s := sign(preds) * log(1 + abs(preds))]
+netm <- melt(net, id.vars = c("region", "year", "agegroup"))
+netm <- netm[variable %in% c("actual_s", "preds_s")]
+netm[shp, geometry := i.geometry, on = .(region = AGS)]
+
+```
+
+## Maps
+```{r make-maps}
+
+lapply(age_lvls, function(age) make_map(netm, age))
+
+```
+
+## Net chart
+```{r net-plot}
+
+make_net_plot(net, scale = FALSE)
+
+```
+
+```{r net-plot}
+
+make_net_plot(net, scale = TRUE)
+
+```
+
+```{r suminoit, eval = FALSE}
+
+net <- calculate_net(dtm, "preds", by = c("year", "agegroup", "model"))
+net[, total := inflow + outflow]
+
+net[region == 6435 & agegroup == "30-50"]
+
+total <- net[model == "flows", .(region, year, agegroup, total, net_actual = net)]
+pred <- net[model == "preds3", .(region, year, agegroup, net_pred = net)]
+
+total[pred, net_pred := i.net_pred, on = .(region, year, agegroup)]
+total[, resid := (net_actual - net_pred) / total]
+total[order(net_actual - net_pred)]
+
+ggplot(total, aes(total, net_actual - net_pred)) +
+    geom_point() +
+    facet_wrap(~agegroup)
+
+ggsave(file.path(path, "resid_net_total.pdf"), width = w, height = h)
+
+dcast(net, region + year + agegroup + total ~ model, value.var = "net")
+
+
+```
+
+
+```{r, eval = FALSE}
+
+w <- 10
+h <- w / 1.6
+
+dtm[flows == 0]
+
+plt <- ggplot(dt3[agegroup == "18-25"],
+              aes(log(preds3), log(flows))) +
+    geom_point(pch = ".") +
+    geom_smooth(se = FALSE) +
+    facet_wrap(vars(agegroup), scale = "free") +
+    ggtitle("individual flows")
+plt
+ggsave(file.path(path, "preds_l_flows_l.pdf"), width = w, height = h)
+
+plt <- ggplot(dt3[agegroup == "18-25"],
+              aes(preds3, flows)) +
+    geom_point(pch = ".") +
+    geom_smooth(se = FALSE) +
+    xlim(c(00, 100)) +
+    facet_wrap(vars(agegroup), scale = "free") +
+    ggtitle("individual flows, preds < 100")
+plt
+
+ggsave(file.path(path, "preds_flows.pdf"), width = w, height = h)
+
+
+plt <- ggplot(dt3[agegroup == "18-25"],
+              aes(preds1, flows)) +
+    geom_point(pch = ".") +
+    geom_smooth(se = FALSE) +
+    xlim(c(0, 10)) +
+    facet_wrap(vars(agegroup), scale = "free") +
+    ggtitle("individual flows, preds < 100")
+plt
+
+ggsave(file.path(path, "preds_flows.pdf"), width = w, height = h)
+
+dt3[, sum(flows == 0)]
+dt3[, sum(preds3 < 1)]
+
+
+ggplot(dt3[agegroup == "18-25"], aes(preds3, flows - preds3)) +
+    geom_point(pch = ".") +
+    geom_smooth(se = FALSE) +
+    facet_wrap(~agegroup, scale = "free") +
+    xlim(c(0, 100)) 
+
+ggsave(file.path(path, "resid.pdf"), width = w, height = h)
+
+
+resid_plt <- ggplot(dtm, aes(agegroup, resid_l, fill = agegroup)) +
+    geom_violin() +
+    facet_wrap(vars(model))
+resid_plt <- prettify(resid_plt, main = "Residuals sign(resid) * log(abs(resid))",
+         sub = "resid = (actual - preds) / preds")
+ggsave(file.path(path, "resid_violin.pdf"), resid_plt, width = w, height = h)
+
+```
