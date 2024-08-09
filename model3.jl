@@ -3,13 +3,13 @@
                            agegroup, Nages,
                            xcoord, ycoord,density,
                            Ndist, meddist, netactual, ncoefs)
-    a ~ filldist(Gamma(5.0, 10.0/4.0),Nages)
+    a ~ filldist(Normal(0.0,4.0),Nages)
     b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
     c ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     neterr ~ Gamma(3.0, 2.0/2.0)
     kd ~ MvNormal(fill(0.0,Nages),0.1*ones(Nages))
-    logisticconst ~ MvNormal(fill(-3.0,Nages),fill(2.0,Nages)) # logistic(-3.0) ~ 0.05 flows are typically on order 5% or less
+    logisticconst ~ Normal(-4.0,2.0) # logistic(-4.0) ~ 0.017 flows are typically on order 5% or less
 
     ## priors for chebychev polys parameters
     desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 1.0 .* ones(ncoefs*Nages))  
@@ -25,8 +25,8 @@
                         desvals[fromdist[i],agegroup[i]])
                for i in 1:length(flows)]
     ## indiviudal flows
-    preds = [frompop[i] * logistic(logisticconst[agegroup[i]]  + (topop[i] / popgerm) + a[agegroup[i]] +
-        (1.0 + b[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) + desires[i])
+    preds = [frompop[i] * logistic(logisticconst + (topop[i] / popgerm) + a[agegroup[i]] +
+        log1p(b[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]]) * c[agegroup[i]]) + desires[i])
              for i in 1:length(flows)]
 
     if typeof(a[1]) != Float64
