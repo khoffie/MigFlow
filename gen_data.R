@@ -20,6 +20,7 @@ flows <- flows[agegroup != "all"]
 
 dt_coords <- shp[, .(distcode = AGS, year, name = GEN, xcoord = x, ycoord = y)]
 dt_coords <- dt_coords[distcode %notin% c(3159, 5978)]
+dt_coords[density, density := i.density, on = .(distcode = region, year)]
 
 ### check if districts are the same
 all(flows[, unique(fromdist)] == flows[order(todist), unique(todist)] )
