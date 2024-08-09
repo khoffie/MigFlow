@@ -181,3 +181,12 @@ ggplot(dt, aes(preds, resid2)) +
     theme_minimal()
 
 ```
+
+```{r, eval = FALSE}
+
+head(dt[order(- preds)], 20)
+
+dt_coords[distcode == 2000]
+flows[fromdist == 2000]
+
+```
