@@ -1,3 +1,4 @@
+
 includet("model3.jl")
 optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
 
@@ -27,10 +28,12 @@ function testmod3(dt,optis,dists,meddist)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
     ncoefs = 64
     Nages = 6 ## inits require it, only later we compute it
-    opinit = [optis[:, 2]; [1.5]; 0 * ones(ncoefs * Nages)]
-    opinit = [optis[:, 2]; [1.5]; rand(Normal(0.0, .4),Nages*ncoefs)]
-    lower = [fill(0,Nages); fill(0,Nages); fill(0,Nages); fill(0,Nages); [.05]; -40 * ones(ncoefs * Nages)]
-    upper = [fill(20,Nages); fill(10,Nages); fill(5,Nages); fill(1,Nages); [2]; 40 * ones(ncoefs * Nages)]
+    opinit = [optis[:, 2]; [1.5];
+              fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
+    lower = [fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05];
+             fill(-.1, Nages); -40 * ones(ncoefs * Nages)]
+    upper = [fill(20.0,Nages); fill(10.0,Nages); fill(5.0,Nages); fill(1.0,Nages); [2];
+             fill(.1, Nages); 40.0 * ones(ncoefs * Nages)]
 
     ##    dt2 = dt[dt.fromdist .in dists.distcode .&& dt.todist .in
     ##    dists.distcode,:]
