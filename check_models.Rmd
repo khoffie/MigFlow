@@ -70,6 +70,8 @@ make_net_plot <- function(net, scales = "free") {
 
 ```{r data}
 
+use_age <- c("18-25", "below18")
+
 p_out <- "~/Documents/GermanMigration/plots"
 p_in <- "~/Documents/GermanMigration/data"
 
@@ -77,10 +79,12 @@ shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "district
 dt_coefs <- fread(file.path(p_in, "opti_d0_allrows.csv"))
 
 dt <- fread(file.path(p_in, "FlowDataPreds1.csv"))
+dt <- dt[agegroup %in% use_age]
 pop_dt <- dt[, .SD[1], keyby = .(fromdist, agegroup, year)][
   , .(region = fromdist, agegroup, year, pop = frompop_ger)]
 dt <- dt[, .(fromdist, todist, year, agegroup, distance, flows, preds)]
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
+age_lvls <- intersect(age_lvls, use_age)
 dt[, agegroup := factor(agegroup, levels = age_lvls)]
 setnames(dt, "flows", "actual")
 dtm <- melt(dt,
@@ -124,7 +128,12 @@ dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 
 resid_plt <- ggplot(dt, aes(agegroup, resid2, fill = agegroup)) +
     geom_violin() 
-prettify(resid_plt, main = "Residuals sign(resid) * log(1 + abs(resid))",
+prettify(resid_plt, main = "Individual Flows Residuals sign(resid) * log(1 + abs(resid))",
+         sub = "Residuals sign(resid) * log(1 + abs(resid))")
+
+resid_plt <- ggplot(dt, aes(agegroup, resid1, fill = agegroup)) +
+    geom_violin() 
+prettify(resid_plt, main = "Individual Flows",
          sub = "resid = (actual - preds) / preds")
 
 ```
