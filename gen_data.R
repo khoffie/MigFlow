@@ -26,6 +26,8 @@ dt_coords[density, density := i.density, on = .(distcode = region, year)]
 all(flows[, unique(fromdist)] == flows[order(todist), unique(todist)] )
 all(flows[, unique(fromdist)] == dt_coords[, distcode])
 
+dt_coords[distcode %in% c(5315, 2000, 11000, 14713, 9162, 1001),
+          .(name, xcoord = xcoord / 1000, ycoord = ycoord / 1000)]
 
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(dt_coords, "~/Documents/GermanMigration/data/districts.csv")
