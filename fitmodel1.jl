@@ -24,5 +24,5 @@ opti_params = DataFrame(names=names(mapfit1.values, 1),
 model1_chain = Chains([optis[: , 2]], optis[: , 1]) 
 dt2[:, "preds"] = generated_quantities(model1, model1_chain)[1]
 
-CSV.write("./data/opti_d0_allrows.csv", opti_params[:, 1:2])
+CSV.write("./data/opti_d0_flow_greater_0.csv", opti_params[:, 1:2])
 CSV.write("./data/FlowDataPreds1.csv", dt2)
