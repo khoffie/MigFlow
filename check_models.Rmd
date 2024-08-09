@@ -140,6 +140,20 @@ prettify(resid_plt, main = "Individual Flows",
 
 ```{r, preds-resid, eval = TRUE}
 
+ggplot(dt, aes(log(preds), log(actual))) +
+    geom_point(pch = ".") +
+    geom_smooth(se = FALSE) +
+    facet_wrap(vars(agegroup), scale = "free") +
+    ggtitle("individual flows, log(preds) v log(actual)") +
+    theme_minimal()
+
+ggplot(dt, aes(log(preds), log(actual / preds))) +
+    geom_point(pch = ".") +
+    geom_smooth(se = FALSE) +
+    facet_wrap(vars(agegroup), scale = "free") +
+    ggtitle("individual flows, log(preds) v log(actual/preds)") +
+    theme_minimal()
+
 ggplot(dt, aes(preds, resid1)) +
     geom_point(pch = ".") +
     xlim(c(0, 50)) +
