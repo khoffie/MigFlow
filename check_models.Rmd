@@ -50,7 +50,7 @@ make_map <- function(netm, age) {
     plt <- ggplot(set_geom(netm[agegroup == age], F)) +
         geom_sf(aes(fill = value)) +
         facet_wrap(~variable) +
-        ggtitle(sprintf("Actual and prediction for age group %s", age)) +
+        ggtitle(sprintf("Actual and predicted nmr (normalized by pop of Germans) for age group %s", age)) +
         theme_minimal() 
     return(plt)
 }
@@ -62,7 +62,7 @@ make_net_plot <- function(net, scales = "free") {
         geom_point(alpha = .5) +
         facet_wrap(vars(agegroup, year), scales = scales) +
         theme_minimal() +
-        ggtitle("Net migration (400 regions)")
+        ggtitle("Net migration rate(400 regions, normalized by pop of Germans)")
     return(plt)
 }
 
@@ -77,9 +77,9 @@ shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "district
 dt_coefs <- fread(file.path(p_in, "opti_d0_allrows.csv"))
 
 dt <- fread(file.path(p_in, "FlowDataPreds1.csv"))
-dt <- dt[, .(fromdist, todist, year, agegroup, distance, flows, preds, frompop_ger)]
 pop_dt <- dt[, .SD[1], keyby = .(fromdist, agegroup, year)][
   , .(region = fromdist, agegroup, year, pop = frompop_ger)]
+dt <- dt[, .(fromdist, todist, year, agegroup, distance, flows, preds)]
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 dt[, agegroup := factor(agegroup, levels = age_lvls)]
 setnames(dt, "flows", "actual")
@@ -115,89 +115,36 @@ make_net_plot(net, scales = "free")
 
 ```
 
-```{r suminoit, eval = FALSE}
+## Individual Flows
 
-net <- calculate_net(dtm, "preds", by = c("year", "agegroup", "model"))
-net[, total := inflow + outflow]
+```{r individual-resids-violin}
 
-net[region == 6435 & agegroup == "30-50"]
+dt[, resid1 := (actual - preds) / preds]
+dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 
-total <- net[model == "flows", .(region, year, agegroup, total, net_actual = net)]
-pred <- net[model == "preds3", .(region, year, agegroup, net_pred = net)]
-
-total[pred, net_pred := i.net_pred, on = .(region, year, agegroup)]
-total[, resid := (net_actual - net_pred) / total]
-total[order(net_actual - net_pred)]
-
-ggplot(total, aes(total, net_actual - net_pred)) +
-    geom_point() +
-    facet_wrap(~agegroup)
-
-ggsave(file.path(path, "resid_net_total.pdf"), width = w, height = h)
-
-dcast(net, region + year + agegroup + total ~ model, value.var = "net")
-
+resid_plt <- ggplot(dt, aes(agegroup, resid2, fill = agegroup)) +
+    geom_violin() 
+prettify(resid_plt, main = "Residuals sign(resid) * log(1 + abs(resid))",
+         sub = "resid = (actual - preds) / preds")
 
 ```
 
+```{r, preds-resid, eval = TRUE}
 
-```{r, eval = FALSE}
-
-w <- 10
-h <- w / 1.6
-
-dtm[flows == 0]
-
-plt <- ggplot(dt3[agegroup == "18-25"],
-              aes(log(preds3), log(flows))) +
+ggplot(dt, aes(preds, resid1)) +
     geom_point(pch = ".") +
+    xlim(c(0, 50)) +
     geom_smooth(se = FALSE) +
     facet_wrap(vars(agegroup), scale = "free") +
-    ggtitle("individual flows")
-plt
-ggsave(file.path(path, "preds_l_flows_l.pdf"), width = w, height = h)
+    ggtitle("individual flows, pred < 50, (actual - pred) / pred") +
+    theme_minimal()
 
-plt <- ggplot(dt3[agegroup == "18-25"],
-              aes(preds3, flows)) +
+ggplot(dt, aes(preds, resid2)) +
     geom_point(pch = ".") +
+    xlim(c(0, 50)) +
     geom_smooth(se = FALSE) +
-    xlim(c(00, 100)) +
     facet_wrap(vars(agegroup), scale = "free") +
-    ggtitle("individual flows, preds < 100")
-plt
-
-ggsave(file.path(path, "preds_flows.pdf"), width = w, height = h)
-
-
-plt <- ggplot(dt3[agegroup == "18-25"],
-              aes(preds1, flows)) +
-    geom_point(pch = ".") +
-    geom_smooth(se = FALSE) +
-    xlim(c(0, 10)) +
-    facet_wrap(vars(agegroup), scale = "free") +
-    ggtitle("individual flows, preds < 100")
-plt
-
-ggsave(file.path(path, "preds_flows.pdf"), width = w, height = h)
-
-dt3[, sum(flows == 0)]
-dt3[, sum(preds3 < 1)]
-
-
-ggplot(dt3[agegroup == "18-25"], aes(preds3, flows - preds3)) +
-    geom_point(pch = ".") +
-    geom_smooth(se = FALSE) +
-    facet_wrap(~agegroup, scale = "free") +
-    xlim(c(0, 100)) 
-
-ggsave(file.path(path, "resid.pdf"), width = w, height = h)
-
-
-resid_plt <- ggplot(dtm, aes(agegroup, resid_l, fill = agegroup)) +
-    geom_violin() +
-    facet_wrap(vars(model))
-resid_plt <- prettify(resid_plt, main = "Residuals sign(resid) * log(abs(resid))",
-         sub = "resid = (actual - preds) / preds")
-ggsave(file.path(path, "resid_violin.pdf"), resid_plt, width = w, height = h)
+    ggtitle("individual flows, pred < 50, sign(r) * log(1 + abs(r))") +
+    theme_minimal()
 
 ```
