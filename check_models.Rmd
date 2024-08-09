@@ -74,12 +74,13 @@ age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 use_age <- age_lvls
 p_out <- "~/Documents/GermanMigration/plots"
 p_in <- "~/Documents/GermanMigration/data"
-f_optis <- "opts1greater0.csv"
-f_preds <- "preds1greater0.csv"
+f_optis <- "opti_model3.csv"
+f_preds <- "FlowDataPreds3.csv"
 shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
 dt_coefs <- fread(file.path(p_in, f_optis))
 
 dt <- fread(file.path(p_in, f_preds))
+setnames(dt, "preds3", "preds")
 dt <- dt[agegroup %in% use_age]
 pop_dt <- dt[, .SD[1], keyby = .(fromdist, agegroup, year)][
   , .(region = fromdist, agegroup, year, pop = frompop_ger)]
@@ -104,6 +105,15 @@ netm <- netm[variable %in% c("actual_s", "preds_s")]
 netm[shp, geometry := i.geometry, on = .(region = AGS)]
 
 ```
+
+```{r, opti-ini}
+
+ggplot(dt_coefs, aes(values -inits)) +
+    geom_density() +
+    ggtitle("optis - inits")
+
+```
+
 
 ## Maps
 ```{r make-maps}
