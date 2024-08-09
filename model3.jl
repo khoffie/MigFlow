@@ -38,6 +38,10 @@
     end
     ## matrix dist, age
     netflows = calcnet(preds,fromdist,todist,agegroup,Nages,Ndist)
+
+    # total net flow as fraction of germany should be very close to zero: this is part of the overall prior on all parameters
+    Turing.@addlogprob!(logpdf(Normal(0.0,0.005),sum(netflows)/popgerm))
+
     ## flows ~ poisson(expectation)
     flows ~ arraydist([Poisson(p) for p in preds])
     # for c in axes(netactual,2)
