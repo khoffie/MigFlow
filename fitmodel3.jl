@@ -41,8 +41,9 @@ function testmod3(dt,optis,dists,meddist)
     droplevels!(dt2.fromdist)
     droplevels!(dt2.todist)
 
-    dt2 = dt[dt.flows .> 0, :]
-
+    # dt2 = dt[dt.flows .> 0, :]
+    dt2 = dt2[dt2.flows .> 0, :]
+    
     Ndist = length(unique(dt2.fromdist))
     Nages = length(unique(dt2.agegroup))
 
