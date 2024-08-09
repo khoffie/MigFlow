@@ -55,24 +55,14 @@ make_map <- function(netm, age) {
     return(plt)
 }
 
-make_net_plot <- function(net, scale = FALSE) {
-    if(scale == TRUE) {
-        x <- "preds_s"
-        y <- "actual_s"
-        main <- "Net migration (400 regions), scaled with sign(x) * log(1 + abs(x))"
-    }
-    if(scale == FALSE) {
-        x <- "preds"
-        y <- "actual"
-        main <- "Net migration (400 regions)"
-    }
-    plt <- ggplot(net, aes(get(x), get(y))) +
+make_net_plot <- function(net, scales = "free") {
+    plt <- ggplot(net, aes(preds, actual)) +
+        geom_hline(yintercept = 0, col = "blue", linewidth = .2) +
+        geom_vline(xintercept = 0, col = "blue", linewidth = .2) +        
         geom_point(alpha = .5) +
-        facet_wrap(vars(agegroup, year), scales = "free") +
+        facet_wrap(vars(agegroup, year), scales = scales) +
         theme_minimal() +
-        ylab("Actual") +
-        xlab("Prediction") +
-        ggtitle(main)
+        ggtitle("Net migration (400 regions)")
     return(plt)
 }
 
@@ -85,21 +75,24 @@ p_in <- "~/Documents/GermanMigration/data"
 
 shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
 dt_coefs <- fread(file.path(p_in, "opti_d0_allrows.csv"))
-dt <- fread(file.path(p_in, "FlowDataPreds1.csv"))
-dt <- dt[, .(fromdist, todist, year, agegroup, distance, flows, preds)]
 
+dt <- fread(file.path(p_in, "FlowDataPreds1.csv"))
+dt <- dt[, .(fromdist, todist, year, agegroup, distance, flows, preds, frompop_ger)]
+pop_dt <- dt[, .SD[1], keyby = .(fromdist, agegroup, year)][
+  , .(region = fromdist, agegroup, year, pop = frompop_ger)]
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 dt[, agegroup := factor(agegroup, levels = age_lvls)]
 setnames(dt, "flows", "actual")
-
 dtm <- melt(dt,
             id.vars = setdiff(colnames(dt), c("preds", "actual")),
             value.vars = c("preds", "actual"),
             variable.name = "model")
 
 ## probably much easier
-net <- calculate_net(dtm, col = "value", by = c("year", "agegroup", "model"), long = FALSE)
-net <- dcast(net, region + year + agegroup ~ model, value.var = "net")
+net <- calculate_net(dtm, col = "value", by = c("year", "agegroup", "model"), long = TRUE)[variable == "net"]
+net[pop_dt, pop := i.pop, on = .(region, year, agegroup)]
+net[, value := value / (pop * 1000) * 100] # in %, pop is in 1000
+net <- dcast(net, region + year + agegroup ~ model, value.var = "value")
 net[, actual_s := sign(actual) * log(1 + abs(actual))]
 net[, preds_s := sign(preds) * log(1 + abs(preds))]
 netm <- melt(net, id.vars = c("region", "year", "agegroup"))
@@ -118,13 +111,7 @@ lapply(age_lvls, function(age) make_map(netm, age))
 ## Net chart
 ```{r net-plot}
 
-make_net_plot(net, scale = FALSE)
-
-```
-
-```{r net-plot}
-
-make_net_plot(net, scale = TRUE)
+make_net_plot(net, scales = "free")
 
 ```
 
