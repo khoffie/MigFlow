@@ -1,17 +1,15 @@
 includet("model3.jl")
-optis = CSV.read("./data/opti_d0.csv", DataFrame)
+optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
 
-meddist = 296.0  # (or so?)
+meddist = 293.0  # (or so?)
 
 ## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
 dists = CSV.read("./data/districts.csv",DataFrame)
-
 
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
 function testmod3(dt,optis,dists,meddist)
-    
     droplevels!(dists.distcode)
     dists = @sort(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -20,13 +18,13 @@ function testmod3(dt,optis,dists,meddist)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
     ncoefs = 64
 
-
     opinit = [optis[:, 2]; [1.5]; 0 * ones(ncoefs * Nages)]
     opinit = [optis[:, 2]; [1.5]; rand(Normal(0.0, .4),Nages*ncoefs)]
     lower = [fill(0,Nages); fill(0,Nages); fill(0,Nages); fill(0,Nages); [.05]; -40 * ones(ncoefs * Nages)]
     upper = [fill(20,Nages); fill(10,Nages); fill(5,Nages); fill(1,Nages); [2]; 40 * ones(ncoefs * Nages)]
 
-    dt2 = dt[dt.fromdist .in dists.distcode .&& dt.todist .in dists.distcode,:]
+##    dt2 = dt[dt.fromdist .in dists.distcode .&& dt.todist .in dists.distcode,:]
+    dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
     droplevels!(dt2.fromdist)
     droplevels!(dt2.todist)
 
@@ -34,7 +32,6 @@ function testmod3(dt,optis,dists,meddist)
 
     Ndist = length(unique(dt2.fromdist))
     Nages = length(unique(dt2.agegroup))
-
 
     netactual = calcnet(dt2.flows,
                         levelcode.(dt2.fromdist),
@@ -68,7 +65,7 @@ function testmod3(dt,optis,dists,meddist)
     (fit = mapfit3, dt2 = dt2)
 end
 
-
+testmod3(dt, optis, dists, meddist)
 
 ## try it out:
 
