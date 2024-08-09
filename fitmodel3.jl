@@ -77,30 +77,27 @@ function testmod3(dt,optis,dists,meddist)
 
     display(density(opts3.values .- opts3.inits))
 
-    @show opinit
+   ## @show opinit
     model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
     dt2[:, "preds3"] = generated_quantities(model3, model3_chain)[1][1]
 
-    CSV.write("./data/opti_model3.csv", optis_3)
+    CSV.write("./data/opti_model3.csv", opts3)
     CSV.write("./data/FlowDataPreds3.csv", dt2)
 
     (fit = mapfit3, dt2 = dt2)
 end
 
-testmod3(dt, optis, dists, meddist)
+# testmod3(dt, optis, dists, meddist)
 
 ## try it out:
 
-#=
+## smallerdists = @subset(dists,dists.density .< median(dists.density))
+smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
+# testmod3(dt,optis,smallerdists,meddist)
 
-smallerdists = @subset(dists,dists.density .< median(dists.density))
+# or run the profiler and we see where the time is being spent:
 
-testmod3(dt,optis,smallerdists,meddist)
+# using StatProfilerHTML
 
-or run the profiler and we see where the time is being spent:
+@profilehtml testmod3(dt, optis, smallerdists, meddist)
 
-using StatProfilerHTML
-
-@profilehtml testmod3(dt,optis,smallerdists,meddist)
-
-=#
