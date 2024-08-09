@@ -22,8 +22,8 @@ function testmod3(dt,optis,dists,meddist)
     droplevels!(dists.distcode)
     dists = @sort(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
-    distdens = distdens / maximum(distdens)
-    distdens = distdens - mean(distdens)
+    distdens = distdens ./ maximum(distdens)
+    distdens = distdens .- mean(distdens)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
     ncoefs = 64
 
@@ -32,7 +32,11 @@ function testmod3(dt,optis,dists,meddist)
     lower = [fill(0,Nages); fill(0,Nages); fill(0,Nages); fill(0,Nages); [.05]; -40 * ones(ncoefs * Nages)]
     upper = [fill(20,Nages); fill(10,Nages); fill(5,Nages); fill(1,Nages); [2]; 40 * ones(ncoefs * Nages)]
 
-##    dt2 = dt[dt.fromdist .in dists.distcode .&& dt.todist .in dists.distcode,:]
+    ##    dt2 = dt[dt.fromdist .in dists.distcode .&& dt.todist .in
+    ##    dists.distcode,:]
+
+    ## not working for me. First error: "Whitespace not allowed .in",
+    ## after fixing "unexpected comma in array expression"
     dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
     droplevels!(dt2.fromdist)
     droplevels!(dt2.todist)
