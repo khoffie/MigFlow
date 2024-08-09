@@ -18,10 +18,10 @@
     desfuns = [Fun(Chebyshev(200000.0 .. 600000.0) * Chebyshev(5e6 .. 6.2e6), desirecoefsre[:,i]) for i in 1:Nages]
 
     ## desirability for given age at coordinates as ratio of dest / from
-    desires = [(kd[agegroup[i]]*density[todist[i]] +
-        exp(desfuns[agegroup[i]](xcoord[todist[i]],ycoord[todist[i]]))) /
-        (kd[agegroup[i]]*density[fromdist[i]] +
-        exp(desfuns[agegroup[i]](xcoord[fromdist[i]],ycoord[fromdist[i]])))
+    desires = [exp(kd[agegroup[i]]*density[todist[i]] +
+                    desfuns[agegroup[i]](xcoord[todist[i]],ycoord[todist[i]]) - 
+                    (kd[agegroup[i]]*density[fromdist[i]] +
+                        desfuns[agegroup[i]](xcoord[fromdist[i]],ycoord[fromdist[i]])))
                for i in 1:length(flows)]
     ## indiviudal flows
     preds = [frompop[i] * topop[i] * a[agegroup[i]] / 1000.0 *
