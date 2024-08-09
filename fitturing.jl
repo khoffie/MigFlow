@@ -30,3 +30,4 @@ levels!(dt2.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
 rename!(dt2, Dict(:dist => :distance))
 ## scatter(dt2.distance, log.(dt2.flows ./ dt2.frompop ./ dt2.topop))
 
+includet("fitmodel3.jl")
