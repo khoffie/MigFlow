@@ -14,7 +14,6 @@ function testmod3(dt,optis,dists,meddist)
     
     droplevels!(dists.distcode)
     dists = @sort(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
-
     distdens = dists.density
     distdens = distdens / maximum(distdens)
     distdens = distdens - mean(distdens)
@@ -48,7 +47,7 @@ function testmod3(dt,optis,dists,meddist)
                         dt2.frompop_ger, dt2.topop, dt2.distance,
                         levelcode.(dt2.agegroup),
                         Nages,
-                        dists.xcoord, dists.ycoord, distdens,
+                        dists.xcoord, dists.ycoord, dists.density,
                         Ndist, meddist, netactual, ncoefs)
     mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
