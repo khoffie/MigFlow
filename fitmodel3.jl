@@ -35,12 +35,12 @@ function testmod3(dt,optis,dists,meddist)
     ncoefs = 64
     Nages = 6 ## inits require it, only later we compute it
     popgerm = sum(dists.pop) # total pop of germay, used in model
-    
-    opinit = [optis[:, 2]; [1.5];
+
+    opinit = [optis[:, 2]; [1.5,-3.0];
               fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
-    lower = [fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05];
+    lower = [fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
              fill(-.1, Nages); -40 * ones(ncoefs * Nages)]
-    upper = [fill(20.0,Nages); fill(10.0,Nages); fill(5.0,Nages); fill(1.0,Nages); [2];
+    upper = [fill(20.0,Nages); fill(10.0,Nages); fill(5.0,Nages); fill(1.0,Nages); [2, 0.0];
              fill(.1, Nages); 40.0 * ones(ncoefs * Nages)]
 
     ##    dt2 = dt[dt.fromdist .in dists.distcode .&& dt.todist .in

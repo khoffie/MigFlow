@@ -8,8 +8,8 @@
     c ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     neterr ~ Gamma(3.0, 2.0/2.0)
-    kd ~ MvNormal(fill(0.0,Nages),0.1*ones(Nages))
     logisticconst ~ Normal(-4.0,2.0) # logistic(-4.0) ~ 0.017 flows are typically on order 5% or less
+    kd ~ MvNormal(fill(0.0,Nages),0.1*ones(Nages))
 
     ## priors for chebychev polys parameters
     desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 1.0 .* ones(ncoefs*Nages))  
