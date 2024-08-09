@@ -18,12 +18,12 @@ flows[agegroup == "über65", agegroup := "above65"]
 flows[agegroup == "unter18", agegroup := "below18"]
 flows <- flows[agegroup != "all"]
 
-dt_coords <- shp[, .(district = AGS, year, name = GEN, xcoord = x, ycoord = y)]
-dt_coords <- dt_coords[district %notin% c(3159, 5978)]
+dt_coords <- shp[, .(distcode = AGS, year, name = GEN, xcoord = x, ycoord = y)]
+dt_coords <- dt_coords[distcode %notin% c(3159, 5978)]
 
 ### check if districts are the same
 all(flows[, unique(fromdist)] == flows[order(todist), unique(todist)] )
-all(flows[, unique(fromdist)] == dt_coords[, district])
+all(flows[, unique(fromdist)] == dt_coords[, distcode])
 
 
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
