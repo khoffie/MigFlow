@@ -34,6 +34,8 @@ function testmod3(dt,optis,dists,meddist)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
     ncoefs = 64
     Nages = 6 ## inits require it, only later we compute it
+    popgerm = sum(dists.pop) # total pop of germay, used in model
+    
     opinit = [optis[:, 2]; [1.5];
               fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
     lower = [fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05];
@@ -64,7 +66,7 @@ function testmod3(dt,optis,dists,meddist)
                         Ndist)
 
     model3 = migration3(dt2.flows, levelcode.(dt2.fromdist), levelcode.(dt2.todist),
-                        dt2.frompop_ger, dt2.topop, dt2.distance,
+                        dt2.frompop_ger, dt2.topop, popgerm, dt2.distance,
                         levelcode.(dt2.agegroup),
                         Nages,
                         dists.xcoord, dists.ycoord, distdens,
