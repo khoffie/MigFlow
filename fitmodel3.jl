@@ -47,7 +47,7 @@ function testmod3(dt,optis,dists,meddist)
                         dt2.frompop_ger, dt2.topop, dt2.distance,
                         levelcode.(dt2.agegroup),
                         Nages,
-                        dists.xcoord, dists.ycoord, dists.density,
+                        dists.xcoord, dists.ycoord, distdens,
                         Ndist, meddist, netactual, ncoefs)
     mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
