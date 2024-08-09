@@ -26,7 +26,7 @@ function testmod3(dt,optis,dists,meddist)
     distdens = distdens .- mean(distdens)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
     ncoefs = 64
-
+    Nages = 6 ## inits require it, only later we compute it
     opinit = [optis[:, 2]; [1.5]; 0 * ones(ncoefs * Nages)]
     opinit = [optis[:, 2]; [1.5]; rand(Normal(0.0, .4),Nages*ncoefs)]
     lower = [fill(0,Nages); fill(0,Nages); fill(0,Nages); fill(0,Nages); [.05]; -40 * ones(ncoefs * Nages)]
