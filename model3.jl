@@ -25,7 +25,7 @@
                         desvals[fromdist[i],agegroup[i]])
                for i in 1:length(flows)]
     ## indiviudal flows
-    preds = [frompop[i] * logistic(logisticconst[agegroup[i]]  + (topop[i] / popgerm) * a[agegroup[i]] *
+    preds = [frompop[i] * logistic(logisticconst[agegroup[i]]  + (topop[i] / popgerm) + a[agegroup[i]] +
         (1.0 + b[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) + desires[i])
              for i in 1:length(flows)]
 
