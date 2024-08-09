@@ -1,10 +1,19 @@
 includet("model3.jl")
 optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
 
+dt = CSV.read("/home/donkon/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
+dt.fromdist = categorical(dt.fromdist)
+dt.todist = categorical(dt.todist)
+dt.agegroup = categorical(dt.agegroup)
+levels!(dt.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
+rename!(dt, Dict(:dist => :distance))
+
 meddist = 293.0  # (or so?)
 
 ## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
 dists = CSV.read("./data/districts.csv",DataFrame)
+dists.distcode = categorical(dists.distcode)
+
 
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
