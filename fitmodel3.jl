@@ -69,9 +69,12 @@ function testmod3(dt,optis,dists,meddist)
                         Nages,
                         dists.xcoord, dists.ycoord, distdens,
                         Ndist, meddist, netactual, ncoefs)
-    mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
-                                initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = 20, maxtime = 60, reltol = .08)
+    # mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
+    #                             initial_params = opinit, lb = lower, ub = upper,
+    #                             maxiters = 20, maxtime = 60, reltol = .08)
+    fit3 = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
+                  init_params = opinit,
+                  verbose = true, progress = true)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), values=mapfit3.values.array, inits = opinit)
 
@@ -102,4 +105,15 @@ smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 
 # @profilehtml testmod3(dt, optis, dists, meddist)
 testmod3(dt, optis, dists, meddist)
+
+
+optis = CSV.read("./data/opti_model3.csv", DataFrame)
+
+# opinit = optis[:, 2]
+# lower = [fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05];
+#          fill(-.1, Nages); -40 * ones(ncoefs * Nages)]
+# upper = [fill(20.0,Nages); fill(10.0,Nages); fill(5.0,Nages); fill(1.0,Nages); [2];
+#          fill(.1, Nages); 40.0 * ones(ncoefs * Nages)]
+
+
 
