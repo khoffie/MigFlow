@@ -5,8 +5,10 @@ library(sf)
 
 age_for <- fread(file.path(ps$clean, "aux_data", "age17for.csv"))
 shp <- setDT(sf::read_sf(file.path(ps$clean_shapes, "districts_ext.shp")))
+shp[, year := 2017] ## kind of hacky but otherwise join fails
 density <- data.table::fread(file.path(ps$clean, "aux_data", "density.csv"))
 density <- density[, .(region, year, density, bl_ags)]
+density[is.na(density)]
 
 flows <- ana$flows[year == 2017, .(fromdist = origin, todist = destination,
                                    year, agegroup = age_group, dist = distance_pos,
@@ -33,6 +35,12 @@ fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(dt_coords, "~/Documents/GermanMigration/data/districts.csv")
 
 
+lapply(flows, function(x) all(is.na(x)))
+lapply(dt_coords, function(x) all(is.na(x)))
+
+dt_coords[is.na(density)]
+
+dt_coords
 ### make sure coords are alright
 ## need to join name and geometry
 ## dt_coords[, lbl := substring(name, 1, 2)]
