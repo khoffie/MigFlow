@@ -16,7 +16,7 @@
     ### creates functions from x and y coords, Fun callable chebychev polynomial, kind of a function
     ### array of funs per age group
     desfuns = [Fun(Chebyshev(200000.0 .. 600000.0) * Chebyshev(5e6 .. 6.2e6), desirecoefsre[:,i]) for i in 1:Nages]
-    desvals = [desfuns[age](xcoord,ycoord) for (xcoord,ycoord) in zip(xcoord,ycoord) age in 1:Nages]
+    desvals = [desfuns[age](xcoord,ycoord) for (xcoord,ycoord) in zip(xcoord,ycoord), age in 1:Nages]
     ## desirability for given age at coordinates as ratio of dest / from
     desires = [exp((kd[agegroup[i]]*density[todist[i]] +
                     desvals[todist[i],agegroup[i]]) - 
