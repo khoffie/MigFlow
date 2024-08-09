@@ -1,3 +1,8 @@
+using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
+using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta, DataFrameMacros,
+    StatProfilerHTML
+includet("debughelpers.jl")
+Random.seed!(20240719)
 
 includet("model3.jl")
 optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
