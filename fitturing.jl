@@ -1,11 +1,11 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
-using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta
+using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta, DataFrameMacros
 includet("debughelpers.jl")
 Random.seed!(20240719)
 
 # munis = CSV.read("./data/munis_pop.csv", DataFrame)
 # rename!(munis,Dict(:age_group => :agegroup))
-coords_dt = CSV.read("./data/district_coords.csv", DataFrame)
+coords_dt = CSV.read("./data/districts.csv", DataFrame)
 sims = true
 if sims
 #    dt = CSV.read("data/simulations.csv",DataFrame)
