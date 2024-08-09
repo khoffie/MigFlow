@@ -1,5 +1,14 @@
 using DataFramesMeta,DataFrames
 
+function calcnet(flows,fromdist,todist,agegrp,Nages,Ndist)
+    netflows = zeros(typeof(flows[1]),(Ndist,Nages))
+    for n in 1:length(flows)
+        netflows[fromdist[n],agegrp[n]] -= flows[n]
+        netflows[todist[n],agegrp[n]] += flows[n]
+    end
+    netflows
+end
+
 
 """
 This function takes the results of loading data/munis_pop.csv
