@@ -5,9 +5,10 @@ includet("debughelpers.jl")
 Random.seed!(20240719)
 
 includet("model3.jl")
-optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
+##optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
+optis = CSV.read("./data/opti_d0.csv", DataFrame)
 
-dt = CSV.read("/home/donkon/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
+dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
 dt.fromdist = categorical(dt.fromdist)
 dt.todist = categorical(dt.todist)
 dt.agegroup = categorical(dt.agegroup)
@@ -99,5 +100,6 @@ smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 
 # using StatProfilerHTML
 
-@profilehtml testmod3(dt, optis, smallerdists, meddist)
+# @profilehtml testmod3(dt, optis, dists, meddist)
+testmod3(dt, optis, dists, meddist)
 
