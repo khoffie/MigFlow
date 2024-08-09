@@ -8,7 +8,7 @@
     preds = [frompop[i] * topop[i] * a[agegroup[i]] / 1000.0 * (1.0 + b[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) for i in 1:length(flows)]
 
     if typeof(a[1]) != Float64
-        @show a[1].value,b[1].value,c[1].value,d0[1].value
+        @printf "a1 = %.2f, b1 = %.2f, c1 = %.2f, d0_1 = %.2f\n"  a[1].value b[1].value c[1].value d0[1].value
     end
     if any(isnan,preds)
         println("NaN in predictions")
