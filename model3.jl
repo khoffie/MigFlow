@@ -8,15 +8,15 @@
     c ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     neterr ~ Gamma(3.0, 2.0/2.0)
-    logisticconst ~ Normal(-4.0,2.0) # logistic(-4.0) ~ 0.017 flows are typically on order 5% or less
-    kd ~ MvNormal(fill(0.0,Nages),(log(5.0)/0.5)/2*ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
+    logisticconst ~ Normal(-4.0, 2.0) # logistic(-4.0) ~ 0.017 flows are typically on order 5% or less
+    kd ~ MvNormal(fill(0.0, Nages), (log(5.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
     ## priors for chebychev polys parameters
     desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 1.0 .* ones(ncoefs*Nages))
     desirecoefsre = reshape(desirecoefs, (ncoefs,Nages)) ## vec -> matrix
     ### creates functions from x and y coords, Fun callable chebychev polynomial, kind of a function
     ### array of funs per age group
-    desfuns = [Fun(Chebyshev(200000.0 .. 600000.0) * Chebyshev(5e6 .. 6.2e6), desirecoefsre[:,i]) for i in 1:Nages]
+    desfuns = [Fun(Chebyshev(2e5 .. 1e6) * Chebyshev(5e6 .. 6.2e6), desirecoefsre[:,i]) for i in 1:Nages]
     desvals = [desfuns[age](xcoord,ycoord) for (xcoord,ycoord) in zip(xcoord,ycoord), age in 1:Nages]
     ## desirability for given age at coordinates as ratio of dest / from
     desires = [(kd[agegroup[i]] * density[todist[i]] +
