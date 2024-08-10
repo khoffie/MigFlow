@@ -33,7 +33,7 @@ dists.distcode = categorical(dists.distcode)
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(dt,optis,dists,meddist)
+function testmod3(dt,optis,dists,meddist,dovi,dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -101,7 +101,7 @@ function testmod3(dt,optis,dists,meddist)
     println("Should we try a sample? (y/n)")
 
     l = readline(stdin)
-    if l == "y"
+    if dosamp
         fit3 = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
                     init_params = opinit,
                     verbose = true, progress = true)
@@ -123,7 +123,7 @@ smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 # using StatProfilerHTML
 
 # @profilehtml testmod3(dt, optis, dists, meddist)
-result = testmod3(dt, optis, dists, meddist)
+result = testmod3(dt, optis, dists, meddist,false,false)
 
 
 optis = CSV.read("./data/opti_model3.csv", DataFrame)
