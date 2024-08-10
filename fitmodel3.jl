@@ -65,7 +65,7 @@ function testmod3(dt,optis,dists,meddist)
                         Nages,
                         Ndist)
 
-    model3 = migration3(dt2.flows, levelcode.(dt2.fromdist), levelcode.(dt2.todist),
+    model3 = migration3(dt2.flows, sum(dt2.flows), levelcode.(dt2.fromdist), levelcode.(dt2.todist),
                         dt2.frompop_ger, dt2.topop, popgerm, dt2.distance,
                         levelcode.(dt2.agegroup),
                         Nages,
