@@ -20,6 +20,11 @@ knitr::opts_chunk$set(echo = FALSE,
 
 ```{r fun-pck}
 
+p_out <- "~/Documents/GermanMigration/plots"
+p_in <- "~/Documents/GermanMigration/data"
+f_optis <- "opti_model3.csv"
+f_preds <- "FlowDataPreds3.csv"
+
 library(data.table)
 library(sf)
 library(ggplot2)
@@ -73,16 +78,12 @@ make_net_plot <- function(net, scales = "free") {
 
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 use_age <- age_lvls
-p_out <- "~/Documents/GermanMigration/plots"
-p_in <- "~/Documents/GermanMigration/data"
-f_optis <- "opts1greater0.csv"
-f_preds <- "preds1greater0.csv"
 
 ## f_optis <- "opti_model3.csv"
 ## f_preds <- "FlowDataPreds3.csv"
 shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
 dt_coefs <- fread(file.path(p_in, f_optis))
-
+dt_coefs[, diff := values - inits]
 dt <- fread(file.path(p_in, f_preds))
 setnames(dt, "preds3", "preds", skip_absent = TRUE)
 dt <- dt[agegroup %in% use_age]
@@ -107,6 +108,13 @@ net[, preds_s := sign(preds) * log(1 + abs(preds))]
 netm <- melt(net, id.vars = c("region", "year", "agegroup"))
 netm <- netm[variable %in% c("actual_s", "preds_s")]
 netm[shp, geometry := i.geometry, on = .(region = AGS)]
+
+```
+
+```{r, coef-table, results = "show"}
+
+kbl(dt_coefs, digits = 2, booktabs = TRUE, longtable = TRUE,
+    caption = "Parameters")
 
 ```
 
