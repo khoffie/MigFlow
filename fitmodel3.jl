@@ -33,7 +33,7 @@ dists.distcode = categorical(dists.distcode)
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(dt,optis,dists,meddist)
+function testmod3(dt,optis,dists,meddist,dovi,dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -43,7 +43,7 @@ function testmod3(dt,optis,dists,meddist)
     ncoefs = 64
     Nages = 6 ## inits require it, only later we compute it
 ##    popgerm = sum(dists.pop) # total pop of germay, used in model
-    popgerm = 73000 # total pop of germay in thousands, used in model
+    popgerm = 73000.0 # total pop of germay in thousands, used in model
 
     opinit = [optis[:, 2]; [1.5,-3.0];
               fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
@@ -100,14 +100,17 @@ function testmod3(dt,optis,dists,meddist)
     fit3 = nothing
     println("Should we try a sample? (y/n)")
 
-    l = readline(stdin)
-    if l == "y"
+    if dosamp
         fit3 = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
                     init_params = opinit,
                     verbose = true, progress = true)
     end
+    fit4 = nothing
+    if dovi
+        fit4 = Turing.vi(model3,ADVI())
+    end
 
-    (fit = mapfit3, fitdf = opts3, dt2 = dt2, samps = fit3)
+    (fit = mapfit3, fitdf = opts3, dt2 = dt2, samps = fit3, visamps = fit4)
 end
 
 # testmod3(dt, optis, dists, meddist)
@@ -123,7 +126,7 @@ smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 # using StatProfilerHTML
 
 # @profilehtml testmod3(dt, optis, dists, meddist)
-result = testmod3(dt, optis, dists, meddist)
+result = testmod3(dt, optis, dists, meddist,false,false)
 
 
 optis = CSV.read("./data/opti_model3.csv", DataFrame)
