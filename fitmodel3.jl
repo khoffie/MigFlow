@@ -1,6 +1,6 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
-    StatProfilerHTML
+    StatProfilerHTML, StatsFuns
 includet("debughelpers.jl")
 Random.seed!(20240719)
 
