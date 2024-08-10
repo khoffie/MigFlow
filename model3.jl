@@ -1,4 +1,4 @@
-@model function migration3(flows, fromdist, todist,
+@model function migration3(flows, allmoves, fromdist, todist,
                            frompop, topop, popgerm, distance,
                            agegroup, Nages,
                            xcoord, ycoord,density,
@@ -9,10 +9,10 @@
     d0 ~ filldist(Gamma(5.0, 1.0/4.0),Nages)
     neterr ~ Gamma(3.0, 2.0/2.0)
     logisticconst ~ Normal(-4.0,2.0) # logistic(-4.0) ~ 0.017 flows are typically on order 5% or less
-    kd ~ MvNormal(fill(0.0,Nages),0.1*ones(Nages))
+    kd ~ MvNormal(fill(0.0,Nages),(log(5.0)/0.5)/2*ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
     ## priors for chebychev polys parameters
-    desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 1.0 .* ones(ncoefs*Nages))  
+    desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 1.0 .* ones(ncoefs*Nages))
     desirecoefsre = reshape(desirecoefs, (ncoefs,Nages)) ## vec -> matrix
     ### creates functions from x and y coords, Fun callable chebychev polynomial, kind of a function
     ### array of funs per age group
@@ -39,8 +39,12 @@
     ## matrix dist, age
     netflows = calcnet(preds,fromdist,todist,agegroup,Nages,Ndist)
 
+    predmoves = sum(preds) # total predicted flow
+    allmoves ~ Normal(predmoves,.01*predmoves) ## our total move predictions should be about right by around 1%
+
     # total net flow as fraction of germany should be very close to zero: this is part of the overall prior on all parameters
-    Turing.@addlogprob!(logpdf(Normal(0.0,0.005),sum(netflows)/popgerm))
+    # we might want to make the scale here be a parameter but let's start with an allowable imbalance around 50 people / million people in Germany
+    Turing.@addlogprob!(logpdf(Normal(0.0,50.0/1e6),sum(netflows)/popgerm))
 
     ## flows ~ poisson(expectation)
     flows ~ arraydist([Poisson(p) for p in preds])
