@@ -1,6 +1,6 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
-    StatProfilerHTML, StatsFuns
+    StatProfilerHTML, StatsFuns, OptimizationBBO
 includet("debughelpers.jl")
 Random.seed!(20240719)
 
@@ -78,7 +78,7 @@ function testmod3(dt,optis,dists,meddist)
                         Nages,
                         dists.xcoord, dists.ycoord, distdens,
                         Ndist, meddist, netactual, ncoefs)
-    mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
+    mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
                                 maxiters = 20, maxtime = 60, reltol = .08)
 
@@ -101,7 +101,7 @@ function testmod3(dt,optis,dists,meddist)
                     verbose = true, progress = true)
     end
 
-    (fit = mapfit3, dt2 = dt2,samps = fit3)
+    (fit = mapfit3, fitdf = opts3, dt2 = dt2,samps = fit3)
 end
 
 # testmod3(dt, optis, dists, meddist)
