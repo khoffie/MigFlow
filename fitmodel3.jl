@@ -84,7 +84,7 @@ function testmod3(dt,optis,dists,meddist)
                                 initial_params = opinit, lb = lower, ub = upper,
                                 maxiters = 20, maxtime = 60, reltol = .08)
 
-    opts3 = DataFrame(names=names(mapfit3.values, 1), values=mapfit3.values.array, inits = opinit)
+    opts3 = DataFrame(names=names(mapfit3.values, 1), values=mapfit3.values.array)
     display(opts3)
     display(density(opts3.values .- opts3.inits))
     model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
