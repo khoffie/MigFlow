@@ -25,7 +25,7 @@ library(sf)
 library(ggplot2)
 library(MigStat)
 library(plotR)
-library(knitr)
+library(kableExtra)
 
 calculate_net <- function(dt, col, by, o = "fromdist", d = "todist",
                            long = FALSE, type = NULL) {
@@ -112,8 +112,12 @@ netm[shp, geometry := i.geometry, on = .(region = AGS)]
 
 ```{r, kable-preds, results = "show"}
 
-kable(head(dt[order(actual)]), digits = 2, caption = "Predictions for smallest actual od-flows")
-kable(head(dt[order(- actual)]), digits = 2, caption = "Predictions for largest actual od-flows")
+kbl(head(dt[order(actual)], 10),
+    caption = "Predictions for smallest actual od-flows",
+    digits = 2, booktabs = TRUE)
+kbl(head(dt[order(- actual)], 10),
+    caption = "Predictions for largest actual od-flows",
+    digits = 2, booktabs = TRUE)
 
 ## should have done a join
 dt_sym1 <- dt[fromdist == 11000 & todist == 14713]
@@ -126,8 +130,9 @@ dt_sym <- melt(dt_sym[, -c(1,2)],
      id.vars = c("agegroup", "year", "distance", "type"),
      value.var = c("preds", "actual"))
 
-kable(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
-      digits = 2, caption = "Are our predictions symmetric? Berlin - Leipzig" )
+kbl(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
+    caption = "Are our predictions symmetric? Berlin - Leipzig",
+    digits = 2, booktabs = TRUE)
 
 ```
 ```{r, opti-ini}
