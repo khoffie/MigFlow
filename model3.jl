@@ -8,7 +8,7 @@
     c ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 0.2/4.0),Nages)
     neterr ~ Gamma(3.0, 2.0/2.0)
-    logisticconst ~ Uniform(-12.0,-2.5) # logistic(-4.0) ~ 0.017 flows are typically on order 5% or less
+    logisticconst ~ Uniform(-12.0,12.0) # This constant isn't easy to figure out because log(topop[i]/popgerm) is numbers in the range maybe -10 to -4 
     kd ~ MvNormal(fill(0.0, Nages), (log(5.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
     ## priors for chebychev polys parameters
@@ -20,8 +20,8 @@
     desvals = [desfuns[age](xcoord,ycoord) for (xcoord,ycoord) in zip(xcoord,ycoord), age in 1:Nages]
 
     ## as prior for the coefficients, let's tell it that desvals should be near 0 and have standard deviation 1 ish.
-    Turing.@addlogprob!(Normal(0.0,0.25),mean(desvals))
-    Turing.@addlogprob!(Exponential(1.0),std(desvals))
+    Turing.@addlogprob!(logpdf(Normal(0.0,0.25),mean(desvals)))
+    Turing.@addlogprob!(logpdf(Exponential(1.0),std(desvals)))
 
     ## desirability for given age at coordinates as ratio of dest / from
     desires = [(kd[agegroup[i]] * density[todist[i]] +
