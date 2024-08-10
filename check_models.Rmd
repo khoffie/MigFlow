@@ -20,11 +20,17 @@ knitr::opts_chunk$set(echo = FALSE,
 
 ```{r fun-pck}
 
+p_out <- "~/Documents/GermanMigration/plots"
+p_in <- "~/Documents/GermanMigration/data"
+f_optis <- "opti_model3.csv"
+f_preds <- "FlowDataPreds3.csv"
+
 library(data.table)
 library(sf)
 library(ggplot2)
 library(MigStat)
 library(plotR)
+library(kableExtra)
 
 calculate_net <- function(dt, col, by, o = "fromdist", d = "todist",
                            long = FALSE, type = NULL) {
@@ -72,15 +78,14 @@ make_net_plot <- function(net, scales = "free") {
 
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 use_age <- age_lvls
-p_out <- "~/Documents/GermanMigration/plots"
-p_in <- "~/Documents/GermanMigration/data"
-f_optis <- "opti_model3.csv"
-f_preds <- "FlowDataPreds3.csv"
+
+## f_optis <- "opti_model3.csv"
+## f_preds <- "FlowDataPreds3.csv"
 shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
 dt_coefs <- fread(file.path(p_in, f_optis))
-
+dt_coefs[, diff := values - inits]
 dt <- fread(file.path(p_in, f_preds))
-setnames(dt, "preds3", "preds")
+setnames(dt, "preds3", "preds", skip_absent = TRUE)
 dt <- dt[agegroup %in% use_age]
 pop_dt <- dt[, .SD[1], keyby = .(fromdist, agegroup, year)][
   , .(region = fromdist, agegroup, year, pop = frompop_ger)]
@@ -106,11 +111,43 @@ netm[shp, geometry := i.geometry, on = .(region = AGS)]
 
 ```
 
+```{r, coef-table, results = "show"}
+
+kbl(dt_coefs, digits = 2, booktabs = TRUE, longtable = TRUE,
+    caption = "Parameters")
+
+```
+
+```{r, kable-preds, results = "show"}
+
+kbl(head(dt[order(actual)], 10),
+    caption = "Predictions for smallest actual od-flows",
+    digits = 2, booktabs = TRUE)
+kbl(head(dt[order(- actual)], 10),
+    caption = "Predictions for largest actual od-flows",
+    digits = 2, booktabs = TRUE)
+
+## should have done a join
+dt_sym1 <- dt[fromdist == 11000 & todist == 14713]
+dt_sym1[, type := "fromto"]
+dt_sym2 <- dt[fromdist == 14713 & todist == 11000]
+dt_sym2[, type := "tofrom"]
+dt_sym <- rbind(dt_sym1, dt_sym2)
+
+dt_sym <- melt(dt_sym[, -c(1,2)],
+     id.vars = c("agegroup", "year", "distance", "type"),
+     value.var = c("preds", "actual"))
+
+kbl(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
+    caption = "Are our predictions symmetric? Berlin - Leipzig",
+    digits = 2, booktabs = TRUE)
+
+```
 ```{r, opti-ini}
 
-ggplot(dt_coefs, aes(values -inits)) +
-    geom_density() +
-    ggtitle("optis - inits")
+plt_change <- ggplot(dt_coefs, aes(values - inits)) +
+    geom_density() 
+prettify(plt_change, main = "Optimial parameters - inits", show_cap = FALSE)
 
 ```
 
