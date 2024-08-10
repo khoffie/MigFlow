@@ -14,7 +14,7 @@ if ENV["USER"] == "konstantin"
 
 elseif ENV["USER"] == "dlakelan"
     dt = CSV.read("data/simulations.csv", DataFrame)
-    @transform!(dt,:flows = round.(Int32,:predict),:frompop_ger = :frompop, :topop_ger = :topop)
+    DataFramesMeta.@transform!(dt,:flows = round.(Int32,:predict),:frompop_ger = :frompop, :topop_ger = :topop)
 end
 
 dt.fromdist = categorical(dt.fromdist)
@@ -45,8 +45,20 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
 ##    popgerm = sum(dists.pop) # total pop of germay, used in model
     popgerm = 73000.0 # total pop of germay in thousands, used in model
 
+
+#= 
+    opinit = [rand(Normal(0.0, 1.0),Nages); #a
+                rand(Gamma(3.0, 1.0 / 2.0),Nages); #b
+                rand(Gamma(5.0, 2.0 / 4.0),Nages); #c
+                rand(Gamma(5.0, 1.0 / 4.0),Nages); #d0
+             [1.5, - 4.0]; #neterr and logisticconst
+              fill(0.0, Nages); #kd
+              rand(Normal(0.0, .4), Nages*ncoefs) # desirecoefs
+              ]
+ =#
     opinit = [optis[:, 2]; [1.5,-3.0];
-              fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
+                     fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
+ 
     lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
              fill(-.1, Nages); -40 * ones(ncoefs * Nages)]
     upper = [fill(20.0,Nages); fill(10.0,Nages); fill(5.0,Nages); fill(1.0,Nages); [2, 0.0];
@@ -84,7 +96,7 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
                         ## BBO_adaptive_de_rand_1_bin()
     mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = 2000, maxtime = 60000, reltol = .08)
+                                maxiters = 20, maxtime = 60000, reltol = .08)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
                       values=mapfit3.values.array, 
