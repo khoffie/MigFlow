@@ -8,7 +8,14 @@ includet("model3.jl")
 ##optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
 optis = CSV.read("./data/opti_d0.csv", DataFrame)
 
-dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
+if ENV["USER"] == "konstantin"
+    dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
+
+elseif ENV["USER"] == "dlakelan"
+    dt = CSV.read("data/simulations.csv", DataFrame)
+    @transform!(dt,:flows = round.(Int32,:predict),:frompop_ger = :frompop, :topop_ger = :topop)
+end
+
 dt.fromdist = categorical(dt.fromdist)
 dt.todist = categorical(dt.todist)
 dt.agegroup = categorical(dt.agegroup)
@@ -27,7 +34,7 @@ dists should be a DataFrame with distcode, pop, density, xcoord, ycoord
 """
 function testmod3(dt,optis,dists,meddist)
     droplevels!(dists.distcode)
-    dists = @sort(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
+    dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
     distdens = distdens ./ maximum(distdens)
     distdens = distdens .- mean(distdens)
@@ -71,26 +78,30 @@ function testmod3(dt,optis,dists,meddist)
                         Nages,
                         dists.xcoord, dists.ycoord, distdens,
                         Ndist, meddist, netactual, ncoefs)
-    # mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
-    #                             initial_params = opinit, lb = lower, ub = upper,
-    #                             maxiters = 20, maxtime = 60, reltol = .08)
-    fit3 = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
-                  init_params = opinit,
-                  verbose = true, progress = true)
+    mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
+                                initial_params = opinit, lb = lower, ub = upper,
+                                maxiters = 20, maxtime = 60, reltol = .08)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), values=mapfit3.values.array, inits = opinit)
-
-
+    display(opts3)
     display(density(opts3.values .- opts3.inits))
-
-   ## @show opinit
     model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
     dt2[:, "preds3"] = generated_quantities(model3, model3_chain)[1][1]
 
     CSV.write("./data/opti_model3.csv", opts3)
     CSV.write("./data/FlowDataPreds3.csv", dt2)
 
-    (fit = mapfit3, dt2 = dt2)
+    fit3 = nothing
+    println("Should we try a sample? (y/n)")
+
+    l = readline(stdin)
+    if l == "y"
+        fit3 = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
+                    init_params = opinit,
+                    verbose = true, progress = true)
+    end
+
+    (fit = mapfit3, dt2 = dt2,samps = fit3)
 end
 
 # testmod3(dt, optis, dists, meddist)
@@ -106,7 +117,7 @@ smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 # using StatProfilerHTML
 
 # @profilehtml testmod3(dt, optis, dists, meddist)
-testmod3(dt, optis, dists, meddist)
+result = testmod3(dt, optis, dists, meddist)
 
 
 optis = CSV.read("./data/opti_model3.csv", DataFrame)
