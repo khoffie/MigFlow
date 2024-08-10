@@ -84,7 +84,7 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
                         ## BBO_adaptive_de_rand_1_bin()
     mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = 200, maxtime = 600, reltol = .08)
+                                maxiters = 2000, maxtime = 60000, reltol = .08)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
                       values=mapfit3.values.array, 
@@ -98,8 +98,7 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
     CSV.write("./data/FlowDataPreds3.csv", dt2)
 
     fit3 = nothing
-    println("Should we try a sample? (y/n)")
-
+ 
     if dosamp
         fit3 = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
                     init_params = opinit,
@@ -121,15 +120,20 @@ end
 smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 # testmod3(dt,optis,smallerdists,meddist)
 
+result = testmod3(dt, optis, smallerdists, meddist,false,false)
+
+
 # or run the profiler and we see where the time is being spent:
 
 # using StatProfilerHTML
 
 # @profilehtml testmod3(dt, optis, dists, meddist)
-result = testmod3(dt, optis, dists, meddist,false,false)
+#result = testmod3(dt, optis, dists, meddist,false,false)
+
+#chain = Turing.sample(model3, Prior(), 100)
 
 
-optis = CSV.read("./data/opti_model3.csv", DataFrame)
+#optis = CSV.read("./data/opti_model3.csv", DataFrame)
 
 # opinit = optis[:, 2]
 # lower = [fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05];
