@@ -7,7 +7,8 @@ Random.seed!(20240719)
 
 includet("model3.jl")
 ##optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
-optis = CSV.read("./data/opts1greater0.csv", DataFrame)
+#optis = CSV.read("./data/opts1greater0.csv", DataFrame)
+optis = CSV.read("./data/opti_d0.csv",DataFrame)
 
 if ENV["USER"] == "konstantin"
     dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
@@ -45,7 +46,6 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
 ##    popgerm = sum(dists.pop) # total pop of germay, used in model
     popgerm = 73000.0 # total pop of germay in thousands, used in model
 
-
 #= 
     opinit = [rand(Normal(0.0, 1.0),Nages); #a
                 rand(Gamma(3.0, 1.0 / 2.0),Nages); #b
@@ -60,8 +60,9 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
                      fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
  
     lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
+
              fill(-.1, Nages); -40 * ones(ncoefs * Nages)]
-    upper = [fill(20.0,Nages); fill(10.0,Nages); fill(5.0,Nages); fill(1.0,Nages); [2, 0.0];
+    upper = [fill(20.0,Nages); fill(20.0,Nages); fill(10.0,Nages); fill(10.0,Nages); [3, 0.0];
              fill(.1, Nages); 40.0 * ones(ncoefs * Nages)]
 
     ##    dt2 = dt[dt.fromdist .in dists.distcode .&& dt.todist .in
@@ -100,8 +101,8 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
                                 progress = true, show_trace = true)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
-                      values=mapfit3.values.array, 
-                      inits = opinit)
+                      values=mapfit3.values.array, inits = opinit)
+                      
     display(opts3)
     display(density(opts3.values .- opts3.inits))
     model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
@@ -111,7 +112,7 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
     CSV.write("./data/FlowDataPreds3.csv", dt2)
 
     fit3 = nothing
- 
+    
     if dosamp
         fit3 = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
                     init_params = opinit,
