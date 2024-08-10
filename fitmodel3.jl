@@ -1,4 +1,5 @@
-using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random, ReverseDiff, Revise, RCall
+using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
+    ReverseDiff, Revise, RCall
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
     StatProfilerHTML, StatsFuns
 includet("debughelpers.jl")
@@ -41,7 +42,8 @@ function testmod3(dt,optis,dists,meddist)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
     ncoefs = 64
     Nages = 6 ## inits require it, only later we compute it
-    popgerm = sum(dists.pop) # total pop of germay, used in model
+##    popgerm = sum(dists.pop) # total pop of germay, used in model
+    popgerm = 80000000 # total pop of germay, used in model
 
     opinit = [optis[:, 2]; [1.5,-3.0];
               fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
