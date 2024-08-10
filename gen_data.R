@@ -52,3 +52,7 @@ dt_coords
 ##     geom_label(aes(xcoord, ycoord, label = lbl))
 
 
+dt_coords[, .(min = min(xcoord), max = max(xcoord))]
+dt_coords[, .(min = min(ycoord), max = max(ycoord))]
+
+fread("/home/konstantin/Documents/GermanMigration/munis_centroid.csv")
