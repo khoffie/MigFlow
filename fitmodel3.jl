@@ -47,7 +47,7 @@ function testmod3(dt,optis,dists,meddist)
 
     opinit = [optis[:, 2]; [1.5,-3.0];
               fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
-    lower = [fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
+    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
              fill(-.1, Nages); -40 * ones(ncoefs * Nages)]
     upper = [fill(20.0,Nages); fill(10.0,Nages); fill(5.0,Nages); fill(1.0,Nages); [2, 0.0];
              fill(.1, Nages); 40.0 * ones(ncoefs * Nages)]
@@ -80,9 +80,11 @@ function testmod3(dt,optis,dists,meddist)
                         Nages,
                         dists.xcoord, dists.ycoord, distdens,
                         Ndist, meddist, netactual, ncoefs)
+
+                        ## BBO_adaptive_de_rand_1_bin()
     mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = 20, maxtime = 60, reltol = .08)
+                                maxiters = 20, maxtime = 600, reltol = .08)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
                       values=mapfit3.values.array, 
