@@ -96,7 +96,8 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
                         ## BBO_adaptive_de_rand_1_bin()
     mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = 20, maxtime = 60000, reltol = .08)
+                                maxiters = 100, maxtime = 60, reltol = .08, 
+                                progress = true, show_trace = true)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
                       values=mapfit3.values.array, 
