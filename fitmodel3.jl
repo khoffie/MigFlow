@@ -7,7 +7,7 @@ Random.seed!(20240719)
 
 includet("model3.jl")
 ##optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
-optis = CSV.read("./data/opti_d0.csv", DataFrame)
+optis = CSV.read("./data/opts1greater0.csv", DataFrame)
 
 if ENV["USER"] == "konstantin"
     dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
