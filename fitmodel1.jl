@@ -1,7 +1,7 @@
 includet("model1.jl")
-optis = CSV.read("./data/opti_d0.csv", DataFrame)
+includet("fithelpers.jl")
 
-dt = CSV.read("/home/donkon/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
+dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
 dt.fromdist = categorical(dt.fromdist)
 dt.todist = categorical(dt.todist)
 dt.agegroup = categorical(dt.agegroup)
@@ -12,7 +12,6 @@ Nages = 6
 meddist = 293
 
 dt2 = dt[dt.flows .> 0, :]
-
 Ndist = length(unique(dt2.fromdist))
 
 model1 = migration1(dt2.flows, levelcode.(dt2.fromdist), levelcode.(dt2.todist),
@@ -25,14 +24,11 @@ upper = [fill(20,Nages); fill(10,Nages); fill(5,Nages); fill(1,Nages)]
 
 mapfit1 = maximum_a_posteriori(model1, LBFGS() ; adtype = AutoReverseDiff(), 
                                initial_params = opinit, lb = lower, ub = upper,
-                               maxiters = 20, maxtime = 60, reltol = .08)
+                               maxiters = 200, maxtime = 600, reltol = .08)
 
-opti_params = DataFrame(names=names(mapfit1.values, 1),
-                        values=mapfit1.values.array)
-
-model1_chain = Chains([optis[: , 2]], optis[: , 1]) 
-dt2[:, "preds"] = generated_quantities(model1, model1_chain)[1]
-
+optis = get_params(mapfit1)
+optis[, "inits"] = opinit
+dt2[:, "preds"] = preds = gen_preds(model1, opti_params)[1]
 
 CSV.write("./data/opts1greater0.csv", opti_params[:, 1:2])
 CSV.write("./data/preds1greater0.csv", dt2)
