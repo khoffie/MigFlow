@@ -100,14 +100,17 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
     fit3 = nothing
     println("Should we try a sample? (y/n)")
 
-    l = readline(stdin)
     if dosamp
         fit3 = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
                     init_params = opinit,
                     verbose = true, progress = true)
     end
+    fit4 = nothing
+    if dovi
+        fit4 = Turing.vi(model3,ADVI())
+    end
 
-    (fit = mapfit3, fitdf = opts3, dt2 = dt2, samps = fit3)
+    (fit = mapfit3, fitdf = opts3, dt2 = dt2, samps = fit3, visamps = fit4)
 end
 
 # testmod3(dt, optis, dists, meddist)
