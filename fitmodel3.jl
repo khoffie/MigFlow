@@ -43,7 +43,7 @@ function testmod3(dt,optis,dists,meddist)
     ncoefs = 64
     Nages = 6 ## inits require it, only later we compute it
 ##    popgerm = sum(dists.pop) # total pop of germay, used in model
-    popgerm = 73000000 # total pop of germay, used in model
+    popgerm = 73000 # total pop of germay in thousands, used in model
 
     opinit = [optis[:, 2]; [1.5,-3.0];
               fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
