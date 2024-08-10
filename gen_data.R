@@ -3,10 +3,12 @@ library(MigStat)
 library(sfheaders)
 library(sf)
 
-age_for <- fread(file.path(ps$clean, "aux_data", "age17for.csv"))
-shp <- setDT(sf::read_sf(file.path(ps$clean_shapes, "districts_ext.shp")))
+p_clean <- "~/Diss/inst/extdata/clean/"
+age_for <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
+age_for[age_group == "all", .(sum(all), sum(german))]
+shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
 shp[, year := 2017] ## kind of hacky but otherwise join fails
-density <- data.table::fread(file.path(ps$clean, "aux_data", "density.csv"))
+density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))
 density <- density[, .(region, year, density, bl_ags)]
 density[is.na(density)]
 
