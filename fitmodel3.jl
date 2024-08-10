@@ -131,6 +131,9 @@ end
 
 ## smallerdists = @subset(dists,dists.density .< median(dists.density))
 smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
+smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
+
+smallerdists = dists[shuffle(1:nrow(dists))[1:50] , : ]
 # testmod3(dt,optis,smallerdists,meddist)
 
 result = testmod3(dt, optis, smallerdists, meddist,false,false)
