@@ -19,10 +19,10 @@
     desfuns = [Fun(Chebyshev(200000.0 .. 600000.0) * Chebyshev(5e6 .. 6.2e6), desirecoefsre[:,i]) for i in 1:Nages]
     desvals = [desfuns[age](xcoord,ycoord) for (xcoord,ycoord) in zip(xcoord,ycoord), age in 1:Nages]
     ## desirability for given age at coordinates as ratio of dest / from
-    desires = [(kd[agegroup[i]]*density[todist[i]] +
-                    desvals[todist[i],agegroup[i]]) - 
-                    (kd[agegroup[i]]*density[fromdist[i]] +
-                        desvals[fromdist[i],agegroup[i]])
+    desires = [(kd[agegroup[i]] * density[todist[i]] +
+                    desvals[todist[i], agegroup[i]]) -
+                    (kd[agegroup[i]] * density[fromdist[i]] +
+                        desvals[fromdist[i], agegroup[i]])
                for i in 1:length(flows)]
     ## indiviudal flows
     preds = [frompop[i] * logistic(logisticconst + log(topop[i] / popgerm) + a[agegroup[i]] +
@@ -40,11 +40,11 @@
     netflows = calcnet(preds,fromdist,todist,agegroup,Nages,Ndist)
 
     predmoves = sum(preds) # total predicted flow
-    allmoves ~ Normal(predmoves,.01*predmoves) ## our total move predictions should be about right by around 1%
+    allmoves ~ Normal(predmoves, .01*predmoves) ## our total move predictions should be about right by around 1%
 
     # total net flow as fraction of germany should be very close to zero: this is part of the overall prior on all parameters
     # we might want to make the scale here be a parameter but let's start with an allowable imbalance around 50 people / million people in Germany
-    Turing.@addlogprob!(logpdf(Normal(0.0,50.0/1e6),sum(netflows)/popgerm))
+    Turing.@addlogprob!(logpdf(Normal(0.0,50.0/1e6), sum(netflows) / popgerm))
 
     ## flows ~ poisson(expectation)
     flows ~ arraydist([Poisson(p) for p in preds])
