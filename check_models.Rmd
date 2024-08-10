@@ -112,9 +112,10 @@ netm[shp, geometry := i.geometry, on = .(region = AGS)]
 
 ```{r, kable-preds, results = "show"}
 
-kable(head(dt[order(actual)], 10), digits = 2, caption = "Predictions for smallest actual od-flows")
-kable(head(dt[order(- actual)], 10), digits = 2, caption = "Predictions for largest actual od-flows")
+kable(head(dt[order(actual)]), digits = 2, caption = "Predictions for smallest actual od-flows")
+kable(head(dt[order(- actual)]), digits = 2, caption = "Predictions for largest actual od-flows")
 
+## should have done a join
 dt_sym1 <- dt[fromdist == 11000 & todist == 14713]
 dt_sym1[, type := "fromto"]
 dt_sym2 <- dt[fromdist == 14713 & todist == 11000]
@@ -126,7 +127,7 @@ dt_sym <- melt(dt_sym[, -c(1,2)],
      value.var = c("preds", "actual"))
 
 kable(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
-      digits = 2, caption = "Are our predictions symmetric?" )
+      digits = 2, caption = "Are our predictions symmetric? Berlin - Leipzig" )
 
 ```
 ```{r, opti-ini}
