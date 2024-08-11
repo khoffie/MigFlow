@@ -2,7 +2,7 @@
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
+function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -10,7 +10,7 @@ function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
     distdens = distdens .- mean(distdens)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
 
-    ncoefs = 16
+    ncoefs = 36
     meddist = 293.0  # (or so?)
     Nages = 6 ## inits require it, only later we compute it
     popgerm = sum(dists.pop) # total pop of germay in thousands, used in model
@@ -18,20 +18,28 @@ function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
     #=     opinit = [optis[:, 2]; [1.5,-3.0];
                      fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
  =# 
-cheby_lb = - .1
-cheby_ub = .1
-    opinit = [rand(Normal(0.0, 1.0), Nages); #a
+cheby_lb = - .5
+cheby_ub = .5
+kd_lb = -1.5
+kd_ub = 1.5
+c_lb = .05
+c_ub = 5
+d0_lb = 0
+d0_ub = .03
+    
+opinit = [rand(Normal(0.0, 1.0), Nages); #a
                 rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
-                rand(Gamma(5.0, 2.0 / 4.0), Nages); #c
-                rand(Gamma(5.0, 1.0 / 4.0), Nages); #d0
-             [2.5, 0.0]; #neterr and logisticconst
+                rand(Uniform(1.5, 2.5), Nages); #c
+                rand(Uniform(d0_lb, d0_ub), Nages); #d0
+             [1.5, - 4.0]; #neterr and logisticconst
               fill(0.0, Nages); #kd
               fill(0.0, Nages*ncoefs) # desirecoefs
               ]
-    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
-             fill(-.1, Nages); cheby_lb * ones(ncoefs * Nages)]
-    upper = [fill(20.0,Nages); fill(20.0,Nages); fill(10.0,Nages); fill(10.0,Nages); [3, 0.0];
-             fill(.1, Nages); cheby_ub * ones(ncoefs * Nages)]
+              
+    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -10.0];
+             fill(kd_lb, Nages); cheby_lb * ones(ncoefs * Nages)]
+    upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 0.0];
+             fill(kd_ub, Nages); cheby_ub * ones(ncoefs * Nages)]
 
     dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
     droplevels!(dt2.fromdist)
@@ -57,9 +65,9 @@ cheby_ub = .1
                         Ndist, meddist, netactual, ncoefs)
 
                         ## BBO_adaptive_de_rand_1_bin()
-    mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
+    mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = 200, maxtime = 60, reltol = .08, 
+                                maxiters = map_iters, maxtime = 600, reltol = .08, 
                                 progress = true, show_trace = true)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
@@ -73,7 +81,7 @@ cheby_ub = .1
 
     CSV.write("./data/opti_model3.csv", opts3)
     CSV.write("./data/FlowDataPreds3.csv", dt2)
-
+    @printf("Map iterations = %.f", map_iters)
     fit3 = nothing
     
     if dosamp
@@ -88,4 +96,5 @@ cheby_ub = .1
 
     (fit = mapfit3, fitdf = opts3, dt2 = dt2, samps = fit3, visamps = fit4)
 end
+
 
