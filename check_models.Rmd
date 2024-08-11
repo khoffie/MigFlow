@@ -97,6 +97,8 @@ dtm <- melt(dt,
             id.vars = setdiff(colnames(dt), c("preds", "actual")),
             value.vars = c("preds", "actual"),
             variable.name = "model")
+dt[, resid1 := (actual - preds) / preds]
+dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 
 ## probably much easier
 net <- calculate_net(dtm, col = "value", by = c("year", "agegroup", "model"), long = TRUE)[variable == "net"]
@@ -170,18 +172,18 @@ make_net_plot(net, scales = "free")
 
 ```{r individual-resids-violin}
 
-dt[, resid1 := (actual - preds) / preds]
-dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
-
-resid_plt <- ggplot(dt, aes(agegroup, resid2, fill = agegroup)) +
+resid_plt <- ggplot(dt[preds > 1], aes(agegroup, resid2, fill = agegroup)) +
     geom_violin() 
 prettify(resid_plt, main = "Individual Flows Residuals sign(resid) * log(1 + abs(resid))",
-         sub = "Residuals sign(resid) * log(1 + abs(resid))")
+         sub = "Residuals sign(resid) * log(1 + abs(resid)), only preds > 1 are shown")
 
-resid_plt <- ggplot(dt, aes(agegroup, resid1, fill = agegroup)) +
-    geom_violin() 
+## dt[, quantile(resid1, 0.9), keyby = .(agegroup)]
+## dt[, max(resid1), keyby = .(agegroup)]
+
+resid_plt <- ggplot(dt[preds > 1], aes(agegroup, resid1, fill = agegroup)) +
+    geom_violin()
 prettify(resid_plt, main = "Individual Flows",
-         sub = "resid = (actual - preds) / preds")
+         sub = "resid = (actual - preds) / preds, only preds > 1 are shown")
 
 ```
 
@@ -235,5 +237,7 @@ dt[, cor(log(flows), log(preds)), keyby = agegroup]
 dt[, cor((actual), (preds)), keyby = agegroup]
 
 dt[agegroup == "above65", ][order(preds)]
+
+
 
 ```
