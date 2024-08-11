@@ -48,8 +48,8 @@ function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
     #=     opinit = [optis[:, 2]; [1.5,-3.0];
                      fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
  =# 
-cheby_lb = - .01
-cheby_ub = .01
+cheby_lb = - .1
+cheby_ub = .1
     opinit = [rand(Normal(0.0, 1.0), Nages); #a
                 rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
                 rand(Gamma(5.0, 2.0 / 4.0), Nages); #c
