@@ -32,7 +32,7 @@ dists.distcode = categorical(dists.distcode)
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
+function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -40,7 +40,7 @@ function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
     distdens = distdens .- mean(distdens)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
 
-    ncoefs = 64
+    ncoefs = 36
     meddist = 293.0  # (or so?)
     Nages = 6 ## inits require it, only later we compute it
     popgerm = sum(dists.pop) # total pop of germay in thousands, used in model
@@ -97,7 +97,7 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
                         ## BBO_adaptive_de_rand_1_bin()
     mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = 100, maxtime = 60, reltol = .08, 
+                                maxiters = map_iters, maxtime = 600, reltol = .08, 
                                 progress = true, show_trace = true)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
@@ -111,7 +111,7 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
 
     CSV.write("./data/opti_model3.csv", opts3)
     CSV.write("./data/FlowDataPreds3.csv", dt2)
-
+    @printf("Map iterations = %.f", map_iters)
     fit3 = nothing
     
     if dosamp
@@ -142,7 +142,7 @@ smallerdists = [sd1; sd2]
 smallerdists = dists
 # testmod3(dt,optis,smallerdists,meddist)
 
-result = @time(testmod3(dt, optis, smallerdists, 0, false, false))
+result = @time(testmod3(dt, optis, smallerdists, 0, 1000, false, false))
 
 
 # or run the profiler and we see where the time is being spent:
@@ -153,5 +153,7 @@ result = @time(testmod3(dt, optis, smallerdists, 0, false, false))
 #result = testmod3(dt, optis, dists, meddist,false,false)
 
 #chain = Turing.sample(model3, Prior(), 100)
+
+
 
 
