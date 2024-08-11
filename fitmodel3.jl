@@ -40,7 +40,7 @@ function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
     distdens = distdens .- mean(distdens)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
 
-    ncoefs = 16
+    ncoefs = 36
     meddist = 293.0  # (or so?)
     Nages = 6 ## inits require it, only later we compute it
     popgerm = sum(dists.pop) # total pop of germay in thousands, used in model
@@ -48,10 +48,14 @@ function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
     #=     opinit = [optis[:, 2]; [1.5,-3.0];
                      fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
  =# 
-cheby_lb = - .01
-cheby_ub = .01
-kd_lb = -.01
-kd_ub = .01
+cheby_lb = - .5
+cheby_ub = .5
+kd_lb = -1.5
+kd_ub = 1.5
+c_lb = .05
+c_ub = 5
+d0_lb = 0
+d0_ub = .03
     opinit = [rand(Normal(0.0, 1.0), Nages); #a
                 rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
                 rand(Gamma(5.0, 2.0 / 4.0), Nages); #c
@@ -60,9 +64,9 @@ kd_ub = .01
               fill(0.0, Nages); #kd
               fill(0.0, Nages*ncoefs) # desirecoefs
               ]
-    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
+    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -10.0];
              fill(kd_lb, Nages); cheby_lb * ones(ncoefs * Nages)]
-    upper = [fill(20.0,Nages); fill(20.0,Nages); fill(10.0,Nages); fill(10.0,Nages); [3, 0.0];
+    upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 0.0];
              fill(kd_ub, Nages); cheby_ub * ones(ncoefs * Nages)]
 
     dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
@@ -97,7 +101,7 @@ kd_ub = .01
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
                       values=mapfit3.values.array, 
                       inits = opinit)
-    display(opts3])
+    display(opts3)
     display(density(opts3.values .- opts3.inits))
 
     model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
@@ -126,13 +130,16 @@ end
 ## try it out:
 
 ## smallerdists = @subset(dists,dists.density .< median(dists.density))
-smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
-smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
+sd1 = dists[dists.density .< 1* median(dists.density), :]
+sd2 = dists[dists.density .> 1 * median(dists.density), :]
 
-smallerdists = dists[shuffle(1 : nrow(dists))[1:50] , : ]
+sd1 = sd1[shuffle(1 : nrow(sd1))[1:50] , : ]
+sd2 = sd2[shuffle(1 : nrow(sd2))[1:50] , : ]
+
+smallerdists = [sd1; sd2]
 # testmod3(dt,optis,smallerdists,meddist)
 
-result = testmod3(dt, optis, smallerdists, 0, false, false)
+result = @time(testmod3(dt, optis, smallerdists, 0, false, false))
 
 
 # or run the profiler and we see where the time is being spent:
