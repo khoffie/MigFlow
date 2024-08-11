@@ -34,7 +34,7 @@ dists.distcode = categorical(dists.distcode)
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(dt,optis,dists,meddist,dovi,dosamp)
+function testmod3(dt, optis, dists, meddist, flow_th, dovi, dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -75,7 +75,7 @@ function testmod3(dt,optis,dists,meddist,dovi,dosamp)
     droplevels!(dt2.todist)
 
     # dt2 = dt[dt.flows .> 0, :]
-    dt2 = dt2[dt2.flows .> 0, :]
+    dt2 = dt2[dt2.flows .> flow_th, :]
     
     Ndist = length(unique(dt2.fromdist))
     Nages = length(unique(dt2.agegroup))
