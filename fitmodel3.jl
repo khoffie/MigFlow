@@ -83,7 +83,7 @@ cheby_ub = .01
                         dt2.frompop, dt2.topop, popgerm, dt2.distance,
                         levelcode.(dt2.agegroup),
                         Nages,
-                        dists.xcoord, dists.ycoord, distdens,
+                        dists.xcoord, dists.ycoord, distdens,dists.pop,
                         Ndist, meddist, netactual, ncoefs)
 
                         ## BBO_adaptive_de_rand_1_bin()
