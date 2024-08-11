@@ -50,6 +50,8 @@ function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
  =# 
 cheby_lb = - .01
 cheby_ub = .01
+kd_lb = -.01
+kd_ub = .01
     opinit = [rand(Normal(0.0, 1.0), Nages); #a
                 rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
                 rand(Gamma(5.0, 2.0 / 4.0), Nages); #c
@@ -59,9 +61,9 @@ cheby_ub = .01
               fill(0.0, Nages*ncoefs) # desirecoefs
               ]
     lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
-             fill(-.1, Nages); cheby_lb * ones(ncoefs * Nages)]
+             fill(kd_lb, Nages); cheby_lb * ones(ncoefs * Nages)]
     upper = [fill(20.0,Nages); fill(20.0,Nages); fill(10.0,Nages); fill(10.0,Nages); [3, 0.0];
-             fill(.1, Nages); cheby_ub * ones(ncoefs * Nages)]
+             fill(kd_ub, Nages); cheby_ub * ones(ncoefs * Nages)]
 
     dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
     droplevels!(dt2.fromdist)
@@ -87,15 +89,15 @@ cheby_ub = .01
                         Ndist, meddist, netactual, ncoefs)
 
                         ## BBO_adaptive_de_rand_1_bin()
-    mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
+    mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = 200, maxtime = 60, reltol = .08, 
+                                maxiters = 100, maxtime = 60, reltol = .08, 
                                 progress = true, show_trace = true)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
                       values=mapfit3.values.array, 
                       inits = opinit)
-    display(opts3)
+    display(opts3])
     display(density(opts3.values .- opts3.inits))
 
     model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
@@ -130,7 +132,7 @@ smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 smallerdists = dists[shuffle(1 : nrow(dists))[1:50] , : ]
 # testmod3(dt,optis,smallerdists,meddist)
 
-result = testmod3(dt, optis, smallerdists, 1, false, false)
+result = testmod3(dt, optis, smallerdists, 0, false, false)
 
 
 # or run the profiler and we see where the time is being spent:
