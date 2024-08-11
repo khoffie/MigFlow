@@ -24,8 +24,6 @@ dt.agegroup = categorical(dt.agegroup)
 levels!(dt.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
 rename!(dt, Dict(:dist => :distance))
 
-meddist = 293.0  # (or so?)
-
 ## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
 dists = CSV.read("./data/districts.csv",DataFrame)
 dists.distcode = categorical(dists.distcode)
@@ -34,46 +32,41 @@ dists.distcode = categorical(dists.distcode)
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(dt, optis, dists, meddist, flow_th, dovi, dosamp)
+function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
     distdens = distdens ./ maximum(distdens)
     distdens = distdens .- mean(distdens)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
-    ncoefs = 64
+
+    ncoefs = 16
+    meddist = 293.0  # (or so?)
     Nages = 6 ## inits require it, only later we compute it
-##    popgerm = sum(dists.pop) # total pop of germay, used in model
     popgerm = sum(dists.pop) # total pop of germay in thousands, used in model
 
- 
-    opinit = [rand(Normal(0.0, 1.0),Nages); #a
-                rand(Gamma(3.0, 1.0 / 2.0),Nages); #b
-                rand(Gamma(5.0, 2.0 / 4.0),Nages); #c
-                rand(Gamma(5.0, 1.0 / 4.0),Nages); #d0
-             [1.5, - 4.0]; #neterr and logisticconst
-              fill(0.0, Nages); #kd
-              rand(Normal(0.0, .4), Nages*ncoefs) # desirecoefs
-              ]
- 
-#=     opinit = [optis[:, 2]; [1.5,-3.0];
+    #=     opinit = [optis[:, 2]; [1.5,-3.0];
                      fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
  =# 
-     lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
-             fill(-.1, Nages); -40 * ones(ncoefs * Nages)]
+cheby_lb = - .01
+cheby_ub = .01
+    opinit = [rand(Normal(0.0, 1.0), Nages); #a
+                rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
+                rand(Gamma(5.0, 2.0 / 4.0), Nages); #c
+                rand(Gamma(5.0, 1.0 / 4.0), Nages); #d0
+             [1.5, - 4.0]; #neterr and logisticconst
+              fill(0.0, Nages); #kd
+              fill(0.0, Nages*ncoefs) # desirecoefs
+              ]
+    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
+             fill(-.1, Nages); cheby_lb * ones(ncoefs * Nages)]
     upper = [fill(20.0,Nages); fill(20.0,Nages); fill(10.0,Nages); fill(10.0,Nages); [3, 0.0];
-             fill(.1, Nages); 40.0 * ones(ncoefs * Nages)]
+             fill(.1, Nages); cheby_ub * ones(ncoefs * Nages)]
 
-    ##    dt2 = dt[dt.fromdist .in dists.distcode .&& dt.todist .in
-    ##    dists.distcode,:]
-
-    ## not working for me. First error: "Whitespace not allowed .in",
-    ## after fixing "unexpected comma in array expression"
     dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
     droplevels!(dt2.fromdist)
     droplevels!(dt2.todist)
 
-    # dt2 = dt[dt.flows .> 0, :]
     dt2 = dt2[dt2.flows .> flow_th, :]
     
     Ndist = length(unique(dt2.fromdist))
@@ -137,7 +130,7 @@ smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 smallerdists = dists[shuffle(1 : nrow(dists))[1:50] , : ]
 # testmod3(dt,optis,smallerdists,meddist)
 
-result = testmod3(dt, optis, smallerdists, meddist, 0, false, true)
+result = testmod3(dt, optis, smallerdists, 1, false, false)
 
 
 # or run the profiler and we see where the time is being spent:
@@ -148,15 +141,5 @@ result = testmod3(dt, optis, smallerdists, meddist, 0, false, true)
 #result = testmod3(dt, optis, dists, meddist,false,false)
 
 #chain = Turing.sample(model3, Prior(), 100)
-
-
-#optis = CSV.read("./data/opti_model3.csv", DataFrame)
-
-# opinit = optis[:, 2]
-# lower = [fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05];
-#          fill(-.1, Nages); -40 * ones(ncoefs * Nages)]
-# upper = [fill(20.0,Nages); fill(10.0,Nages); fill(5.0,Nages); fill(1.0,Nages); [2];
-#          fill(.1, Nages); 40.0 * ones(ncoefs * Nages)]
-
 
 
