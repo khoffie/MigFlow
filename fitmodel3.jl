@@ -3,8 +3,8 @@ using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
     StatProfilerHTML, StatsFuns, OptimizationBBO
 includet("debughelpers.jl")
-Random.seed!(20240719)
-
+#= Random.seed!(20240719)
+ =#
 includet("model3.jl")
 ##optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
 #optis = CSV.read("./data/opts1greater0.csv", DataFrame)
