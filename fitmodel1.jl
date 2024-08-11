@@ -1,6 +1,9 @@
-includet("model1.jl")
-includet("fithelpers.jl")
 
+"""
+FIXME LATER, put all the steps in a function that takes parameters
+"""
+
+function fitmod1()
 dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
 dt.fromdist = categorical(dt.fromdist)
 dt.todist = categorical(dt.todist)
@@ -37,5 +40,5 @@ CSV.write("./data/preds1greater0.csv", dt2)
 # CSV.write("./data/FlowDataPreds1.csv", dt2)
 
 
-
+end
 
