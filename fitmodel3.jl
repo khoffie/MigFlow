@@ -95,16 +95,17 @@ function testmod3(dt, optis, dists, meddist, flow_th, dovi, dosamp)
                         Ndist, meddist, netactual, ncoefs)
 
                         ## BBO_adaptive_de_rand_1_bin()
-    mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
+    mapfit3 = maximum_a_posteriori(model3, LBFGS() ; adtype = AutoReverseDiff(), 
                                 initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = 100, maxtime = 60, reltol = .08, 
+                                maxiters = 200, maxtime = 60, reltol = .08, 
                                 progress = true, show_trace = true)
 
     opts3 = DataFrame(names=names(mapfit3.values, 1), 
-                      values=mapfit3.values.array, inits = opinit)
-                      
+                      values=mapfit3.values.array, 
+                      inits = opinit)
     display(opts3)
     display(density(opts3.values .- opts3.inits))
+
     model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
     dt2[:, "preds3"] = generated_quantities(model3, model3_chain)[1][1]
 
