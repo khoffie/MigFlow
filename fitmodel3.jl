@@ -54,7 +54,7 @@ cheby_ub = .01
                 rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
                 rand(Gamma(5.0, 2.0 / 4.0), Nages); #c
                 rand(Gamma(5.0, 1.0 / 4.0), Nages); #d0
-             [1.5, - 4.0]; #neterr and logisticconst
+             [2.5, 0.0]; #neterr and logisticconst
               fill(0.0, Nages); #kd
               fill(0.0, Nages*ncoefs) # desirecoefs
               ]
