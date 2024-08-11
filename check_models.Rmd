@@ -88,7 +88,7 @@ dt <- fread(file.path(p_in, f_preds))
 setnames(dt, "preds3", "preds", skip_absent = TRUE)
 dt <- dt[agegroup %in% use_age]
 pop_dt <- dt[, .SD[1], keyby = .(fromdist, agegroup, year)][
-  , .(region = fromdist, agegroup, year, pop = frompop_ger)]
+  , .(region = fromdist, agegroup, year, pop = frompop)]
 dt <- dt[, .(fromdist, todist, year, agegroup, distance, flows, preds)]
 age_lvls <- intersect(age_lvls, use_age)
 dt[, agegroup := factor(agegroup, levels = age_lvls)]
