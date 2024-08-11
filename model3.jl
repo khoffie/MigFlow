@@ -16,7 +16,7 @@
     desirecoefsre = reshape(desirecoefs, (ncoefs,Nages)) ## vec -> matrix
     ### creates functions from x and y coords, Fun callable chebychev polynomial, kind of a function
     ### array of funs per age group
-    desfuns = [Fun(Chebyshev(2e5 .. 1e6) * Chebyshev(5e6 .. 6.2e6), desirecoefsre[:,i]) for i in 1:Nages]
+    desfuns = [Fun(Chebyshev(300.0 .. 1000.0) * Chebyshev(5000.0 .. 6200.0), desirecoefsre[:,i]) for i in 1:Nages]
     desvals = [desfuns[age](xcoord,ycoord) for (xcoord,ycoord) in zip(xcoord,ycoord), age in 1:Nages]
 
     ## as prior for the coefficients, let's tell it that desvals should be near 0 and have standard deviation 1 ish.
