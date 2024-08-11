@@ -98,8 +98,11 @@ dtm <- melt(dt,
             id.vars = setdiff(colnames(dt), c("preds", "actual")),
             value.vars = c("preds", "actual"),
             variable.name = "model")
+
 dt[, resid1 := (actual - preds) / preds]
 dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
+## dt[, resid1 := actual / preds]
+## dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 
 ## probably much easier
 net <- calculate_net(dtm, col = "value", by = c("year", "agegroup", "model"), long = TRUE)[variable == "net"]
@@ -130,10 +133,12 @@ kbl(head(dt[order(- actual)], 10),
     caption = "Predictions for largest actual od-flows",
     digits = 2, booktabs = TRUE)
 
+max_reg <- dt[actual == max(actual), .(fromdist, todist)]
+
 ## should have done a join
-dt_sym1 <- dt[fromdist == 11000 & todist == 14713]
+dt_sym1 <- dt[fromdist == max_reg[[1]] & todist == max_reg[[2]]]
 dt_sym1[, type := "fromto"]
-dt_sym2 <- dt[fromdist == 14713 & todist == 11000]
+dt_sym2 <- dt[fromdist == max_reg[[2]] & todist == max_reg[[1]]]
 dt_sym2[, type := "tofrom"]
 dt_sym <- rbind(dt_sym1, dt_sym2)
 
@@ -142,7 +147,7 @@ dt_sym <- melt(dt_sym[, -c(1,2)],
      value.var = c("preds", "actual"))
 
 kbl(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
-    caption = "Are our predictions symmetric? Berlin - Leipzig",
+    caption = "Are our predictions symmetric?",
     digits = 2, booktabs = TRUE)
 
 ```
@@ -167,6 +172,9 @@ lapply(age_lvls, function(age) make_map(netm, age))
 
 make_net_plot(net, scales = "free")
 
+make_net_plot(net, scales = "fixed") +
+    coord_fixed()
+
 ```
 
 ## Individual Flows
@@ -183,7 +191,7 @@ prettify(resid_plt,
 ## dt[, quantile(resid1, 0.9), keyby = .(agegroup)]
 ## dt[, max(resid1), keyby = .(agegroup)]
 sub2 <- sprintf("resid = (actual - preds) / preds, only preds > %s are shown", preds_th)
-resid_plt <- ggplot(dt[preds > 1], aes(agegroup, resid1, fill = agegroup)) +
+resid_plt <- ggplot(dt[preds > preds_th], aes(agegroup, resid1, fill = agegroup)) +
     geom_violin()
 prettify(resid_plt, main = "Individual Flows",
          sub = sub2)
@@ -192,6 +200,15 @@ prettify(resid_plt, main = "Individual Flows",
 
 ```{r, preds-resid, eval = TRUE}
 
+ggplot(dt[preds > 0], aes(distance, log(actual / preds))) +
+    geom_hline(yintercept = 0) +
+    geom_point(pch = ".") +
+    geom_smooth(se = FALSE) +
+    facet_wrap(vars(agegroup), scale = "free") +
+    ggtitle("individual flows, distance v log(actual/preds)") +
+    theme_minimal()
+
+
 ggplot(dt, aes(log(preds), log(actual))) +
     geom_point(pch = ".") +
     geom_smooth(se = FALSE) +
@@ -199,12 +216,12 @@ ggplot(dt, aes(log(preds), log(actual))) +
     ggtitle("individual flows, log(preds) v log(actual)") +
     theme_minimal()
 
-ggplot(dt, aes(log(preds), log(actual / preds))) +
-    geom_point(pch = ".") +
-    geom_smooth(se = FALSE) +
-    facet_wrap(vars(agegroup), scale = "free") +
-    ggtitle("individual flows, log(preds) v log(actual/preds)") +
-    theme_minimal()
+## ggplot(dt, aes(log(preds), log(actual / preds))) +
+##     geom_point(pch = ".") +
+##     geom_smooth(se = FALSE) +
+##     facet_wrap(vars(agegroup), scale = "free") +
+##     ggtitle("individual flows, log(preds) v log(actual/preds)") +
+##     theme_minimal()
 
 ggplot(dt, aes(preds, resid1)) +
     geom_point(pch = ".") +
@@ -241,6 +258,6 @@ dt[, cor((actual), (preds)), keyby = agegroup]
 
 dt[agegroup == "above65", ][order(preds)]
 
-
+dt[preds > 3][order(resid1)]
 
 ```
