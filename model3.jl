@@ -12,11 +12,11 @@
     kd ~ MvNormal(fill(0.0, Nages), (log(5.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
     ## priors for chebychev polys parameters
-    desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 1.0 .* ones(ncoefs*Nages))
+    desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 2.0 .* ones(ncoefs*Nages)) ## new scaling we are dividing by 10 below
     desirecoefsre = reshape(desirecoefs, (ncoefs,Nages)) ## vec -> matrix
     ### creates functions from x and y coords, Fun callable chebychev polynomial, kind of a function
     ### array of funs per age group
-    desfuns = [Fun(Chebyshev(300.0 .. 1000.0) * Chebyshev(5000.0 .. 6200.0), desirecoefsre[:,i]) for i in 1:Nages]
+    desfuns = [Fun(Chebyshev(300.0 .. 1000.0) * Chebyshev(5000.0 .. 6200.0), desirecoefsre[:,i] ./ 10) for i in 1:Nages]
     desvals = [desfuns[age](xcoord,ycoord) for (xcoord,ycoord) in zip(xcoord,ycoord), age in 1:Nages]
 
     ## as prior for the coefficients, let's tell it that desvals should be near 0 and have standard deviation 1 ish.
@@ -64,6 +64,7 @@
 
     ## bubble under rug, how do I get the bubble to a certain spot by
     ## stomping on the rug?
-    netactual ~ arraydist([Normal(netflows[dist,age],neterr/100*distpop[dist]) for dist in 1:Ndist, age in 1:Nages]) # neterr is in percent now
+    neterrfrac = neterr/100 ## we rescaled it to percent
+    netactual ~ arraydist([Normal(netflows[dist,age],neterrfrac*distpop[dist]) for dist in 1:Ndist, age in 1:Nages]) # neterr is in percent now
     return((preds,netflows))
 end
