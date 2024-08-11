@@ -44,9 +44,9 @@ function testmod3(dt, optis, dists, meddist, flow_th, dovi, dosamp)
     ncoefs = 64
     Nages = 6 ## inits require it, only later we compute it
 ##    popgerm = sum(dists.pop) # total pop of germay, used in model
-    popgerm = 73000.0 # total pop of germay in thousands, used in model
+    popgerm = sum(dists.pop) # total pop of germay in thousands, used in model
 
-#= 
+ 
     opinit = [rand(Normal(0.0, 1.0),Nages); #a
                 rand(Gamma(3.0, 1.0 / 2.0),Nages); #b
                 rand(Gamma(5.0, 2.0 / 4.0),Nages); #c
@@ -55,12 +55,11 @@ function testmod3(dt, optis, dists, meddist, flow_th, dovi, dosamp)
               fill(0.0, Nages); #kd
               rand(Normal(0.0, .4), Nages*ncoefs) # desirecoefs
               ]
- =#
-    opinit = [optis[:, 2]; [1.5,-3.0];
-                     fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
  
-    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
-
+#=     opinit = [optis[:, 2]; [1.5,-3.0];
+                     fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
+ =# 
+     lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(0.0,Nages); fill(0.0,Nages); [.05, -10.0];
              fill(-.1, Nages); -40 * ones(ncoefs * Nages)]
     upper = [fill(20.0,Nages); fill(20.0,Nages); fill(10.0,Nages); fill(10.0,Nages); [3, 0.0];
              fill(.1, Nages); 40.0 * ones(ncoefs * Nages)]
@@ -88,7 +87,7 @@ function testmod3(dt, optis, dists, meddist, flow_th, dovi, dosamp)
                         Ndist)
 
     model3 = migration3(dt2.flows, sum(dt2.flows), levelcode.(dt2.fromdist), levelcode.(dt2.todist),
-                        dt2.frompop_ger, dt2.topop, popgerm, dt2.distance,
+                        dt2.frompop, dt2.topop, popgerm, dt2.distance,
                         levelcode.(dt2.agegroup),
                         Nages,
                         dists.xcoord, dists.ycoord, distdens,
@@ -138,7 +137,7 @@ smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 smallerdists = dists[shuffle(1 : nrow(dists))[1:50] , : ]
 # testmod3(dt,optis,smallerdists,meddist)
 
-result = testmod3(dt, optis, smallerdists, meddist, 0, false, false)
+result = testmod3(dt, optis, smallerdists, meddist, 0, false, true)
 
 
 # or run the profiler and we see where the time is being spent:
