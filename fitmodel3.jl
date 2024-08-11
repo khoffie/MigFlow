@@ -40,7 +40,7 @@ function testmod3(dt, optis, dists, flow_th, dovi, dosamp)
     distdens = distdens .- mean(distdens)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
 
-    ncoefs = 36
+    ncoefs = 64
     meddist = 293.0  # (or so?)
     Nages = 6 ## inits require it, only later we compute it
     popgerm = sum(dists.pop) # total pop of germay in thousands, used in model
@@ -56,14 +56,16 @@ c_lb = .05
 c_ub = 5
 d0_lb = 0
 d0_ub = .03
-    opinit = [rand(Normal(0.0, 1.0), Nages); #a
+    
+opinit = [rand(Normal(0.0, 1.0), Nages); #a
                 rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
-                rand(Gamma(5.0, 2.0 / 4.0), Nages); #c
-                rand(Gamma(5.0, 1.0 / 4.0), Nages); #d0
+                rand(Uniform(1.5, 2.5), Nages); #c
+                rand(Uniform(d0_lb, d0_ub), Nages); #d0
              [1.5, - 4.0]; #neterr and logisticconst
               fill(0.0, Nages); #kd
               fill(0.0, Nages*ncoefs) # desirecoefs
               ]
+              
     lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -10.0];
              fill(kd_lb, Nages); cheby_lb * ones(ncoefs * Nages)]
     upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 0.0];
@@ -137,6 +139,7 @@ sd1 = sd1[shuffle(1 : nrow(sd1))[1:50] , : ]
 sd2 = sd2[shuffle(1 : nrow(sd2))[1:50] , : ]
 
 smallerdists = [sd1; sd2]
+smallerdists = dists
 # testmod3(dt,optis,smallerdists,meddist)
 
 result = @time(testmod3(dt, optis, smallerdists, 0, false, false))
