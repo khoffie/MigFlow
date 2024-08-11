@@ -24,6 +24,7 @@ p_out <- "~/Documents/GermanMigration/plots"
 p_in <- "~/Documents/GermanMigration/data"
 f_optis <- "opti_model3.csv"
 f_preds <- "FlowDataPreds3.csv"
+preds_th <- 3
 
 library(data.table)
 library(sf)
@@ -172,18 +173,20 @@ make_net_plot(net, scales = "free")
 
 ```{r individual-resids-violin}
 
-resid_plt <- ggplot(dt[preds > 1], aes(agegroup, resid2, fill = agegroup)) +
+sub1 <- sprintf("Residuals sign(resid) * log(1 + abs(resid)), only preds > %s are shown", preds_th)
+resid_plt <- ggplot(dt[preds > preds_th], aes(agegroup, resid2, fill = agegroup)) +
     geom_violin() 
-prettify(resid_plt, main = "Individual Flows Residuals sign(resid) * log(1 + abs(resid))",
-         sub = "Residuals sign(resid) * log(1 + abs(resid)), only preds > 1 are shown")
+prettify(resid_plt,
+         main = "Individual Flows Residuals sign(resid) * log(1 + abs(resid))",
+         sub = sub1)
 
 ## dt[, quantile(resid1, 0.9), keyby = .(agegroup)]
 ## dt[, max(resid1), keyby = .(agegroup)]
-
+sub2 <- sprintf("resid = (actual - preds) / preds, only preds > %s are shown", preds_th)
 resid_plt <- ggplot(dt[preds > 1], aes(agegroup, resid1, fill = agegroup)) +
     geom_violin()
 prettify(resid_plt, main = "Individual Flows",
-         sub = "resid = (actual - preds) / preds, only preds > 1 are shown")
+         sub = sub2)
 
 ```
 
