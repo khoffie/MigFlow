@@ -3,6 +3,7 @@ using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
     StatProfilerHTML, StatsFuns, OptimizationBBO
 includet("debughelpers.jl")
+includet("fithelpers.jl")
 includet("models.jl")
 includet("fitmodel1.jl")
 includet("fitmodel2.jl")
@@ -16,14 +17,8 @@ Random.seed!(20240719)
 #optis = CSV.read("./data/opts1greater0.csv", DataFrame)
 optis = CSV.read("./data/opti_d0.csv",DataFrame)
 
-if ENV["USER"] == "konstantin"
-    dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
 
-elseif ENV["USER"] == "dlakelan"
-    dt = CSV.read("data/simulations.csv", DataFrame)
-    DataFramesMeta.@transform!(dt,:flows = round.(Int32,:predict),:frompop_ger = :frompop, :topop_ger = :topop)
-end
-
+dt = load_flows()
 dt.fromdist = categorical(dt.fromdist)
 dt.todist = categorical(dt.todist)
 dt.agegroup = categorical(dt.agegroup)
@@ -33,10 +28,6 @@ rename!(dt, Dict(:dist => :distance))
 ## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
 dists = CSV.read("./data/districts.csv",DataFrame)
 dists.distcode = categorical(dists.distcode)
-
-
-
-
 
 
 # testmod3(dt, optis, dists, meddist)
@@ -50,7 +41,7 @@ smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
 smallerdists = dists[shuffle(1 : nrow(dists))[1:50] , : ]
 # testmod3(dt,optis,smallerdists,meddist)
 
-result = testmod3(dt, optis, smallerdists, 1, false, false)
+result = testmod3(dt, optis, smallerdists, 1, 100, false, false)
 
 
 # or run the profiler and we see where the time is being spent:
