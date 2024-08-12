@@ -65,23 +65,30 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
                         Ndist, meddist, netactual, ncoefs)
 
                         ## BBO_adaptive_de_rand_1_bin()
-    mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
-                                initial_params = opinit, lb = lower, ub = upper,
-                                maxiters = map_iters, maxtime = 600, reltol = .08, 
-                                progress = true, show_trace = true)
+    for size in [.1,.2,.4,1.0,2.0,4.0,10.0]
+        lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -10.0];
+            fill(kd_lb, Nages); -size  * ones(ncoefs * Nages)]
+        upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 0.0];
+            fill(kd_ub, Nages); size  * ones(ncoefs * Nages)]            
+        mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
+                                    initial_params = opinit, lb = lower, ub = upper,
+                                    maxiters = map_iters, maxtime = 600, reltol = .08, 
+                                    progress = true, show_trace = true)
+        opinit = mapfit3.values
 
-    opts3 = DataFrame(names=names(mapfit3.values, 1), 
-                      values=mapfit3.values.array, 
-                      inits = opinit)
-    display(opts3)
-    display(density(opts3.values .- opts3.inits))
+        opts3 = DataFrame(names=names(mapfit3.values, 1), 
+                        values=mapfit3.values.array, 
+                        inits = opinit)
+        display(opts3)
+        display(density(opts3.values .- opts3.inits))
 
-    model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
-    dt2[:, "preds3"] = generated_quantities(model3, model3_chain)[1][1]
+        model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
+        dt2[:, "preds3"] = generated_quantities(model3, model3_chain)[1][1]
 
-    CSV.write("./data/opti_model3.csv", opts3)
-    CSV.write("./data/FlowDataPreds3.csv", dt2)
-    @printf("Chosen MAP iterations = %.f\n", map_iters)
+        CSV.write("./data/opti_model3_$size.csv", opts3)
+        CSV.write("./data/FlowDataPreds3_$size.csv", dt2)
+        @printf("Chosen MAP iterations = %.f\n", map_iters)
+    end
     fit3 = nothing
     
     if dosamp
