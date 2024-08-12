@@ -77,7 +77,7 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
                                     initial_params = opinit, lb = lower, ub = upper,
                                     maxiters = map_iters, maxtime = 600, reltol = .08, 
                                     progress = true, show_trace = true)
-        serialize("data/mapfit3.dat",mapfit3)
+        serialize("data/mapfit3_$size.dat",mapfit3)
 
         opts3 = DataFrame(names=names(mapfit3.values, 1), 
                         values=mapfit3.values.array, 
