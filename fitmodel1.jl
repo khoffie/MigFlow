@@ -30,7 +30,7 @@ mapfit1 = maximum_a_posteriori(model1, LBFGS() ; adtype = AutoReverseDiff(),
                                maxiters = 200, maxtime = 600, reltol = .08)
 
 optis = get_params(mapfit1)
-optis[, "inits"] = opinit
+optis[: , "inits"] = opinit
 dt2[:, "preds"] = preds = gen_preds(model1, opti_params)[1]
 
 CSV.write("./data/opts1greater0.csv", opti_params[:, 1:2])
