@@ -81,7 +81,7 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
 
     CSV.write("./data/opti_model3.csv", opts3)
     CSV.write("./data/FlowDataPreds3.csv", dt2)
-    @printf("Map iterations = %.f", map_iters)
+    @printf("Choosen MAP iterations = %.f\n", map_iters)
     fit3 = nothing
     
     if dosamp
