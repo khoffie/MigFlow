@@ -3,37 +3,44 @@ library(MigStat)
 library(sfheaders)
 library(sf)
 
+rec_ages <- function(dt) {
+  agegroup <- NULL
+  lbls <- data.table(old = c("unter18", "über65"),
+                     new = c("below18", "above65"))
+  dt[lbls, agegroup := i.new, on = .(agegroup = old)]
+  return(NULL)
+}
+
+add_mising_flows <- function(flows, regions, agegroups, years) {
+    ### in flows data all 0 flows are missing. We add them now to make
+    ### sure all origins have the same destinations for all age groups and
+    ### vice versa
+    all_keys <- CJ(fromdist = regions,
+                   todist = regions,
+                   agegroup = agegroups,
+                   year = years)
+    setkeyv(all_keys, colnames(all_keys))
+    setkeyv(flows, colnames(all_keys))
+    flows <- flows[all_keys]
+    flows[is.na(flows), flows := 0]
+    return(flows)
+}
+
 p_clean <- "~/Diss/inst/extdata/clean/"
 flows <- fread(file.path(p_clean, "flows_districts/districts_2000_2017_ger.csv"))
-flows <- flows[year == 2017, .(fromdist = origin, todist = destination,
-                                   year, agegroup = age_group, flows = flow)]
-flows[agegroup == "über65", agegroup := "above65"]
-flows[agegroup == "unter18", agegroup := "below18"]
-flows <- flows[agegroup != "all"]
-
 age_for <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
-setnames(age_for, "age_group", "agegroup")
-age_for[age_group == "all", .(sum(all), sum(german))]
-age_for[agegroup == "über65", agegroup := "above65"]
-age_for[agegroup == "unter18", agegroup := "below18"]
-
 shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
-shp[, year := 2017] ## kind of hacky but otherwise join fails
 density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))
+
+flows <- flows[year == 2017 & age_group != "all", .(fromdist = origin, todist = destination, year, agegroup = age_group, flows = flow)]
+rec_ages(flows)
+setnames(age_for, "age_group", "agegroup")
+rec_ages(age_for)
+shp[, year := 2017] ## actual year is 2018, hacky but otherwise join fails
 density <- density[, .(region, year, density, bl_ags)]
 
-
-### in flows data all 0 flows are missing. We add them now to make
-### sure all origins have the same destinations for all age groups and
-### vice versa
-all_keys <- CJ(fromdist = regions,
-               todist = regions,
-               agegroup = flows[, unique(agegroup)],
-               year = flows[, unique(year)])
-setkeyv(all_keys, colnames(all_keys))
-setkeyv(flows, colnames(all_keys))
-flows <- flows[all_keys]
-flows[is.na(flows), flows := 0]
+flows <- add_mising_flows(flows, flows[, unique(fromdist)],
+                          flows[, unique(agegroup)], flows[, unique(year)])
 ### omitting since all intra-district flows are 0 and this would be
 ### hard to explain for the model
 flows <- flows[fromdist != todist]
@@ -73,8 +80,6 @@ flows[distances, dist := as.integer(round(i.distance)), on = .(fromdist, todist)
 
 dt_coords[, .(min = min(xcoord), max = max(xcoord))]
 dt_coords[, .(min = min(ycoord), max = max(ycoord))]
-
-
 
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(dt_coords, "~/Documents/GermanMigration/data/districts.csv")
