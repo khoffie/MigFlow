@@ -32,7 +32,10 @@ age_for <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
 shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
 density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))
 
-flows <- flows[year == 2017 & age_group != "all", .(fromdist = origin, todist = destination, year, agegroup = age_group, flows = flow)]
+flows <- flows[year == 2017 & age_group != "all", 
+               .(fromdist = origin, todist = destination, year,
+                 agegroup = age_group, flows = flow)]
+
 rec_ages(flows)
 setnames(age_for, "age_group", "agegroup")
 rec_ages(age_for)
