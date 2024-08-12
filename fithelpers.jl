@@ -12,9 +12,9 @@ end
 
 load_flows = function()
     if ENV["USER"] == "konstantin"
-        dt = CSV.read("/home/konstantin/Documents/GermanMigration/data/FlowDataGermans.csv", DataFrame)
+        dt = CSV.read("data/FlowDataGermans.csv", DataFrame)
     elseif ENV["USER"] == "donkon" ## USER on main machine in office
-        dt = CSV.read("./data/FlowDataGermans.csv", DataFrame)
+        dt = CSV.read("data/FlowDataGermans.csv", DataFrame)
     elseif ENV["USER"] == "dlakelan"
         dt = CSV.read("data/simulations.csv", DataFrame)
         DataFramesMeta.@transform!(dt,:flows = round.(Int32,:predict),:frompop_ger = :frompop, :topop_ger = :topop)
