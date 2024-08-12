@@ -18,8 +18,8 @@ function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     #=     opinit = [optis[:, 2]; [1.5,-3.0];
                      fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
  =# 
-cheby_lb = - .5
-cheby_ub = .5
+cheby_lb = - .1
+cheby_ub = .1
 kd_lb = -1.5
 kd_ub = 1.5
 c_lb = .05
@@ -31,14 +31,14 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
                 rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
                 rand(Uniform(1.5, 2.5), Nages); #c
                 rand(Uniform(d0_lb, d0_ub), Nages); #d0
-             [1.5, - 4.0]; #neterr and logisticconst
+             [1.5, 8.0]; #neterr and logisticconst
               fill(0.0, Nages); #kd
               fill(0.0, Nages*ncoefs) # desirecoefs
               ]
               
-    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -10.0];
+    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -30.0];
              fill(kd_lb, Nages); cheby_lb * ones(ncoefs * Nages)]
-    upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 0.0];
+    upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [10, 30.0];
              fill(kd_ub, Nages); cheby_ub * ones(ncoefs * Nages)]
 
     dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
@@ -65,16 +65,19 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
                         Ndist, meddist, netactual, ncoefs)
 
                         ## BBO_adaptive_de_rand_1_bin()
+
+    mapfit3 = nothing
+    opts3 = nothing
     for size in [.1,.2,.4,1.0,2.0,4.0,10.0]
-        lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -10.0];
+        lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -30.0];
             fill(kd_lb, Nages); -size  * ones(ncoefs * Nages)]
-        upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 0.0];
+        upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 30.0];
             fill(kd_ub, Nages); size  * ones(ncoefs * Nages)]            
         mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                     initial_params = opinit, lb = lower, ub = upper,
                                     maxiters = map_iters, maxtime = 600, reltol = .08, 
                                     progress = true, show_trace = true)
-        opinit = mapfit3.values
+        serialize("data/mapfit3.dat",mapfit3)
 
         opts3 = DataFrame(names=names(mapfit3.values, 1), 
                         values=mapfit3.values.array, 
@@ -88,6 +91,7 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
         CSV.write("./data/opti_model3_$size.csv", opts3)
         CSV.write("./data/FlowDataPreds3_$size.csv", dt2)
         @printf("Chosen MAP iterations = %.f\n", map_iters)
+        opinit = mapfit3.values.array
     end
     fit3 = nothing
     
