@@ -94,7 +94,7 @@ etc etc
     c ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 0.2/4.0),Nages)
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
-    logisticconst ~ Normal(0.0,10.0) # This constant isn't easy to figure out because log(topop[i]/popgerm) is numbers in the range maybe -10 to -4 
+    logisticconst ~ Normal(0.0,30.0) # This constant isn't easy to figure out because log(topop[i]/popgerm) is numbers in the range maybe -10 to -4 
     kd ~ MvNormal(fill(0.0, Nages), (log(5.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
     ## priors for chebychev polys parameters
@@ -126,9 +126,9 @@ etc etc
     end
 
 
-     if typeof(a[1]) != Float64
-        @printf "a1 = %.2f, b1 = %.2f, c1 = %.2f, d0_1 = %.2f, neterr = %.2f\n"  a[1] b[1] c[1] d0[1] neterr
-    end 
+    #if typeof(a[1]) != Float64
+    #    @printf "a1 = %.2f, b1 = %.2f, c1 = %.2f, d0_1 = %.2f, neterr = %.2f\n"  a[1] b[1] c[1] d0[1] neterr
+    #end 
 
     if any(isnan,preds)
         println("NaN in predictions")
