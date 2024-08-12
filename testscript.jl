@@ -1,3 +1,4 @@
+
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
     ReverseDiff, Revise, RCall
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
@@ -33,15 +34,18 @@ dists.distcode = categorical(dists.distcode)
 
 ## try it out:
 
-## smallerdists = @subset(dists,dists.density .< median(dists.density))
-smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
-smallerdists = dists[dists.density .< 0.5 * median(dists.density), :]
+biggerdists = dists[dists.density .> median(dists.density), :]
+smallerdists = dists[dists.density .< median(dists.density), :]
 
-smallerdists = dists[shuffle(1 : nrow(dists))[1:50] , : ]
-# testmod3(dt,optis,smallerdists,meddist)
+sampdists = biggerdists[StatsBase.sample(1:nrow(biggerdists),25;replace=false),:]
+sampdists = [sampdists;
+            smallerdists[StatsBase.sample(1:nrow(smallerdists),25; replace = false),:]    
+            ]
 
-result = testmod3(dt, optis, smallerdists, 1, 10, false, false)
 
+result = testmod3(dt, optis, sampdists, 1, 10, false, false)
+
+#@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
 # or run the profiler and we see where the time is being spent:
 
