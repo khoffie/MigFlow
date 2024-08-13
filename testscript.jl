@@ -42,8 +42,7 @@ sampdists = [sampdists;
             smallerdists[StatsBase.sample(1:nrow(smallerdists),25; replace = false),:]    
             ]
 
-result = testmod3(dt, optis,sampdists, 
-            0, 100, false, false)
+result = @time(testmod3(dt, optis,sampdists, 0, 100, false, false))
 
 
 #= result = testmod3(dt = dt, optis = optis, dists = sampdists, 
