@@ -15,7 +15,7 @@ function testmod3(; dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     droplevels!(dt2.todist)
     dt2 = dt2[dt2.flows .> flow_th, :]
 
-    ncoefs = 2
+    ncoefs = 36
     meddist = 293.0
     Ndist = length(unique(dt2.fromdist))
     Nages = length(unique(dt2.agegroup))
@@ -50,7 +50,7 @@ function testmod3(; dt, optis, dists, flow_th, map_iters, dovi, dosamp)
         @printf("Number of districts = %.f\n", Ndist)
         @printf("Number of cheby coefs = %.f\n", ncoefs)
         mapfit, opts, preds = fit_map(model3, opinit, lower, upper, map_iters, dt2)
-        serialize("data/mapfit3_$size.dat", mapfit)
+     ##   serialize("data/mapfit3_$size.dat", mapfit)
         CSV.write("./data/opti_model3_$size.csv", opts)
         CSV.write("./data/FlowDataPreds3_$size.csv", preds)        
         opinit = opts
@@ -66,8 +66,6 @@ function testmod3(; dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     if dovi
         fit4 = Turing.vi(model3,ADVI())
     end
-
-    return(fit = mapfit, fitdf = opts, dt2 = preds, samps = fit3, visamps = fit4)
 end
 
 
