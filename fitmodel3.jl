@@ -15,7 +15,7 @@ function testmod3(; dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     droplevels!(dt2.todist)
     dt2 = dt2[dt2.flows .> flow_th, :]
 
-    ncoefs = 36
+    ncoefs = 2
     meddist = 293.0
     Ndist = length(unique(dt2.fromdist))
     Nages = length(unique(dt2.agegroup))
@@ -46,7 +46,9 @@ function testmod3(; dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     for size in [10.0]
         lower, upper = gen_bounds(Nages, ncoefs, - size, size)
         @printf("Starting Optimization for size = %.2f\n", size) 
-        @printf("Chosen MAP iterations = %.f\n", map_iters)
+        @printf("Number of iterations = %.f\n", map_iters)
+        @printf("Number of districts = %.f\n", Ndist)
+        @printf("Number of cheby coefs = %.f\n", ncoefs)
         mapfit, opts, preds = fit_map(model3, opinit, lower, upper, map_iters, dt2)
         serialize("data/mapfit3_$size.dat", mapfit)
         CSV.write("./data/opti_model3_$size.csv", opts)
