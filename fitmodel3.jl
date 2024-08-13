@@ -2,7 +2,7 @@
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(; dt, optis, dists, flow_th, map_iters, dovi, dosamp)
+function testmod3(; dt, inits, dists, flow_th, map_iters, dovi, dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -21,7 +21,13 @@ function testmod3(; dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     Nages = length(unique(dt2.agegroup))
     popgerm = sum(dists.pop) # total pop of germay in thousands, used in model
 
-    opinit = gen_random_inits(Nages, ncoefs)
+    ## better something like (in R) testmod3(..., optis = NULL) and check if optis == NULL
+    if typeof(inits) .== DataFrame
+        @printf("Supplied inits used\n")
+    elseif typeof(inits) .!= DataFrame
+        inits = gen_random_inits(Nages, ncoefs)
+        @printf("Random inits used\n")
+    end
     lower, upper = gen_bounds(Nages, ncoefs, -10.0, 10.0)
     
     netactual = calcnet(dt2.flows,
@@ -49,7 +55,7 @@ function testmod3(; dt, optis, dists, flow_th, map_iters, dovi, dosamp)
         @printf("Number of iterations = %.f\n", map_iters)
         @printf("Number of districts = %.f\n", Ndist)
         @printf("Number of cheby coefs = %.f\n", ncoefs)
-        mapfit, opts, preds = fit_map(model3, opinit, lower, upper, map_iters, dt2)
+        mapfit, opts, preds = fit_map(model3, inits[:, 2], lower, upper, map_iters, dt2)
      ##   serialize("data/mapfit3_$size.dat", mapfit)
         CSV.write("./data/opti_model3_$size.csv", opts)
         CSV.write("./data/FlowDataPreds3_$size.csv", preds)        
