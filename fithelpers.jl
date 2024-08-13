@@ -21,7 +21,7 @@ load_flows = function()
     end
 end    
 
-make_random_inits = function(Nages, ncoefs)
+gen_random_inits = function(Nages, ncoefs)
     inits = [
         rand(Normal(0.0, 1.0), Nages); #a
         rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
@@ -32,4 +32,48 @@ make_random_inits = function(Nages, ncoefs)
         fill(0.0, Nages * ncoefs) # desirecoefs
         ]
   return inits
+end
+
+gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
+    kd_lb = -1.5
+    kd_ub = 1.5
+    c_lb = .05
+    c_ub = 5
+    d0_lb = 0.0
+    d0_ub = .03
+        
+    lower = [fill(-5.5,Nages); 
+            fill(0.0,Nages); 
+            fill(c_lb,Nages); 
+            fill(d0_lb,Nages); 
+            [.05, -30.0];
+            fill(kd_lb, Nages); 
+            cheby_lb * ones(ncoefs * Nages)]
+
+    upper = [fill(20.0,Nages); 
+            fill(20.0,Nages); 
+            fill(c_ub,Nages); 
+            fill(d0_ub,Nages); 
+            [3, 30.0];
+            fill(kd_ub, Nages); 
+            cheby_ub * ones(ncoefs * Nages)]
+    return(lower, upper)
+end
+
+fit_map = function(model, inits, lower, upper, iters)
+    fit = maximum_a_posteriori(model, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
+    initial_params = inits, lb = lower, ub = upper,
+    maxiters = iters, maxtime = 600, reltol = .08, 
+    progress = true, show_trace = true)
+    serialize("data/mapfit3_$size.dat", mapfit3)
+
+    opts = DataFrame(names=names(fit.values, 1), 
+    values = fit.values.array, 
+    inits = inits)
+    ## display(opts3)
+    display(density(opts.values .- opts.inits))
+
+    chain = Chains([opts[: , 2]], opts[: , 1])
+    dt[:, "preds"] = generated_quantities(model, chain)[1][1]
+    return(opts, dt)
 end

@@ -15,23 +15,8 @@ function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     Nages = 6 ## inits require it, only later we compute it
     popgerm = sum(dists.pop) # total pop of germay in thousands, used in model
 
-    #=     opinit = [optis[:, 2]; [1.5,-3.0];
-                     fill(0.0, Nages); rand(Normal(0.0, .4), Nages*ncoefs)]
- =# 
-cheby_lb = - .1
-cheby_ub = .1
-kd_lb = -1.5
-kd_ub = 1.5
-c_lb = .05
-c_ub = 5
-d0_lb = 0
-d0_ub = .03
-    
-    opinit = make_random_inits()
-    lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -30.0];
-             fill(kd_lb, Nages); cheby_lb * ones(ncoefs * Nages)]
-    upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [10, 30.0];
-             fill(kd_ub, Nages); cheby_ub * ones(ncoefs * Nages)]
+    opinit = gen_random_inits(Nages, ncoefs)
+    lower, upper = gen_bounds(Nages, ncoefs, -10.0, 10.0)
 
     dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
     droplevels!(dt2.fromdist)
@@ -61,30 +46,13 @@ d0_ub = .03
     mapfit3 = nothing
     opts3 = nothing
     for size in [.1, .2, .4, 1.0, 2.0, 4.0, 10.0]
-        lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -30.0];
-            fill(kd_lb, Nages); -size  * ones(ncoefs * Nages)]
-        upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 30.0];
-            fill(kd_ub, Nages); size  * ones(ncoefs * Nages)]
+        lower, upper = gen_bounds(Nages, ncoefs, - size, size)
         @printf("Starting Optimization for size = %.2f\n", size) 
         @printf("Chosen MAP iterations = %.f\n", map_iters)
-        mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
-                                    initial_params = opinit, lb = lower, ub = upper,
-                                    maxiters = map_iters, maxtime = 600, reltol = .08, 
-                                    progress = true, show_trace = true)
-        serialize("data/mapfit3_$size.dat",mapfit3)
-
-        opts3 = DataFrame(names=names(mapfit3.values, 1), 
-                        values=mapfit3.values.array, 
-                        inits = opinit)
-        ## display(opts3)
-        display(density(opts3.values .- opts3.inits))
-
-        model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
-        dt2[:, "preds3"] = generated_quantities(model3, model3_chain)[1][1]
-
-        CSV.write("./data/opti_model3_$size.csv", opts3)
-        CSV.write("./data/FlowDataPreds3_$size.csv", dt2)        
-        opinit = mapfit3.values.array
+        opts, preds = fit_map(model3, opinit, lower, upper, map_iters)
+        CSV.write("./data/opti_model3_$size.csv", opts)
+        CSV.write("./data/FlowDataPreds3_$size.csv", preds)        
+        opinit = opts
     end
     fit3 = nothing
     
