@@ -42,9 +42,13 @@ sampdists = [sampdists;
             smallerdists[StatsBase.sample(1:nrow(smallerdists),25; replace = false),:]    
             ]
 
+result = testmod3(dt, optis,sampdists, 
+            0, 100, false, false)
 
-result = testmod3(dt, optis, sampdists, 1, 10, false, false)
 
+#= result = testmod3(dt = dt, optis = optis, dists = sampdists, 
+                  flow_th = 0, map_iters = 10, false, false)
+ =#
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
 # or run the profiler and we see where the time is being spent:
