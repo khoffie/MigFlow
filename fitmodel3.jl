@@ -72,7 +72,9 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
         lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -30.0];
             fill(kd_lb, Nages); -size  * ones(ncoefs * Nages)]
         upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 30.0];
-            fill(kd_ub, Nages); size  * ones(ncoefs * Nages)]            
+            fill(kd_ub, Nages); size  * ones(ncoefs * Nages)]
+        @printf("Starting Optimization for size = %.2f\n", size) 
+        @printf("Chosen MAP iterations = %.f\n", map_iters)
         mapfit3 = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
                                     initial_params = opinit, lb = lower, ub = upper,
                                     maxiters = map_iters, maxtime = 600, reltol = .08, 
@@ -82,15 +84,14 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
         opts3 = DataFrame(names=names(mapfit3.values, 1), 
                         values=mapfit3.values.array, 
                         inits = opinit)
-        display(opts3)
+        ## display(opts3)
         display(density(opts3.values .- opts3.inits))
 
         model3_chain = Chains([opts3[: , 2]], opts3[: , 1])
         dt2[:, "preds3"] = generated_quantities(model3, model3_chain)[1][1]
 
         CSV.write("./data/opti_model3_$size.csv", opts3)
-        CSV.write("./data/FlowDataPreds3_$size.csv", dt2)
-        @printf("Chosen MAP iterations = %.f\n", map_iters)
+        CSV.write("./data/FlowDataPreds3_$size.csv", dt2)        
         opinit = mapfit3.values.array
     end
     fit3 = nothing
