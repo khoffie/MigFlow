@@ -86,3 +86,23 @@ dt_coords[, .(min = min(ycoord), max = max(ycoord))]
 
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(dt_coords, "~/Documents/GermanMigration/data/districts.csv")
+
+library(ggplot2)
+
+ggplot(flows[year == 2017], aes(log(flows))) +
+    geom_density() +
+    facet_wrap(vars(agegroup)) +
+    theme_minimal()
+
+ggplot(flows[year == 2017], aes(log(flows))) +
+    geom_histogram() +
+    facet_wrap(vars(agegroup)) +
+    theme_minimal()
+
+ggplot(flows[year == 2017], aes((flows))) +
+    geom_histogram() +
+    xlim(c(0, 50)) +
+    facet_wrap(vars(agegroup)) +
+    theme_minimal()
+
+log(1)
