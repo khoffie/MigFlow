@@ -2,7 +2,7 @@
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
+function testmod3(; dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -47,7 +47,7 @@ function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
         lower, upper = gen_bounds(Nages, ncoefs, - size, size)
         @printf("Starting Optimization for size = %.2f\n", size) 
         @printf("Chosen MAP iterations = %.f\n", map_iters)
-        mapfit, opts, preds = fit_map(model3, opinit, lower, upper, map_iters)
+        mapfit, opts, preds = fit_map(model3, opinit, lower, upper, map_iters, dt2)
         serialize("data/mapfit3_$size.dat", mapfit)
         CSV.write("./data/opti_model3_$size.csv", opts)
         CSV.write("./data/FlowDataPreds3_$size.csv", preds)        
