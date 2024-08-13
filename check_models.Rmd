@@ -18,13 +18,7 @@ knitr::opts_chunk$set(echo = FALSE,
 
 ```
 
-```{r fun-pck}
-
-p_out <- "~/Documents/GermanMigration/plots"
-p_in <- "~/Documents/GermanMigration/data"
-f_optis <- "opti_model3.csv"
-f_preds <- "FlowDataPreds3.csv"
-preds_th <- 3
+```{r, packages}
 
 library(data.table)
 library(sf)
@@ -32,6 +26,24 @@ library(ggplot2)
 library(MigStat)
 library(plotR)
 library(kableExtra)
+
+```
+
+```{r, funs}
+
+read_data <- function(path, file) {
+    if(grepl("prediction", path)) {
+        mod <- gsub("FlowData", "", file)
+        mod <- gsub("Preds", "model", mod)
+    }
+    if(grepl("models", path)) {
+        mod <- gsub("opti_", "", file)
+    }
+    mod <- gsub(".csv", "", mod)
+    dt <- data.table::fread(file.path(path, file))
+    dt[, model := mod]
+    return(dt)
+}
 
 calculate_net <- function(dt, col, by, o = "fromdist", d = "todist",
                            long = FALSE, type = NULL) {
@@ -86,6 +98,21 @@ plot_fit <- function(dt, x, y, th) {
 
 ```
 
+```{r read-data}
+
+p_out <- "~/Documents/GermanMigration/plots"
+p_preds <- "~/Documents/GermanMigration/predictions"
+p_coefs <- "~/Documents/GermanMigration/fitted_models"
+f_preds <- list.files(p_in)
+f_coefs <- list.files(p_coefs, "opti")
+preds_th <- 3
+
+dt <- rbindlist(lapply(f_preds, function(x) read_data(p_preds, x)))
+dt_coefs <- rbindlist(lapply(f_coefs, function(x) read_data(p_coefs, x)))
+shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
+
+```
+
 ```{r data}
 
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
@@ -93,7 +120,7 @@ use_age <- age_lvls
 
 ## f_optis <- "opti_model3.csv"
 ## f_preds <- "FlowDataPreds3.csv"
-shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
+
 dt_coefs <- fread(file.path(p_in, f_optis))
 dt_coefs[, diff := values - inits]
 dt <- fread(file.path(p_in, f_preds))
