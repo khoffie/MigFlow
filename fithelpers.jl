@@ -42,18 +42,18 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
     d0_lb = 0.0
     d0_ub = .03
         
-    lower = [fill(-5.5,Nages); 
-            fill(0.0,Nages); 
-            fill(c_lb,Nages); 
-            fill(d0_lb,Nages); 
+    lower = [fill(-5.5, Nages); 
+            fill(0.0, Nages); 
+            fill(c_lb, Nages); 
+            fill(d0_lb, Nages); 
             [.05, -30.0];
             fill(kd_lb, Nages); 
             cheby_lb * ones(ncoefs * Nages)]
 
-    upper = [fill(20.0,Nages); 
-            fill(20.0,Nages); 
-            fill(c_ub,Nages); 
-            fill(d0_ub,Nages); 
+    upper = [fill(20.0, Nages); 
+            fill(20.0, Nages); 
+            fill(c_ub, Nages); 
+            fill(d0_ub, Nages); 
             [3, 30.0];
             fill(kd_ub, Nages); 
             cheby_ub * ones(ncoefs * Nages)]
@@ -75,5 +75,5 @@ fit_map = function(model, inits, lower, upper, iters)
 
     chain = Chains([opts[: , 2]], opts[: , 1])
     dt[:, "preds"] = generated_quantities(model, chain)[1][1]
-    return(opts, dt)
+    return(fit, opts, dt)
 end
