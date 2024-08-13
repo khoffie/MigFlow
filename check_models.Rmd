@@ -90,10 +90,27 @@ plot_fit <- function(dt, x, y, th) {
         geom_hline(yintercept = 0) +
         geom_point(pch = ".") +
         geom_smooth(se = FALSE) +
-        facet_wrap(vars(agegroup), scale = "free") +
+        facet_wrap(vars(model, agegroup), scale = "free") +
         ggtitle(sprintf("Individual flows for preds > %s", th)) +
         theme_minimal()
     return(plt)
+}
+
+order_models <- function(dt) {
+    model_names <- dt[, unique(model)]
+    lvls <- data.table(models = model_names)
+    lvls[, id := tstrsplit(model_names, "_")[[2]]]
+    lvls <- lvls[order(as.numeric(id)), .(models)]
+    dt[, model := factor(model, levels = lvls[, models])]
+    return(NULL)
+}
+
+rec_ages <- function(dt) {
+  agegroup <- NULL
+  lbls <- data.table(old = c("unter18", "über65"),
+                     new = c("below18", "above65"))
+  dt[lbls, agegroup := i.new, on = .(agegroup = old)]
+  return(NULL)
 }
 
 ```
@@ -108,8 +125,37 @@ f_coefs <- list.files(p_coefs, "opti")
 preds_th <- 3
 
 dt <- rbindlist(lapply(f_preds, function(x) read_data(p_preds, x)))
+setnames(dt, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
+order_models(dt)
 dt_coefs <- rbindlist(lapply(f_coefs, function(x) read_data(p_coefs, x)))
+order_models(dt_coefs)
+dt_coefs[, diff := values - inits]
+pop_dt <- fread(file.path("~/Diss/inst/extdata/clean/aux_data/", "age17for.csv"))
+setnames(pop_dt, "age_group", "agegroup")
+rec_ages(pop_dt)
 shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
+
+```
+
+```{r, diff-plt, fig.cap = caption}
+
+caption <- "Distribution of differences between optimal values and initial values."
+ggplot(dt_coefs[startsWith(names, "desire")], aes(diff)) +
+    geom_histogram() +
+    facet_wrap(vars(model), scale = "free") +
+    theme_minimal() +
+    ggtitle("opti - init for desire coefs")
+
+ggplot(dt_coefs[startsWith(names, "desire")], aes(values)) +
+    geom_density() +
+    facet_wrap(vars(model), scale = "free") +
+    theme_minimal() +
+    ggtitle("opti coefs")
+
+## ggplot(dt_coefs, aes(model, diff)) +
+##     geom_violin() +
+##     theme_minimal() +
+##     ggtitle("opti - init")
 
 ```
 
@@ -117,40 +163,28 @@ shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "district
 
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 use_age <- age_lvls
-
-## f_optis <- "opti_model3.csv"
-## f_preds <- "FlowDataPreds3.csv"
-
-dt_coefs <- fread(file.path(p_in, f_optis))
-dt_coefs[, diff := values - inits]
-dt <- fread(file.path(p_in, f_preds))
-setnames(dt, "preds3", "preds", skip_absent = TRUE)
 dt <- dt[agegroup %in% use_age]
-pop_dt <- dt[, .SD[1], keyby = .(fromdist, agegroup, year)][
-  , .(region = fromdist, agegroup, year, pop = frompop)]
-dt <- dt[, .(fromdist, todist, year, agegroup, distance, flows, preds)]
-age_lvls <- intersect(age_lvls, use_age)
 dt[, agegroup := factor(agegroup, levels = age_lvls)]
-setnames(dt, "flows", "actual")
-dtm <- melt(dt,
-            id.vars = setdiff(colnames(dt), c("preds", "actual")),
-            value.vars = c("preds", "actual"),
-            variable.name = "model")
-
 dt[, resid1 := (actual - preds) / preds]
 dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
-## dt[, resid1 := actual / preds]
-## dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
+
+dtm <- melt(dt, measure.vars = c("actual", "preds"), variable.name = "type")
+
 
 ## probably much easier
-net <- calculate_net(dtm, col = "value", by = c("year", "agegroup", "model"), long = TRUE)[variable == "net"]
-net[pop_dt, pop := i.pop, on = .(region, year, agegroup)]
+net <- calculate_net(dtm, col = "value",
+                     by = c("year", "agegroup", "model", "type"),
+                     long = TRUE)[variable == "net"]
+net[pop_dt, pop := i.german, on = .(region, year, agegroup)]
 net[, value := value / (pop * 1000) * 100] # in %, pop is in 1000
-net <- dcast(net, region + year + agegroup ~ model, value.var = "value")
-net[, actual_s := sign(actual) * log(1 + abs(actual))]
-net[, preds_s := sign(preds) * log(1 + abs(preds))]
-netm <- melt(net, id.vars = c("region", "year", "agegroup"))
-netm <- netm[variable %in% c("actual_s", "preds_s")]
+net <- dcast(net, region + year + agegroup + type ~ model, value.var = "value")
+## net[, actual_s := sign(actual) * log(1 + abs(actual))]
+## net[, preds_s := sign(preds) * log(1 + abs(preds))]
+netm <- melt(net, id.vars = c("region", "year", "agegroup", "type"),
+             variable.name = "model")
+netm <- dcast(netm, region + year + agegroup + model ~ type)
+## netm <- netm[variable %in% c("actual", "preds")]
+##netm <- netm[variable %in% c("actual_s", "preds_s")]
 netm[shp, geometry := i.geometry, on = .(region = AGS)]
 
 ```
@@ -201,14 +235,39 @@ prettify(plt_change, main = "Optimial parameters - inits", show_cap = FALSE)
 ## Maps
 ```{r make-maps}
 
-lapply(age_lvls, function(age) make_map(netm, age))
+netm[, diff := actual - preds]
+netm2 <- melt(netm, measure.vars = c("actual", "preds", "diff"))
+netm2 <- netm2[model %in% c("model3_0.1", "model3_10.0")]
+netm2 <- netm2[variable == "diff"]
+
+make_map <- function(netm) {
+    plt <- ggplot(set_geom(netm, F)) +
+        geom_sf(aes(fill = value)) +
+        facet_wrap(vars(model, variable, agegroup)) +
+        theme_minimal() 
+    return(plt)
+}
+
+make_map(netm2[model == "model3_10.0"])
+make_map(netm2[model == "model3_0.1"])
+
+dt[, sum(actual), keyby = .(model)]
+netm[order(actual)]
 
 ```
 
 ## Net chart
 ```{r net-plot}
 
-make_net_plot(net, scales = "free")
+make_net_plot(netm[variable %in% c("model3_0.1", "model3_10.0")], scales = "free") +
+    facet_wrap(vars(variable, agegroup), nrow = 6)
+
+make_net_plot(netm[variable %in% c("model3_0.1")], scales = "free") +
+    facet_wrap(vars(variable, agegroup))
+
+
+make_net_plot(netm[variable %in% c("model3_10.0")], scales = "free") +
+    facet_wrap(vars(variable, agegroup))
 
 make_net_plot(net, scales = "fixed") +
     coord_fixed()
@@ -220,17 +279,19 @@ make_net_plot(net, scales = "fixed") +
 ```{r individual-resids-violin}
 
 sub1 <- sprintf("Residuals sign(resid) * log(1 + abs(resid)), only preds > %s are shown", preds_th)
-resid_plt <- ggplot(dt[preds > preds_th], aes(agegroup, resid2, fill = agegroup)) +
-    geom_violin() 
+resid_plt <- ggplot(dt[preds > preds_th],
+                    aes(agegroup, resid2, fill = agegroup)) +
+    geom_violin() +
+    facet_wrap(vars(model))
 prettify(resid_plt,
          main = "Individual Flows Residuals sign(resid) * log(1 + abs(resid))",
          sub = sub1)
 
-## dt[, quantile(resid1, 0.9), keyby = .(agegroup)]
-## dt[, max(resid1), keyby = .(agegroup)]
 sub2 <- sprintf("resid = (actual - preds) / preds, only preds > %s are shown", preds_th)
-resid_plt <- ggplot(dt[preds > preds_th], aes(agegroup, resid1, fill = agegroup)) +
-    geom_violin()
+resid_plt <- ggplot(dt[preds > preds_th & model %in% c("model3_0.1", "model3_10.0")],
+                    aes(agegroup, resid1, fill = agegroup)) +
+    geom_violin() +
+    facet_wrap(vars(model))
 prettify(resid_plt, main = "Individual Flows",
          sub = sub2)
 
@@ -239,9 +300,18 @@ prettify(resid_plt, main = "Individual Flows",
 ```{r, preds-resid, eval = TRUE}
 
 
-plot_fit(dt, distance, log(actual/preds), 0)
+plot_fit(dt[model %in% c("model3_0.1", "model3_10.0")], distance, log(actual/preds), 0) +
+    facet_wrap(vars(agegroup, model), scale = "free", ncol = 2) 
+
+
 plot_fit(dt, log(preds), log(actual/preds), 3)
 plot_fit(dt, preds, (actual - preds) / preds, 3)
 plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1)
+
+```
+
+```{r}
+
+dcast(dt, fromdist + todist + agegroup ~ model)
 
 ```
