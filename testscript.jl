@@ -44,7 +44,7 @@ sampdists = [sampdists;
 sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#    
 
-result = testmod3(dt = dt, inits = optis, dists = sampdists,
+result = testmod3(dt = dt, inits = optis, dists = dists,
                         flow_th = 0; map_iters = 1000, dosamp = false, dovi = false)
 
 
