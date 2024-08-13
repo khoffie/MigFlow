@@ -128,8 +128,10 @@ make_net_map <- function(net) {
 p_out <- "~/Documents/GermanMigration/plots"
 p_preds <- "~/Documents/GermanMigration/predictions"
 p_coefs <- "~/Documents/GermanMigration/fitted_models"
-f_preds <- list.files(p_in)[5]
+f_preds <- list.files(p_preds)[5]
+f_preds <- "FlowDataPreds3_200districts.csv"
 f_coefs <- list.files(p_coefs, "opti")[5]
+f_coefs <- "opti_model3_200districts.csv"
 preds_th <- 3
 
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
@@ -137,14 +139,16 @@ use_age <- age_lvls
 
 dt <- rbindlist(lapply(f_preds, function(x) read_data(p_preds, x)))
 setnames(dt, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
-order_models(dt)
+
+dtm <- melt(dt, measure.vars = c("actual", "preds"))
+## order_models(dt)
 dt <- dt[agegroup %in% use_age]
 dt[, agegroup := factor(agegroup, levels = age_lvls)]
 dt[, resid1 := (actual - preds) / preds]
 dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 
 dt_coefs <- rbindlist(lapply(f_coefs, function(x) read_data(p_coefs, x)))
-order_models(dt_coefs)
+### order_models(dt_coefs)
 dt_coefs[, diff := values - inits]
 
 pop_dt <- fread(file.path("~/Diss/inst/extdata/clean/aux_data/", "age17for.csv"))
@@ -184,8 +188,11 @@ net1 <- calculate_net(dt, col = "actual", by = c("year", "agegroup", "model"),
 net2 <- calculate_net(dt, col = "preds", by = c("year", "agegroup", "model"),
                       long = TRUE, type = "preds")
 net <- rbind(net1, net2)
+
+net2 <- dcast(net[variable == "net"], region + year + agegroup ~ type)
+
 net[pop_dt, pop := i.german, on = .(region, year, agegroup)]
-net[, value := value / (pop * 1000) * 100] # in %, pop is in 1000
+net[, value := value / pop * 100] # in %, pop is in 1000
 net <- dcast(net[variable == "net"], region + year + agegroup + model ~ type, value.var = "value")
 net[shp, geometry := i.geometry, on = .(region = AGS)]
 
@@ -233,6 +240,7 @@ net[, diff := actual - preds]
 netm <- melt(net,
              measure.vars = c("actual", "preds", "diff"),
              variable.name = "type")
+##netm[, value := sign(value) * log(1 + abs(value))]
 
 lapply(use_age, function(age) make_net_map(netm[agegroup == age & type %in% c("actual", "preds")]))
 
@@ -241,16 +249,31 @@ lapply(use_age, function(age) make_net_map(netm[agegroup == age & type %in% c("a
 ## Net chart
 ```{r net-plot}
 
-
 make_net_plot(net, scales = "free") +
     facet_wrap(vars(agegroup))
 
 make_net_plot(net, scales = "fixed") +
     coord_fixed()
 
+ggplot(netm[type != "diff"], aes(value, fill = type)) +
+    geom_density(alpha = .2) +
+    facet_wrap(vars(agegroup), scales = "free") +
+    ggtitle("Distribution of net migration rate") +
+    theme_minimal()
+
 ```
 
 ## Individual Flows
+
+```{r,}
+
+dtm <- melt(dt, measure.vars = c("actual", "preds"))
+
+ggplot(dtm, aes(log(value), color = variable)) +
+    geom_density() +
+    facet_wrap(vars(agegroup))
+
+```
 
 ```{r individual-resids-violin}
 
@@ -264,7 +287,7 @@ prettify(resid_plt,
          sub = sub1)
 
 sub2 <- sprintf("resid = (actual - preds) / preds, only preds > %s are shown", preds_th)
-resid_plt <- ggplot(dt[preds > preds_th & model %in% c("model3_0.1", "model3_10.0")],
+resid_plt <- ggplot(dt[preds > preds_th],
                     aes(agegroup, resid1, fill = agegroup)) +
     geom_violin() +
     facet_wrap(vars(model))
@@ -275,7 +298,7 @@ prettify(resid_plt, main = "Individual Flows",
 
 ```{r, preds-resid, eval = TRUE}
 
-plot_fit(dt[model %in% c("model3_0.1", "model3_10.0")], distance, log(actual/preds), 0) +
+plot_fit(dt, distance, log(actual/preds), 0) +
     facet_wrap(vars(agegroup, model), scale = "free", ncol = 2) 
 
 plot_fit(dt, log(preds), log(actual/preds), 3)
