@@ -20,3 +20,16 @@ load_flows = function()
         DataFramesMeta.@transform!(dt,:flows = round.(Int32,:predict),:frompop_ger = :frompop, :topop_ger = :topop)
     end
 end    
+
+make_random_inits = function(Nages, ncoefs)
+    inits = [
+        rand(Normal(0.0, 1.0), Nages); #a
+        rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
+        rand(Uniform(1.5, 2.5), Nages); #c
+        rand(Uniform(0.0, 0.03), Nages); #d0
+        [1.5, 8.0]; # neterr and logisticconst
+        fill(0.0, Nages); #kd
+        fill(0.0, Nages * ncoefs) # desirecoefs
+        ]
+  return inits
+end

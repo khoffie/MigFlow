@@ -27,15 +27,7 @@ c_ub = 5
 d0_lb = 0
 d0_ub = .03
     
-opinit = [rand(Normal(0.0, 1.0), Nages); #a
-                rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
-                rand(Uniform(1.5, 2.5), Nages); #c
-                rand(Uniform(d0_lb, d0_ub), Nages); #d0
-             [1.5, 8.0]; #neterr and logisticconst
-              fill(0.0, Nages); #kd
-              fill(0.0, Nages*ncoefs) # desirecoefs
-              ]
-              
+    opinit = make_random_inits()
     lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -30.0];
              fill(kd_lb, Nages); cheby_lb * ones(ncoefs * Nages)]
     upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [10, 30.0];
@@ -68,7 +60,7 @@ opinit = [rand(Normal(0.0, 1.0), Nages); #a
 
     mapfit3 = nothing
     opts3 = nothing
-    for size in [.1,.2,.4,1.0,2.0,4.0,10.0]
+    for size in [.1, .2, .4, 1.0, 2.0, 4.0, 10.0]
         lower = [fill(-5.5,Nages); fill(0.0,Nages); fill(c_lb,Nages); fill(d0_lb,Nages); [.05, -30.0];
             fill(kd_lb, Nages); -size  * ones(ncoefs * Nages)]
         upper = [fill(20.0,Nages); fill(20.0,Nages); fill(c_ub,Nages); fill(d0_ub,Nages); [3, 30.0];
