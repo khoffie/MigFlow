@@ -32,14 +32,19 @@ dists.distcode = categorical(dists.distcode)
 biggerdists = dists[dists.density .> median(dists.density), :]
 smallerdists = dists[dists.density .< median(dists.density), :]
 
-sampdists = biggerdists[StatsBase.sample(1:nrow(biggerdists),2; replace=false),:]
+sampdists = biggerdists[StatsBase.sample(1:nrow(biggerdists),100; replace=false),:]
 sampdists = [sampdists;
-            smallerdists[StatsBase.sample(1:nrow(smallerdists),2; replace = false),:]    
+            smallerdists[StatsBase.sample(1:nrow(smallerdists),100; replace = false),:]    
             ]
+
+
+#= choosen_dists = [11000; 14713]            
+sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
+ =#    
 
 ## optis = "" since it is not needed. Check default args
 result = testmod3(dt = dt, optis = "", dists = sampdists,
-                        flow_th = 0; map_iters = 10, dosamp = false, dovi = false)
+                        flow_th = 0; map_iters = 100, dosamp = false, dovi = false)
 
 
 
