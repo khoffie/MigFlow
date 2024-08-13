@@ -217,26 +217,4 @@ plot_fit(dt, log(preds), log(actual/preds), 3)
 plot_fit(dt, preds, (actual - preds) / preds, 3)
 plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1)
 
-
-```
-
-```{r, eval = FALSE}
-
-head(dt[order(- preds)], 20)
-
-dt_coords[distcode == 2000]
-flows[fromdist == 2000]
-
-dt[order(flows)]
-
-dt[, cor(log(flows), log(preds3)), keyby = agegroup]
-dt[, cor((flows), (preds3)), keyby = agegroup]
-
-dt[, cor(log(flows), log(preds)), keyby = agegroup]
-dt[, cor((actual), (preds)), keyby = agegroup]
-
-dt[agegroup == "above65", ][order(preds)]
-
-dt[preds > 3][order(resid1)]
-
 ```
