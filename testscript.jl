@@ -1,4 +1,3 @@
-
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
     ReverseDiff, Revise, RCall
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
@@ -13,10 +12,6 @@ includet("fitmodel3.jl")
 
 Random.seed!(20240719)
 
-
-##optis = CSV.read("./data/opti_d0_allrows.csv", DataFrame)
-#optis = CSV.read("./data/opts1greater0.csv", DataFrame)
-optis = CSV.read("./data/opti_d0.csv",DataFrame)
 
 dt = load_flows()
 dt.fromdist = categorical(dt.fromdist)
@@ -42,7 +37,7 @@ sampdists = [sampdists;
             smallerdists[StatsBase.sample(1:nrow(smallerdists),25; replace = false),:]    
             ]
 
-result = @time(testmod3(dt, optis,sampdists, 0, 100, false, false))
+result = @time(testmod3(dt, "",sampdists, 0, 10, false, false))
 
 
 #= result = testmod3(dt = dt, optis = optis, dists = sampdists, 
