@@ -13,6 +13,7 @@ includet("fitmodel3.jl")
 Random.seed!(20240719)
 
 optis = CSV.read("./fitted_models/opti_model3_10.0.csv", DataFrame)
+optis = CSV.read("./fitted_models/opti_model3_200districts.csv", DataFrame)
 
 dt = load_flows()
 dt.fromdist = categorical(dt.fromdist)
@@ -44,7 +45,7 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#    
 
 result = testmod3(dt = dt, inits = optis, dists = sampdists,
-                        flow_th = 0; map_iters = 100, dosamp = false, dovi = false)
+                        flow_th = 0; map_iters = 1000, dosamp = false, dovi = false)
 
 
 

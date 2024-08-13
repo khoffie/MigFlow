@@ -57,8 +57,8 @@ function testmod3(; dt, inits, dists, flow_th, map_iters, dovi, dosamp)
         @printf("Number of cheby coefs = %.f\n", ncoefs)
         mapfit, opts, preds = fit_map(model3, inits[:, 2], lower, upper, map_iters, dt2)
      ##   serialize("data/mapfit3_$size.dat", mapfit)
-        CSV.write("./fitted_models/opti_model3_200districts.csv", opts)
-        CSV.write("./predictions/FlowDataPreds3_200districts.csv", preds)        
+        CSV.write("./fitted_models/opti_model3_all_districts.csv", opts)
+        CSV.write("./predictions/FlowDataPreds3_all_districts.csv", preds)        
         inits = opts
     end
     fit3 = nothing
