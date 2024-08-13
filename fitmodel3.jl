@@ -42,11 +42,13 @@ function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
 
     mapfit3 = nothing
     opts3 = nothing
-    for size in [.1, .2, .4, 1.0, 2.0, 4.0, 10.0]
+    ## for size in [.1, .2, .4, 1.0, 2.0, 4.0, 10.0]
+    for size in [10.0]
         lower, upper = gen_bounds(Nages, ncoefs, - size, size)
         @printf("Starting Optimization for size = %.2f\n", size) 
         @printf("Chosen MAP iterations = %.f\n", map_iters)
         mapfit, opts, preds = fit_map(model3, opinit, lower, upper, map_iters)
+        serialize("data/mapfit3_$size.dat", mapfit)
         CSV.write("./data/opti_model3_$size.csv", opts)
         CSV.write("./data/FlowDataPreds3_$size.csv", preds)        
         opinit = opts

@@ -64,8 +64,7 @@ fit_map = function(model, inits, lower, upper, iters)
     fit = maximum_a_posteriori(model, BBO_adaptive_de_rand_1_bin() ; adtype = AutoReverseDiff(), 
     initial_params = inits, lb = lower, ub = upper,
     maxiters = iters, maxtime = 600, reltol = .08, 
-    progress = true, show_trace = true)
-    serialize("data/mapfit3_$size.dat", mapfit3)
+    progress = true, show_trace = true)    
 
     opts = DataFrame(names=names(fit.values, 1), 
     values = fit.values.array, 
