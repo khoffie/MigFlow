@@ -12,6 +12,7 @@ includet("fitmodel3.jl")
 
 Random.seed!(20240719)
 
+optis = CSV.read("./fitted_models/opti_model3_10.0.csv", DataFrame)
 
 dt = load_flows()
 dt.fromdist = categorical(dt.fromdist)
@@ -42,8 +43,7 @@ sampdists = [sampdists;
 sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#    
 
-## optis = "" since it is not needed. Check default args
-result = testmod3(dt = dt, optis = "", dists = sampdists,
+result = testmod3(dt = dt, inits = optis, dists = sampdists,
                         flow_th = 0; map_iters = 100, dosamp = false, dovi = false)
 
 
