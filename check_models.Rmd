@@ -113,6 +113,14 @@ rec_ages <- function(dt) {
   return(NULL)
 }
 
+make_net_map <- function(net) {
+    plt <- ggplot(set_geom(net, F)) +
+        geom_sf(aes(fill = value)) +
+        facet_wrap(vars(model, type, agegroup)) +
+        theme_minimal() 
+    return(plt)
+}
+
 ```
 
 ```{r read-data}
@@ -120,19 +128,29 @@ rec_ages <- function(dt) {
 p_out <- "~/Documents/GermanMigration/plots"
 p_preds <- "~/Documents/GermanMigration/predictions"
 p_coefs <- "~/Documents/GermanMigration/fitted_models"
-f_preds <- list.files(p_in)
-f_coefs <- list.files(p_coefs, "opti")
+f_preds <- list.files(p_in)[5]
+f_coefs <- list.files(p_coefs, "opti")[5]
 preds_th <- 3
+
+age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
+use_age <- age_lvls
 
 dt <- rbindlist(lapply(f_preds, function(x) read_data(p_preds, x)))
 setnames(dt, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
 order_models(dt)
+dt <- dt[agegroup %in% use_age]
+dt[, agegroup := factor(agegroup, levels = age_lvls)]
+dt[, resid1 := (actual - preds) / preds]
+dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
+
 dt_coefs <- rbindlist(lapply(f_coefs, function(x) read_data(p_coefs, x)))
 order_models(dt_coefs)
 dt_coefs[, diff := values - inits]
+
 pop_dt <- fread(file.path("~/Diss/inst/extdata/clean/aux_data/", "age17for.csv"))
 setnames(pop_dt, "age_group", "agegroup")
 rec_ages(pop_dt)
+
 shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
 
 ```
@@ -140,52 +158,36 @@ shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "district
 ```{r, diff-plt, fig.cap = caption}
 
 caption <- "Distribution of differences between optimal values and initial values."
-ggplot(dt_coefs[startsWith(names, "desire")], aes(diff)) +
-    geom_histogram() +
-    facet_wrap(vars(model), scale = "free") +
-    theme_minimal() +
-    ggtitle("opti - init for desire coefs")
 
-ggplot(dt_coefs[startsWith(names, "desire")], aes(values)) +
+ggplot(dt_coefs, aes(values)) +
     geom_density() +
     facet_wrap(vars(model), scale = "free") +
     theme_minimal() +
     ggtitle("opti coefs")
 
-## ggplot(dt_coefs, aes(model, diff)) +
-##     geom_violin() +
-##     theme_minimal() +
-##     ggtitle("opti - init")
+ggplot(dt_coefs, aes(values - inits)) +
+    geom_density() +
+    facet_wrap(vars(model)) +
+    theme_minimal() +
+    ggtitle("opti - init")
 
 ```
 
 ```{r data}
 
-age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
-use_age <- age_lvls
-dt <- dt[agegroup %in% use_age]
-dt[, agegroup := factor(agegroup, levels = age_lvls)]
-dt[, resid1 := (actual - preds) / preds]
-dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
+## dt
+dtm <- melt(dt, measure.vars = c("preds", "resid1", "resid2"), variable.name = "type")
+dtm <- melt(dt, measure.vars = c("preds"), variable.name = "type")
 
-dtm <- melt(dt, measure.vars = c("actual", "preds"), variable.name = "type")
-
-
-## probably much easier
-net <- calculate_net(dtm, col = "value",
-                     by = c("year", "agegroup", "model", "type"),
-                     long = TRUE)[variable == "net"]
+net1 <- calculate_net(dt, col = "actual", by = c("year", "agegroup", "model"),
+                      long = TRUE, type = "actual")
+net2 <- calculate_net(dt, col = "preds", by = c("year", "agegroup", "model"),
+                      long = TRUE, type = "preds")
+net <- rbind(net1, net2)
 net[pop_dt, pop := i.german, on = .(region, year, agegroup)]
 net[, value := value / (pop * 1000) * 100] # in %, pop is in 1000
-net <- dcast(net, region + year + agegroup + type ~ model, value.var = "value")
-## net[, actual_s := sign(actual) * log(1 + abs(actual))]
-## net[, preds_s := sign(preds) * log(1 + abs(preds))]
-netm <- melt(net, id.vars = c("region", "year", "agegroup", "type"),
-             variable.name = "model")
-netm <- dcast(netm, region + year + agegroup + model ~ type)
-## netm <- netm[variable %in% c("actual", "preds")]
-##netm <- netm[variable %in% c("actual_s", "preds_s")]
-netm[shp, geometry := i.geometry, on = .(region = AGS)]
+net <- dcast(net[variable == "net"], region + year + agegroup + model ~ type, value.var = "value")
+net[shp, geometry := i.geometry, on = .(region = AGS)]
 
 ```
 
@@ -223,51 +225,25 @@ kbl(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
     digits = 2, booktabs = TRUE)
 
 ```
-```{r, opti-ini}
-
-plt_change <- ggplot(dt_coefs, aes(values - inits)) +
-    geom_density() 
-prettify(plt_change, main = "Optimial parameters - inits", show_cap = FALSE)
-
-```
-
 
 ## Maps
 ```{r make-maps}
 
-netm[, diff := actual - preds]
-netm2 <- melt(netm, measure.vars = c("actual", "preds", "diff"))
-netm2 <- netm2[model %in% c("model3_0.1", "model3_10.0")]
-netm2 <- netm2[variable == "diff"]
+net[, diff := actual - preds]
+netm <- melt(net,
+             measure.vars = c("actual", "preds", "diff"),
+             variable.name = "type")
 
-make_map <- function(netm) {
-    plt <- ggplot(set_geom(netm, F)) +
-        geom_sf(aes(fill = value)) +
-        facet_wrap(vars(model, variable, agegroup)) +
-        theme_minimal() 
-    return(plt)
-}
-
-make_map(netm2[model == "model3_10.0"])
-make_map(netm2[model == "model3_0.1"])
-
-dt[, sum(actual), keyby = .(model)]
-netm[order(actual)]
+lapply(use_age, function(age) make_net_map(netm[agegroup == age & type %in% c("actual", "preds")]))
 
 ```
 
 ## Net chart
 ```{r net-plot}
 
-make_net_plot(netm[variable %in% c("model3_0.1", "model3_10.0")], scales = "free") +
-    facet_wrap(vars(variable, agegroup), nrow = 6)
 
-make_net_plot(netm[variable %in% c("model3_0.1")], scales = "free") +
-    facet_wrap(vars(variable, agegroup))
-
-
-make_net_plot(netm[variable %in% c("model3_10.0")], scales = "free") +
-    facet_wrap(vars(variable, agegroup))
+make_net_plot(net, scales = "free") +
+    facet_wrap(vars(agegroup))
 
 make_net_plot(net, scales = "fixed") +
     coord_fixed()
@@ -299,19 +275,11 @@ prettify(resid_plt, main = "Individual Flows",
 
 ```{r, preds-resid, eval = TRUE}
 
-
 plot_fit(dt[model %in% c("model3_0.1", "model3_10.0")], distance, log(actual/preds), 0) +
     facet_wrap(vars(agegroup, model), scale = "free", ncol = 2) 
-
 
 plot_fit(dt, log(preds), log(actual/preds), 3)
 plot_fit(dt, preds, (actual - preds) / preds, 3)
 plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1)
-
-```
-
-```{r}
-
-dcast(dt, fromdist + todist + agegroup ~ model)
 
 ```
