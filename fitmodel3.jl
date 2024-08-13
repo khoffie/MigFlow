@@ -10,23 +10,20 @@ function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
     distdens = distdens .- mean(distdens)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
 
+    dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
+    droplevels!(dt2.fromdist)
+    droplevels!(dt2.todist)
+    dt2 = dt2[dt2.flows .> flow_th, :]
+
     ncoefs = 36
-    meddist = 293.0  # (or so?)
-    Nages = 6 ## inits require it, only later we compute it
+    meddist = 293.0
+    Ndist = length(unique(dt2.fromdist))
+    Nages = length(unique(dt2.agegroup))
     popgerm = sum(dists.pop) # total pop of germay in thousands, used in model
 
     opinit = gen_random_inits(Nages, ncoefs)
     lower, upper = gen_bounds(Nages, ncoefs, -10.0, 10.0)
-
-    dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
-    droplevels!(dt2.fromdist)
-    droplevels!(dt2.todist)
-
-    dt2 = dt2[dt2.flows .> flow_th, :]
     
-    Ndist = length(unique(dt2.fromdist))
-    Nages = length(unique(dt2.agegroup))
-
     netactual = calcnet(dt2.flows,
                         levelcode.(dt2.fromdist),
                         levelcode.(dt2.todist),
@@ -49,7 +46,7 @@ function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
         lower, upper = gen_bounds(Nages, ncoefs, - size, size)
         @printf("Starting Optimization for size = %.2f\n", size) 
         @printf("Chosen MAP iterations = %.f\n", map_iters)
-        opts, preds = fit_map(model3, opinit, lower, upper, map_iters)
+        mapfit, opts, preds = fit_map(model3, opinit, lower, upper, map_iters)
         CSV.write("./data/opti_model3_$size.csv", opts)
         CSV.write("./data/FlowDataPreds3_$size.csv", preds)        
         opinit = opts
@@ -66,7 +63,7 @@ function testmod3(dt, optis, dists, flow_th, map_iters, dovi, dosamp)
         fit4 = Turing.vi(model3,ADVI())
     end
 
-    (fit = mapfit3, fitdf = opts3, dt2 = dt2, samps = fit3, visamps = fit4)
+    return(fit = mapfit, fitdf = opts, dt2 = preds, samps = fit3, visamps = fit4)
 end
 
 
