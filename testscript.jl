@@ -32,17 +32,17 @@ dists.distcode = categorical(dists.distcode)
 biggerdists = dists[dists.density .> median(dists.density), :]
 smallerdists = dists[dists.density .< median(dists.density), :]
 
-sampdists = biggerdists[StatsBase.sample(1:nrow(biggerdists),25;replace=false),:]
+sampdists = biggerdists[StatsBase.sample(1:nrow(biggerdists),2; replace=false),:]
 sampdists = [sampdists;
-            smallerdists[StatsBase.sample(1:nrow(smallerdists),25; replace = false),:]    
+            smallerdists[StatsBase.sample(1:nrow(smallerdists),2; replace = false),:]    
             ]
 
-result = @time(testmod3(dt, "",sampdists, 0, 10, false, false))
+## optis = "" since it is not needed. Check default args
+result = testmod3(dt = dt, optis = "", dists = sampdists,
+                        flow_th = 0; map_iters = 10, dosamp = false, dovi = false)
 
 
-#= result = testmod3(dt = dt, optis = optis, dists = sampdists, 
-                  flow_th = 0, map_iters = 10, false, false)
- =#
+
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
 # or run the profiler and we see where the time is being spent:
