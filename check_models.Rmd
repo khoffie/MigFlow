@@ -73,6 +73,17 @@ make_net_plot <- function(net, scales = "free") {
     return(plt)
 }
 
+plot_fit <- function(dt, x, y, th) {
+    plt <- ggplot(dt[preds > th], aes({{x}}, {{y}})) +
+        geom_hline(yintercept = 0) +
+        geom_point(pch = ".") +
+        geom_smooth(se = FALSE) +
+        facet_wrap(vars(agegroup), scale = "free") +
+        ggtitle(sprintf("Individual flows for preds > %s", th)) +
+        theme_minimal()
+    return(plt)
+}
+
 ```
 
 ```{r data}
@@ -200,44 +211,12 @@ prettify(resid_plt, main = "Individual Flows",
 
 ```{r, preds-resid, eval = TRUE}
 
-ggplot(dt[preds > 0], aes(distance, log(actual / preds))) +
-    geom_hline(yintercept = 0) +
-    geom_point(pch = ".") +
-    geom_smooth(se = FALSE) +
-    facet_wrap(vars(agegroup), scale = "free") +
-    ggtitle("individual flows, distance v log(actual/preds)") +
-    theme_minimal()
 
+plot_fit(dt, distance, log(actual/preds), 0)
+plot_fit(dt, log(preds), log(actual/preds), 3)
+plot_fit(dt, preds, (actual - preds) / preds, 3)
+plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1)
 
-ggplot(dt, aes(log(preds), log(actual))) +
-    geom_point(pch = ".") +
-    geom_smooth(se = FALSE) +
-    facet_wrap(vars(agegroup), scale = "free") +
-    ggtitle("individual flows, log(preds) v log(actual)") +
-    theme_minimal()
-
-## ggplot(dt, aes(log(preds), log(actual / preds))) +
-##     geom_point(pch = ".") +
-##     geom_smooth(se = FALSE) +
-##     facet_wrap(vars(agegroup), scale = "free") +
-##     ggtitle("individual flows, log(preds) v log(actual/preds)") +
-##     theme_minimal()
-
-ggplot(dt, aes(preds, resid1)) +
-    geom_point(pch = ".") +
-    xlim(c(0, 50)) +
-    geom_smooth(se = FALSE) +
-    facet_wrap(vars(agegroup), scale = "free") +
-    ggtitle("individual flows, pred < 50, (actual - pred) / pred") +
-    theme_minimal()
-
-ggplot(dt, aes(preds, resid2)) +
-    geom_point(pch = ".") +
-    xlim(c(0, 50)) +
-    geom_smooth(se = FALSE) +
-    facet_wrap(vars(agegroup), scale = "free") +
-    ggtitle("individual flows, pred < 50, sign(r) * log(1 + abs(r))") +
-    theme_minimal()
 
 ```
 
