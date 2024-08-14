@@ -2,7 +2,7 @@
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(; dt, inits, dists, flow_th, map_iters, dovi, dosamp)
+function testmod3(; dt, inits, dists, flow_th, map_iters, mod_name, dovi, dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -24,9 +24,10 @@ function testmod3(; dt, inits, dists, flow_th, map_iters, dovi, dosamp)
     ## better something like (in R) testmod3(..., optis = NULL) and check if optis == NULL
     if typeof(inits) .== DataFrame
         @printf("Supplied inits used\n")
+        inits = inits[:, "values"]
     elseif typeof(inits) .!= DataFrame
         inits = gen_random_inits(Nages, ncoefs)
-        @printf("Random inits used\n")
+        @printf("Random inits of length %.f used\n", length(inits))
     end
     lower, upper = gen_bounds(Nages, ncoefs, -10.0, 10.0)
     
@@ -55,10 +56,10 @@ function testmod3(; dt, inits, dists, flow_th, map_iters, dovi, dosamp)
         @printf("Number of iterations = %.f\n", map_iters)
         @printf("Number of districts = %.f\n", Ndist)
         @printf("Number of cheby coefs = %.f\n", ncoefs)
-        mapfit, opts, preds = fit_map(model3, inits[:, 2], lower, upper, map_iters, dt2)
+        mapfit, opts, preds = fit_map(model3, inits, lower, upper, map_iters, dt2)
      ##   serialize("data/mapfit3_$size.dat", mapfit)
-        CSV.write("./fitted_models/opti_model3_all_districts.csv", opts)
-        CSV.write("./predictions/FlowDataPreds3_all_districts.csv", preds)        
+        CSV.write("./fitted_models/opti$mod_name.csv", opts)
+        CSV.write("./predictions/FlowDataPreds$mod_name.csv", preds)        
         inits = opts
     end
     fit3 = nothing
