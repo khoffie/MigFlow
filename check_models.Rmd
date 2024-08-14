@@ -37,7 +37,7 @@ preds_th <- 3
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 use_age <- age_lvls
 
-data <- read_data("3_all_newrun_allflows")
+data <- read_data("3_all_newrun")
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
