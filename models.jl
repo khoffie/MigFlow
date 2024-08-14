@@ -90,8 +90,8 @@ etc etc
     Ndist, meddist, netactual, ncoefs)
 
     a ~ filldist(Normal(0.0,1.0),Nages)
-    b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
-    bfrac = b ./ 100.0; ## express in percent
+    b ~ filldist(Gamma(3.0, 3.0/2.0),Nages)
+    bfrac = b ./ 10.0; ## rescale to 1/10 
     c ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 0.2/4.0),Nages)
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
