@@ -91,6 +91,7 @@ etc etc
 
     a ~ filldist(Normal(0.0,1.0),Nages)
     b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
+    bfrac = b ./ 100.0; ## express in percent
     c ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 0.2/4.0),Nages)
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
@@ -118,7 +119,7 @@ etc etc
 
     ## indiviudal flows
     preds = [frompop[i] * logistic(logisticconst + log(topop[i] / popgerm) + a[agegroup[i]] +
-                log1p(b[agegroup[i]] /100.0 / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) + desires[i])
+                log1p(bfrac[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) + desires[i])
                     for i in 1:length(flows)]
 
     if typeof(a[1]) != Float64
