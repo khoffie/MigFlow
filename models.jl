@@ -118,7 +118,7 @@ etc etc
 
     ## indiviudal flows
     preds = [frompop[i] * logistic(logisticconst + log(topop[i] / popgerm) + a[agegroup[i]] +
-                log1p(b[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) + desires[i])
+                log1p(b[agegroup[i]] /100.0 / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) + desires[i])
                     for i in 1:length(flows)]
 
     if typeof(a[1]) != Float64
