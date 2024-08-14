@@ -43,9 +43,10 @@ sampdists = [sampdists;
 sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#    
 
+
 result = testmod3(dt = dt, inits = "", dists = dists,
-                        flow_th = -1; map_iters = 1000, 
-                        mod_name = "3_all_newrun_allflows",
+                        flow_th = -1; map_iters = 10, 
+                        mod_name = "3_alldists_allflows_bbo10iter",
                         dosamp = false, dovi = false)
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
