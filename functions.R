@@ -74,14 +74,20 @@ make_net_plot <- function(net, scales = "free") {
     return(plt)
 }
 
-plot_fit <- function(dt, x, y, th) {
-    plt <- ggplot(dt[preds > th], aes({{x}}, {{y}})) +
+plot_fit <- function(dt, x, y, th_min, th_max = NULL) {
+    main <- sprintf("Individual flows for preds > %s", th_min)
+    plt <- ggplot(dt[preds > th_min], aes({{x}}, {{y}})) +
         geom_hline(yintercept = 0) +
-        geom_point(pch = ".") +
+        geom_point(pch = ".", alpha = .3) +
         geom_smooth(se = FALSE) +
         facet_wrap(vars(model, agegroup), scale = "free") +
-        ggtitle(sprintf("Individual flows for preds > %s", th)) +
+        ggtitle(main) +
         theme_minimal()
+    if(is.null(th_max) == FALSE) {
+        main <- sprintf(paste(main, "and < %s"), th_max)
+        plt <- plt + xlim(c(0, th_max)) +
+            ggtitle(main)
+    }
     return(plt)
 }
 

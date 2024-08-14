@@ -58,11 +58,6 @@ shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "district
 
 ```
 
-```{r, results = "show"}
-
-
-```
-
 ```{r, diff-plt, fig.cap = caption}
 
 caption <- "Distribution of differences between optimal values and initial values."
@@ -206,7 +201,7 @@ plot_fit(dt, distance, log(actual/preds), 0) +
     facet_wrap(vars(agegroup, model), scale = "free", ncol = 2) 
 
 plot_fit(dt, log(preds), log(actual/preds), 3)
-plot_fit(dt, preds, (actual - preds) / preds, 3)
-plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1)
+plot_fit(dt, preds, (actual - preds) / preds, 3, 50) 
+plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50)
 
 ```
