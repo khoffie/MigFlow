@@ -74,8 +74,13 @@ make_net_plot <- function(net, scales = "free") {
     return(plt)
 }
 
-plot_fit <- function(dt, x, y, th_min, th_max = NULL) {
-    main <- sprintf("Individual flows for preds > %s", th_min)
+plot_fit <- function(dt, x, y, th_min, th_max = NULL, p_sample = NULL) {
+    main <- "Individual flows "
+    if(!is.null(p_sample)) {
+        dt <- dt[sample(1:.N, size = as.integer(p_sample * .N))]
+        main <- sprintf("%s percent sample of individual flows", p_sample * 100)
+    }
+    main <- sprintf(paste(main, "for preds > %s"), th_min)
     plt <- ggplot(dt[preds > th_min], aes({{x}}, {{y}})) +
         geom_hline(yintercept = 0) +
         geom_point(pch = ".", alpha = .3) +
@@ -114,4 +119,19 @@ make_net_map <- function(net) {
         facet_wrap(vars(model, type, agegroup)) +
         theme_minimal() 
     return(plt)
+}
+
+add_mising_flows <- function(flows, regions, agegroups, years) {
+    ### in flows data all 0 flows are missing. We add them now to make
+    ### sure all origins have the same destinations for all age groups and
+    ### vice versa
+    all_keys <- CJ(fromdist = regions,
+                   todist = regions,
+                   agegroup = agegroups,
+                   year = years)
+    setkeyv(all_keys, colnames(all_keys))
+    setkeyv(flows, colnames(all_keys))
+    flows <- flows[all_keys]
+    flows[is.na(flows), flows := 0]
+    return(flows)
 }
