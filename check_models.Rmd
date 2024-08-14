@@ -38,9 +38,9 @@ p_preds <- "~/Documents/GermanMigration/predictions"
 p_coefs <- "~/Documents/GermanMigration/fitted_models"
 f_preds <- list.files(p_preds)
 f_coefs <- list.files(p_coefs, "opti")
-mod_name <- "all_districts"
-f_preds <- paste0("FlowDataPreds3_", mod_name, ".csv")
-f_coefs <- paste0("opti_model3_", mod_name, ".csv")
+mod_name <- "3_all_newrun"
+f_preds <- paste0("FlowDataPreds", mod_name, ".csv")
+f_coefs <- paste0("opti_", mod_name, ".csv")
 preds_th <- 3
 
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
