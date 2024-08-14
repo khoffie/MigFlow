@@ -133,7 +133,7 @@ kbl(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
 ```
 
 ## Maps
-```{r make-maps}
+```{r make-maps, out.width = "99%"}
 
 net[, diff := actual - preds]
 netm <- melt(net,
