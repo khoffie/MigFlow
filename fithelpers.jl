@@ -82,7 +82,7 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
 end
 
 fit_map = function(model, inits, lower, upper, iters, dt)
-    fit = maximum_a_posteriori(model, LBFGS(); 
+    fit = maximum_a_posteriori(model, BBO_adaptive_de_rand_1_bin(); 
     adtype = AutoReverseDiff(), 
     initial_params = inits, lb = lower, ub = upper,
     maxiters = iters, maxtime = 600, reltol = .05, 
