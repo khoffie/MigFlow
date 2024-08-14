@@ -79,7 +79,7 @@ etc etc
 
 
 To see the distance function: 
-    
+
 https://www.desmos.com/calculator/trnfkop4ox
 
 =#
@@ -93,7 +93,6 @@ https://www.desmos.com/calculator/trnfkop4ox
 
     a ~ filldist(Normal(0.0,1.0),Nages)
     b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
-    bfrac = b ./ 100.0; ## rescale to 1/10 
     c ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     dscale ~ Exponential(1.0) ## something like 300 km typical scale for the decay of sensitivity, probably less
@@ -123,7 +122,7 @@ https://www.desmos.com/calculator/trnfkop4ox
     ## indiviudal flows
     distscale = dscale*meddist
     preds = [frompop[i] * logistic(logisticconst + log(topop[i] / popgerm) + a[agegroup[i]] +
-                log1p(bfrac[agegroup[i]] / (distance[i] / distscale + d0[agegroup[i]]/100.0)^c[agegroup[i]]) + desires[i])
+                log1p(b[agegroup[i]] / (distance[i] / distscale + d0[agegroup[i]]/100.0)^c[agegroup[i]]) + desires[i])
                     for i in 1:length(flows)]
 
     if typeof(a[1]) != Float64
