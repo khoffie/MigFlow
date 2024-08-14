@@ -43,9 +43,9 @@ sampdists = [sampdists;
 sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#    
 
-result = testmod3(dt = dt, inits = optis, dists = dists,
+result = testmod3(dt = dt, inits = "", dists = dists,
                         flow_th = 0; map_iters = 1000, 
-                        mod_name = "3_all_newrun",
+                        mod_name = "3_all_neterrs",
                         dosamp = false, dovi = false)
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
@@ -58,3 +58,4 @@ result = testmod3(dt = dt, inits = optis, dists = dists,
 #result = testmod3(dt, optis, dists, meddist,false,false)
 
 #chain = Turing.sample(model3, Prior(), 100)
+
