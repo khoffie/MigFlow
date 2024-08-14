@@ -57,6 +57,7 @@ function testmod3(; dt, inits, dists, flow_th, map_iters, mod_name, dovi, dosamp
         @printf("Number of districts = %.f\n", Ndist)
         @printf("Number of cheby coefs = %.f\n", ncoefs)
         mapfit, opts, preds = fit_map(model3, inits, lower, upper, map_iters, dt2)
+        @printf("LP of fit= %.f\n", mapfit.lp)
      ##   serialize("data/mapfit3_$size.dat", mapfit)
         CSV.write("./fitted_models/opti$mod_name.csv", opts)
         CSV.write("./predictions/FlowDataPreds$mod_name.csv", preds)        
