@@ -51,17 +51,17 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
     a_lb = - 5.5
     a_ub = 5.5
     b_lb = 0.0
-    b_ub = 10.0
+    b_ub = 20.0
     c_lb = .05
-    c_ub = 5
+    c_ub = 10
     d0_lb = 0.0
-    d0_ub = .05
-    ne_lb = .05
-    ne_ub = 5.0
+    d0_ub = .5
+    ne_lb = .5
+    ne_ub = 10.0
     lc_lb = -30.0
     lc_ub = 30.0
-    kd_lb = -1.5
-    kd_ub = 1.5
+    kd_lb = -2.5
+    kd_ub = 2.5
         
     lower = [fill(a_lb, Nages); 
             fill(b_lb, Nages); 
