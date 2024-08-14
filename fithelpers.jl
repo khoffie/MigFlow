@@ -27,7 +27,7 @@ gen_random_inits = function(Nages, ncoefs)
         rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
         rand(Uniform(1.5, 2.5), Nages); #c
         rand(Uniform(0.0, 0.03), Nages); #d0
-        rand(Uniform(1.0,5.0),Nages); # neterrs
+        rand(Uniform(1.0, 5.0), Nages); # neterrs
         [8.0]; #  logisticconst
         fill(0.0, Nages); #kd
         fill(0.0, Nages * ncoefs) # desirecoefs
@@ -47,7 +47,8 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
             fill(0.0, Nages); 
             fill(c_lb, Nages); 
             fill(d0_lb, Nages); 
-            [.05, -30.0];
+            fill(1.0, Nages);
+            [-30.0]; ## logconst
             fill(kd_lb, Nages); 
             cheby_lb * ones(ncoefs * Nages)]
 
@@ -55,7 +56,8 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
             fill(20.0, Nages); 
             fill(c_ub, Nages); 
             fill(d0_ub, Nages); 
-            [3, 30.0];
+            fill(5.0, Nages);
+            [30.0];
             fill(kd_ub, Nages); 
             cheby_ub * ones(ncoefs * Nages)]
     return(lower, upper)
@@ -64,7 +66,7 @@ end
 fit_map = function(model, inits, lower, upper, iters, dt)
     fit = maximum_a_posteriori(model, LBFGS(); 
     adtype = AutoReverseDiff(; compile = false), 
-    initial_params = inits, lb = lower, ub = upper,
+    initial_params = inits, lb = fill(-30.0, 253), ub = fill(30.0, 253),
     maxiters = iters, maxtime = 600, reltol = .05, 
     progress = true, show_trace = true)    
 
