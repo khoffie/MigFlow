@@ -3,29 +3,6 @@ library(MigStat)
 library(sfheaders)
 library(sf)
 
-rec_ages <- function(dt) {
-  agegroup <- NULL
-  lbls <- data.table(old = c("unter18", "über65"),
-                     new = c("below18", "above65"))
-  dt[lbls, agegroup := i.new, on = .(agegroup = old)]
-  return(NULL)
-}
-
-add_mising_flows <- function(flows, regions, agegroups, years) {
-    ### in flows data all 0 flows are missing. We add them now to make
-    ### sure all origins have the same destinations for all age groups and
-    ### vice versa
-    all_keys <- CJ(fromdist = regions,
-                   todist = regions,
-                   agegroup = agegroups,
-                   year = years)
-    setkeyv(all_keys, colnames(all_keys))
-    setkeyv(flows, colnames(all_keys))
-    flows <- flows[all_keys]
-    flows[is.na(flows), flows := 0]
-    return(flows)
-}
-
 p_clean <- "~/Diss/inst/extdata/clean/"
 flows <- fread(file.path(p_clean, "flows_districts/districts_2000_2017_ger.csv"))
 age_for <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
