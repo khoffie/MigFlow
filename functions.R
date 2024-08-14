@@ -1,15 +1,36 @@
-read_data <- function(path, file) {
-    if(grepl("prediction", path)) {
-        mod <- gsub("FlowData", "", file)
-        mod <- gsub("Preds", "model", mod)
+read_data <- function(mod_name) {
+    p_preds <- "predictions"
+    p_coefs <- "fitted_models"
+
+    gen_filenames <- function(mod_name) {
+    f_preds <- paste0("FlowDataPreds", mod_name, ".csv")
+    f_coefs <- paste0("opti", mod_name, ".csv")
+    nms <- list(f_preds = f_preds, f_coefs = f_coefs)
+
+    f2 <- file.exists(file.path(p_coefs, nms[[2]]))
+    if(file.exists(file.path(p_preds, nms[[1]])) == FALSE) {
+        stop(sprintf("%s does not exist", nms[[1]]))
     }
-    if(grepl("models", path)) {
-        mod <- gsub("opti_", "", file)
+    if(file.exists(file.path(p_coefs, nms[[2]])) == FALSE) {
+        stop(sprintf("%s does not exist", nms[[2]]))
     }
-    mod <- gsub(".csv", "", mod)
-    dt <- data.table::fread(file.path(path, file))
-    dt[, model := mod]
-    return(dt)
+    return(nms)
+    }
+
+    check_creation_time <- function(mod_name) {
+        f1 <- file.path(p_preds, nms[[1]])
+        f2 <- file.path(p_coefs, nms[[2]])
+        message(sprintf("File %s created %s ",nms[1], file.info(f1)$ctime))
+        message(sprintf("File %s created %s ",nms[2], file.info(f2)$ctime))
+    }
+
+    nms <- gen_filenames(mod_name)
+    check_creation_time(mod_name)
+    dt <- data.table::fread(file.path(p_preds, gen_filenames(mod_name)[1]))
+    dt[, model := mod_name]
+    coefs <- data.table::fread(file.path(p_coefs, gen_filenames(mod_name)[2]))
+    out <- list(preds = dt, coefs = coefs)
+    return(out)
 }
 
 calculate_net <- function(dt, col, by, o = "fromdist", d = "todist",
