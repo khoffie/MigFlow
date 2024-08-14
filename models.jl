@@ -93,7 +93,7 @@ etc etc
     b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
     c ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     d0 ~ filldist(Gamma(5.0, 0.2/4.0),Nages)
-    neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
+    neterr ~ arraydist([Gamma(3.0, 5/2.0) for i in 1:Nages]) ## this is in percent
     logisticconst ~ Normal(0.0,30.0) # This constant isn't easy to figure out because log(topop[i]/popgerm) is numbers in the range maybe -10 to -4 
     kd ~ MvNormal(fill(0.0, Nages), (log(5.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
@@ -153,7 +153,7 @@ etc etc
 
     ## bubble under rug, how do I get the bubble to a certain spot by
     ## stomping on the rug?
-    neterrfrac = neterr/100 ## we rescaled it to percent
-    netactual ~ arraydist([Normal(netflows[dist,age],neterrfrac*distpop[dist]) for dist in 1:Ndist, age in 1:Nages]) # neterr is in percent now
+    neterrfrac = neterr ./ 100 ## we rescaled it to percent
+    netactual ~ arraydist([Normal(netflows[dist,age],neterrfrac[age]*distpop[dist]) for dist in 1:Ndist, age in 1:Nages]) # neterr is in percent now
     return((preds,netflows))
 end

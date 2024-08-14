@@ -27,7 +27,8 @@ gen_random_inits = function(Nages, ncoefs)
         rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
         rand(Uniform(1.5, 2.5), Nages); #c
         rand(Uniform(0.0, 0.03), Nages); #d0
-        [1.5, 8.0]; # neterr and logisticconst
+        rand(Uniform(1.0,5.0),Nages); # neterrs
+        [8.0]; #  logisticconst
         fill(0.0, Nages); #kd
         fill(0.0, Nages * ncoefs) # desirecoefs
         ]
