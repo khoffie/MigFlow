@@ -37,10 +37,10 @@ end
 gen_random_inits = function(Nages, ncoefs)
     inits = [
         fill(0.0, Nages); #a
-        fill(1.0, Nages); #b
+        fill(0.25, Nages); #b
         fill(2.0, Nages); #c
-        fill(0.03, Nages); #d0
-        [3.0, 5.0]; #neterr and logconst
+        fill(2.0, Nages); #d0
+        [90.0, 3.0, 5.0]; #dscale, neterr and logconst
         fill(0.0, Nages); #kd
         fill(0.0, Nages * ncoefs) #desire
         ]
@@ -51,11 +51,11 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
     a_lb = - 5.5
     a_ub = 5.5
     b_lb = 0.0
-    b_ub = 30.0
+    b_ub = 200.0
     c_lb = .05
     c_ub = 10
     d0_lb = 0.0
-    d0_ub = .5
+    d0_ub = 50.0
     ne_lb = .5
     ne_ub = 10.0
     lc_lb = -30.0
@@ -67,6 +67,7 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
             fill(b_lb, Nages); 
             fill(c_lb, Nages); 
             fill(d0_lb, Nages); 
+            [10.0]; # dscale in km
             [ne_lb, lc_lb];
             fill(kd_lb, Nages); 
             cheby_lb * ones(ncoefs * Nages)]
@@ -75,6 +76,7 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
             fill(b_ub, Nages); 
             fill(c_ub, Nages); 
             fill(d0_ub, Nages); 
+            [600.0]; #dscale in km
             [ne_ub, lc_ub];
             fill(kd_ub, Nages); 
             cheby_ub * ones(ncoefs * Nages)]

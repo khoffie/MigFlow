@@ -90,10 +90,11 @@ etc etc
     Ndist, meddist, netactual, ncoefs)
 
     a ~ filldist(Normal(0.0,1.0),Nages)
-    b ~ filldist(Gamma(3.0, 3.0/2.0),Nages)
-    bfrac = b ./ 10.0; ## rescale to 1/10 
+    b ~ filldist(Gamma(3.0, 1.0/2.0),Nages)
+    bfrac = b ./ 100.0; ## rescale to 1/10 
     c ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
-    d0 ~ filldist(Gamma(5.0, 0.2/4.0),Nages)
+    d0 ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
+    dscale ~ Exponential(meddist) ## something like 300 km typical scale for the decay of sensitivity, probably less
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
     logisticconst ~ Normal(0.0,30.0) # This constant isn't easy to figure out because log(topop[i]/popgerm) is numbers in the range maybe -10 to -4 
     kd ~ MvNormal(fill(0.0, Nages), (log(5.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
@@ -119,7 +120,7 @@ etc etc
 
     ## indiviudal flows
     preds = [frompop[i] * logistic(logisticconst + log(topop[i] / popgerm) + a[agegroup[i]] +
-                log1p(bfrac[agegroup[i]] / (distance[i] / meddist + d0[agegroup[i]])^c[agegroup[i]]) + desires[i])
+                log1p(bfrac[agegroup[i]] / (distance[i] / dscale + d0[agegroup[i]]/100.0)^c[agegroup[i]]) + desires[i])
                     for i in 1:length(flows)]
 
     if typeof(a[1]) != Float64
