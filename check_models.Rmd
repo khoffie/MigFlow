@@ -37,7 +37,7 @@ preds_th <- 3
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 use_age <- age_lvls
 
-data <- read_data("3_all_newrun")
+data <- read_data("3_all_newrun_allflows")
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
@@ -50,11 +50,13 @@ dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 dt_coefs <- data$coefs
 dt_coefs[, diff := values - inits]
 
-pop_dt <- fread(file.path("~/Diss/inst/extdata/clean/aux_data/", "age17for.csv"))
+p_clean <- "~/Diss/inst/extdata/clean/"
+pop_dt <- fread(file.path(p_clean, "aux_data/age17for.csv"))
 setnames(pop_dt, "age_group", "agegroup")
 rec_ages(pop_dt)
 
-shp <- setDT(sf::read_sf(file.path("~/Diss/inst/extdata/clean/shapes", "districts_ext.shp")))
+shp <- setDT(sf::read_sf(file.path(p_clean, "shapes/districts_ext.shp")))
+density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))
 
 ```
 
@@ -141,7 +143,7 @@ netm <- melt(net,
              variable.name = "type")
 ##netm[, value := sign(value) * log(1 + abs(value))]
 
-lapply(use_age, function(age) make_net_map(netm[agegroup == age & type %in% c("actual", "preds")]))
+lapply(use_age[c(1, 2)], function(age) make_net_map(netm[agegroup == age & type %in% c("actual", "preds")]))
 
 ```
 
@@ -200,8 +202,34 @@ prettify(resid_plt, main = "Individual Flows",
 plot_fit(dt, distance, log(actual/preds), 0) +
     facet_wrap(vars(agegroup, model), scale = "free", ncol = 2) 
 
-plot_fit(dt, log(preds), log(actual/preds), 3)
-plot_fit(dt, preds, (actual - preds) / preds, 3, 50) 
-plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50)
+plot_fit(dt, log(preds), log(actual/preds), 3, p_sample = .2)
+plot_fit(dt, preds, (actual - preds) / preds, 3, 50, p_sample = .2) 
+plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = .2)
+
+```
+
+### Distance
+
+```{r,}
+
+plot_fit(dt, distance, log(actual/preds), 0, p_sample = .2)
+
+```
+
+### Population
+
+```{r,}
+
+plot_fit(dt, log(frompop * topop), log(actual/preds), 3, p_sample = .2)
+
+```
+
+### density
+```{r,}
+
+dt[density, fromdens := i.density, on = .(fromdist = region, year)]
+dt[density, todens := i.density, on = .(todist = region, year)]
+
+plot_fit(dt, log(fromdens * todens), log(actual/preds), 3, p_sample = .2)
 
 ```
