@@ -29,6 +29,7 @@ read_data <- function(mod_name) {
     dt <- data.table::fread(file.path(p_preds, gen_filenames(mod_name)[1]))
     dt[, model := mod_name]
     coefs <- data.table::fread(file.path(p_coefs, gen_filenames(mod_name)[2]))
+    coefs[, model := mod_name]
     out <- list(preds = dt, coefs = coefs)
     return(out)
 }
