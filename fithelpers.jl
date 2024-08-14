@@ -61,9 +61,10 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
 end
 
 fit_map = function(model, inits, lower, upper, iters, dt)
-    fit = maximum_a_posteriori(model, LBFGS(); adtype = AutoReverseDiff(), 
+    fit = maximum_a_posteriori(model, LBFGS(); 
+    adtype = AutoReverseDiff(; compile = false), 
     initial_params = inits, lb = lower, ub = upper,
-    maxiters = iters, maxtime = 600, reltol = .08, 
+    maxiters = iters, maxtime = 600, reltol = .05, 
     progress = true, show_trace = true)    
 
     opts = DataFrame(names=names(fit.values, 1), 
