@@ -80,8 +80,7 @@ etc etc
 
 To see the distance function: 
 
-https://www.desmos.com/calculator/trnfkop4ox
-
+https://www.desmos.com/calculator/jhrgbmw9dd
 =#
 
 
