@@ -24,9 +24,9 @@ end
 gen_random_inits = function(Nages, ncoefs)
     inits = [
         rand(Normal(0.0, 1.0), Nages); #a
-        rand(Gamma(3.0, 1.0 / 2.0), Nages); #b
         rand(Uniform(1.5, 2.5), Nages); #c
         rand(Uniform(0.0, 0.03), Nages); #d0
+        rand(Uniform(0.1, 1), Nages); #dscale
         [1.5, 8.0]; # neterr and logisticconst
         fill(0.0, Nages); #kd
         fill(0.0, Nages * ncoefs) # desirecoefs
@@ -34,7 +34,7 @@ gen_random_inits = function(Nages, ncoefs)
   return inits
 end
 
-gen_random_inits = function(Nages, ncoefs)
+#= gen_random_inits = function(Nages, ncoefs)
     inits = [
         fill(0.0, Nages); #a
         fill(2.0, Nages); #c
@@ -46,7 +46,7 @@ gen_random_inits = function(Nages, ncoefs)
         ]
   return inits
 end
-
+ =#
 gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
     a_lb = - 5.5
     a_ub = 5.5
@@ -78,6 +78,15 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
             fill(kd_ub, Nages); 
             cheby_ub * ones(ncoefs * Nages)]
     return(lower, upper)
+end
+
+
+check_inits = function(Nages, ncoefs) 
+    inits = gen_random_inits(Nages, ncoefs)
+    lb = gen_bounds(Nages, ncoefs, -10, 10)[1]
+    up = gen_bounds(Nages, ncoefs, -10, 10)[2]
+    dt = DataFrame(lower = lb, inits = inits, upper = up)
+    return dt
 end
 
 fit_map = function(model, inits, lower, upper, iters, dt)
