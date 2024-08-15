@@ -11,7 +11,7 @@ includet("fitmodel2.jl")
 includet("fitmodel3.jl")
 
 
-Random.seed!(20240719)
+##Random.seed!(20240719)
 
 model  = "3401dists-1flow_th10itersBBO_adaptive_de_rand_1_bin"
 
@@ -37,9 +37,9 @@ dists.distcode = categorical(dists.distcode)
 biggerdists = dists[dists.density .> median(dists.density), :]
 smallerdists = dists[dists.density .< median(dists.density), :]
 
-sampdists = biggerdists[StatsBase.sample(1:nrow(biggerdists),100; replace=false),:]
+sampdists = biggerdists[StatsBase.sample(1:nrow(biggerdists), 25 ; replace=false),:]
 sampdists = [sampdists;
-            smallerdists[StatsBase.sample(1:nrow(smallerdists),100; replace = false),:]    
+            smallerdists[StatsBase.sample(1:nrow(smallerdists), 25; replace = false),:]    
             ]
 
 
@@ -48,8 +48,9 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#    
 
 
-result = testmod3(dt = dt, inits = "", dists = dists, algo = LBFGS(),
-                        flow_th = -1; map_iters = 100, 
+ ## Make reltol argument
+result = testmod3(dt = dt, inits = optis, dists = dists, algo = LBFGS(),
+                        flow_th = -1; map_iters = 1000, 
                         mod_name = "3",
                         dosamp = false, dovi = false)
 
