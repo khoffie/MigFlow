@@ -5,7 +5,6 @@ documentclass: book
 always_allow_html: true
 ---
 
-
 ```{r global_knitr, echo = FALSE, eval = TRUE}
 
 knitr::opts_chunk$set(echo = FALSE,
