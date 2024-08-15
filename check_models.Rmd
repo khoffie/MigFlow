@@ -34,7 +34,8 @@ source("functions.R")
 
 preds_th <- 3
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
-use_age <- age_lvls
+map_age <- age_lvls ## for maps
+use_age <- age_lvls ## for everything else
 
 ## data <- read_data("3_alldists_allflows_bbo10iter")
 data <- read_data("3_alldists_allflows_lbfgs")
@@ -144,7 +145,7 @@ netm <- melt(net,
              variable.name = "type")
 ##netm[, value := sign(value) * log(1 + abs(value))]
 
-lapply(use_age[c(1, 2)], function(age) make_net_map(netm[agegroup == age & type %in% c("actual", "preds")]))
+lapply(map_age, function(age) make_net_map(netm[agegroup == age & type %in% c("actual", "preds")]))
 
 ```
 
