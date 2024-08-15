@@ -73,7 +73,7 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
     CSV.write("./fitted_models/opti$mod_name.csv", opts)
     CSV.write("./predictions/FlowDataPreds$mod_name.csv", preds)        
     inits = opts
-    
+    @printf("Model name = %s\n", mod_name)     
     fit3 = nothing
     
     if dosamp
