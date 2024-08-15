@@ -64,7 +64,8 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
     lower, upper = gen_bounds(Nages, ncoefs)
     @printf("Number of districts = %.f\n", Ndist)
     @printf("Number of cheby coefs = %.f\n", ncoefs)
-    ##print(check_inits(6, 1))
+    print(show_inits(6, 1))
+    print("\n")
     mapfit, opts, preds = fit_map(model = model3, inits = inits, 
                                 lower = lower, upper = upper, 
                                 algo = algo, iters = map_iters, dt = dt2)        
