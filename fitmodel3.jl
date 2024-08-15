@@ -3,6 +3,16 @@
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
 function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, dosamp)
+    gen_name = function(mod_name, Ndists, flow_th, iters, algo, print) 
+        algo = nameof(typeof(algo))
+        mod_name = string(mod_name) * string(Ndists) * "dists" * string(flow_th) *
+                  "flow_th" * string(iters) * "iters" * string(algo)
+        if print == true
+            @printf("Model name = %s\n", mod_name) 
+        end                 
+        return mod_name
+    end
+
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -49,6 +59,7 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
 
     mapfit3 = nothing
     opts3 = nothing
+    mod_name = gen_name(mod_name, Ndist, flow_th, map_iters, algo, true)    
     ## for size in [.1, .2, .4, 1.0, 2.0, 4.0, 10.0]
     for size in [10.0]
         lower, upper = gen_bounds(Nages, ncoefs, - size, size)
