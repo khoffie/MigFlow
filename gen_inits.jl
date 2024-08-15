@@ -54,8 +54,8 @@ show_inits = function(Nages, ncoefs)
               "netterr"; "logconst"; fill("kd", Nages); fill("desire", Nages * ncoefs)]
 
     inits = gen_random_inits(Nages, ncoefs)
-    lb = gen_bounds(Nages, ncoefs, -10, 10)[1]
-    up = gen_bounds(Nages, ncoefs, -10, 10)[2]
+    lb = gen_bounds(Nages, ncoefs)[1]
+    up = gen_bounds(Nages, ncoefs)[2]
     dt = DataFrame(names = names, lower = lb, inits = inits, upper = up)
     return dt
 end
