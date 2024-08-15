@@ -4,6 +4,7 @@ using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, Data
     StatProfilerHTML, StatsFuns, OptimizationBBO, Printf
 includet("debughelpers.jl")
 includet("fithelpers.jl")
+includet("gen_inits.jl")
 includet("models.jl")
 includet("fitmodel1.jl")
 includet("fitmodel2.jl")
@@ -12,7 +13,10 @@ includet("fitmodel3.jl")
 
 Random.seed!(20240719)
 
-optis = CSV.read("./fitted_models/opti3_alldists_allflows_bbo.csv", DataFrame)
+model  = "3401dists-1flow_th10itersBBO_adaptive_de_rand_1_bin"
+
+optis = CSV.read("./fitted_models/opti" * model * ".csv", DataFrame)
+
 
 dt = load_flows()
 dt.fromdist = categorical(dt.fromdist)
@@ -44,9 +48,9 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#    
 
 
-result = testmod3(dt = dt, inits = optis, dists = dists, algo = LBFGS(),
+result = testmod3(dt = dt, inits = "", dists = dists, algo = LBFGS(),
                         flow_th = -1; map_iters = 100, 
-                        mod_name = "3_alldists_allflows_lbfgs",
+                        mod_name = "3",
                         dosamp = false, dovi = false)
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
