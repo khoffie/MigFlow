@@ -38,7 +38,7 @@ map_age <- age_lvls ## for maps
 use_age <- age_lvls ## for everything else
 
 ## data <- read_data("3_alldists_allflows_bbo10iter")
-data <- read_data("3401dists-1flow_th100itersLBFGS")
+data <- read_data("3401dists-1flow_th10itersBBO_adaptive_de_rand_1_bin")
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
@@ -232,5 +232,32 @@ dt[density, fromdens := i.density, on = .(fromdist = region, year)]
 dt[density, todens := i.density, on = .(todist = region, year)]
 
 plot_fit(dt, log(fromdens * todens), log(actual/preds), 3, p_sample = .2)
+
+
+dt[, sum(actual), keyby = .(agegroup)]
+
+
+plot_fit(dt[distance > 600], distance, log(actual / frompop), th_min = 0)
+
+
+dt[distance > 600, mean(actual == 0), keyby = .(agegroup)]
+
+dt[distance < 100, mean(actual), keyby = .(agegroup)]
+
+dt[distance > 600, .(avg = mean(actual)), keyby = .(agegroup)]
+dt[distance > 600 & actual > 0, .("avg log(actual / frompop)"
+                                  = mean(log(actual / frompop))), keyby = .(agegroup)]
+
+dt[distance > 600 & actual > 0, .("avg log(topop  / popgerm)" =
+                                      mean(log(topop / 73000))), keyby = .(agegroup)]
+
+dt[actual > 0, .("avg log(topop  / popgerm)" =
+                                      mean(log(topop / 73000))), keyby = .(agegroup)]
+
+
+plot_fit(dt[actual > 0], distance,
+         log(actual / frompop) - log(topop / 73000) ,
+         th_min = 0)
+ggsave("~/Desktop/plt.pdf")
 
 ```
