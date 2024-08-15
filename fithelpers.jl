@@ -54,9 +54,9 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
     c_lb = .05
     c_ub = 10
     d0_lb = 0.0
-    d0_ub = 50.0
+    d0_ub = 60.0
     ne_lb = .5
-    ne_ub = 10.0
+    ne_ub = 20.0
     lc_lb = -30.0
     lc_ub = 30.0
     kd_lb = -2.5
@@ -82,15 +82,18 @@ end
 
 
 check_inits = function(Nages, ncoefs) 
+    names  = [fill("a", Nages); fill("c", Nages); fill("d0", Nages); fill("dscale", Nages); 
+              "netterr"; "logconst"; fill("kd", Nages); fill("desire", Nages * ncoefs)]
+
     inits = gen_random_inits(Nages, ncoefs)
     lb = gen_bounds(Nages, ncoefs, -10, 10)[1]
     up = gen_bounds(Nages, ncoefs, -10, 10)[2]
-    dt = DataFrame(lower = lb, inits = inits, upper = up)
+    dt = DataFrame(names = names, lower = lb, inits = inits, upper = up)
     return dt
 end
 
 fit_map = function(; model, inits, lower, upper, algo, iters, dt)
-    @printf("Algorithm = %s\n", algo)
+    @printf("Algorithm = %s\n", nameof(typeof(algo)))
     @printf("Number of iterations = %.f\n", iters)
         
     fit = maximum_a_posteriori(model, algo; 
