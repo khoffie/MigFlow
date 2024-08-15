@@ -2,7 +2,7 @@
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
-function testmod3(; dt, inits, dists, flow_th, map_iters, mod_name, dovi, dosamp)
+function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, dosamp)
     droplevels!(dists.distcode)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
@@ -52,12 +52,13 @@ function testmod3(; dt, inits, dists, flow_th, map_iters, mod_name, dovi, dosamp
     ## for size in [.1, .2, .4, 1.0, 2.0, 4.0, 10.0]
     for size in [10.0]
         lower, upper = gen_bounds(Nages, ncoefs, - size, size)
-        @printf("Starting Optimization for size = %.2f\n", size) 
-        @printf("Number of iterations = %.f\n", map_iters)
         @printf("Number of districts = %.f\n", Ndist)
         @printf("Number of cheby coefs = %.f\n", ncoefs)
-        mapfit, opts, preds = fit_map(model3, inits, lower, upper, map_iters, dt2)
-        @printf("LP of fit= %.f\n", mapfit.lp)
+        @printf("Starting Optimization for size = %.2f\n", size) 
+        ##print(check_inits(6, 1))
+        mapfit, opts, preds = fit_map(model = model3, inits = inits, 
+                                    lower = lower, upper = upper, 
+                                    algo = algo, iters = map_iters, dt = dt2)        
      ##   serialize("data/mapfit3_$size.dat", mapfit)
         CSV.write("./fitted_models/opti$mod_name.csv", opts)
         CSV.write("./predictions/FlowDataPreds$mod_name.csv", preds)        
