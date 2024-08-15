@@ -89,13 +89,16 @@ check_inits = function(Nages, ncoefs)
     return dt
 end
 
-fit_map = function(model, inits, lower, upper, iters, dt)
-    fit = maximum_a_posteriori(model, LBFGS(); 
+fit_map = function(; model, inits, lower, upper, algo, iters, dt)
+    @printf("Algorithm = %s\n", algo)
+    @printf("Number of iterations = %.f\n", iters)
+        
+    fit = maximum_a_posteriori(model, algo; 
     adtype = AutoReverseDiff(), 
     initial_params = inits, lb = lower, ub = upper,
     maxiters = iters, maxtime = 600, reltol = .05, 
     progress = true, show_trace = true)    
-
+    @printf("LP of fit= %.f\n", fit.lp)
     opts = DataFrame(names=names(fit.values, 1), 
     values = fit.values.array, 
     inits = inits)
