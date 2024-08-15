@@ -121,9 +121,22 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
         inits = opts
         @printf("Model name = %s\n", mod_name)     
     end
+    @printf("Begin expanding chebyshev box:\n")
+    for size in [.1, .4, 2.0, 4.0, 10.0]
+        @printf("Chebyshev box size: %.2f,%.2f\n",-size,size)
+        lower, upper = gen_bounds(Nages, ncoefs, -size,size)
+        mapfit, opts, preds = fit_map(model = model3, inits = inits, 
+                                    lower = lower, upper = upper, 
+                                    algo = algo, iters = map_iters, dt = thedf)        
+        ##   serialize("data/mapfit3_$size.dat", mapfit)
+        mod_name = @sprintf("chebybox%.2f",size)
+        CSV.write("./fitted_models/opti$mod_name.csv", opts)
+        CSV.write("./predictions/FlowDataPreds$mod_name.csv", preds)        
+        inits = opts
+        @printf("Model name = %s\n", mod_name)     
 
+    end
     fit3 = nothing
-    ## for size in [.1, .2, .4, 1.0, 2.0, 4.0, 10.0]
     
     if dosamp
         fit3 = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
