@@ -1,4 +1,4 @@
-gen_random_inits = function(Nages, ncoefs)
+function gen_random_inits(Nages, ncoefs)
     inits = [
         rand(Normal(0.0, 1.0), Nages); #a prior Exp = 0
         rand(Uniform(1.5, 2.5), Nages); #c prior Exp = 2.5
@@ -12,7 +12,7 @@ gen_random_inits = function(Nages, ncoefs)
   return inits
 end
 
-gen_bounds = function(Nages, ncoefs)
+function gen_bounds(Nages, ncoefs)
     a_lb = - 5.5
     a_ub = 5.5
     c_lb = .05
@@ -49,7 +49,7 @@ gen_bounds = function(Nages, ncoefs)
 end
 
 
-show_inits = function(Nages, ncoefs) 
+function show_inits(Nages, ncoefs) 
     names  = [fill("a", Nages); fill("c", Nages); fill("d0", Nages); fill("dscale", Nages); 
               "netterr"; "logconst"; fill("kd", Nages); fill("desire", Nages * ncoefs)]
 

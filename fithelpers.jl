@@ -1,16 +1,16 @@
-gen_preds = function(mapmodel, optis)
+function gen_preds(mapmodel, optis)
     ## expects values in col2, names in col1
     chain = Chains([optis[: , 2]], optis[: , 1]) 
     preds = generated_quantities(mapmodel, chain)
     return preds
 end
 
-get_params = function(mapfit) 
+function get_params(mapfit) 
     params = DataFrame(names = names(mapfit.values, 1), values = mapfit.values.array)
     return params   
 end
 
-load_flows = function()
+function load_flows()
     if ENV["USER"] == "konstantin"
         dt = CSV.read("data/FlowDataGermans.csv", DataFrame)
     elseif ENV["USER"] == "donkon" ## USER on main machine in office
@@ -21,7 +21,7 @@ load_flows = function()
     end
 end    
 
-gen_random_inits = function(Nages, ncoefs)
+function gen_random_inits(Nages, ncoefs)
     inits = [
         rand(Normal(0.0, 1.0), Nages); #a
         rand(Uniform(1.5, 2.5), Nages); #c
@@ -34,7 +34,7 @@ gen_random_inits = function(Nages, ncoefs)
   return inits
 end
 
-#= gen_random_inits = function(Nages, ncoefs)
+#= function gen_random_inits(Nages, ncoefs)
     inits = [
         fill(0.0, Nages); #a
         fill(2.0, Nages); #c
@@ -47,7 +47,7 @@ end
   return inits
 end
  =#
-gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
+function gen_bounds(Nages, ncoefs, cheby_lb, cheby_ub)
     a_lb = - 5.5
     a_ub = 5.5
 
@@ -81,7 +81,7 @@ gen_bounds = function(Nages, ncoefs, cheby_lb, cheby_ub)
 end
 
 
-check_inits = function(Nages, ncoefs) 
+function check_inits(Nages, ncoefs) 
     names  = [fill("a", Nages); fill("c", Nages); fill("d0", Nages); fill("dscale", Nages); 
               "netterr"; "logconst"; fill("kd", Nages); fill("desire", Nages * ncoefs)]
 
@@ -92,7 +92,7 @@ check_inits = function(Nages, ncoefs)
     return dt
 end
 
-fit_map = function(; model, inits, lower, upper, algo, iters, dt)
+function fit_map(; model, inits, lower, upper, algo, iters, dt)
     @printf("Algorithm = %s\n", nameof(typeof(algo)))
     @printf("Number of iterations = %.f\n", iters)
         
