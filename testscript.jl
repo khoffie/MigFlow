@@ -12,7 +12,7 @@ includet("fitmodel3.jl")
 
 Random.seed!(20240719)
 
-optis = CSV.read("./fitted_models/opti3_alldists_allflows_bbo10iter.csv", DataFrame)
+optis = CSV.read("./fitted_models/opti3_alldists_allflows_bbo.csv", DataFrame)
 
 dt = load_flows()
 dt.fromdist = categorical(dt.fromdist)
@@ -44,8 +44,8 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#    
 
 
-result = testmod3(dt = dt, inits = optis, dists = dists,
-                        flow_th = -1; map_iters = 1000, 
+result = testmod3(dt = dt, inits = optis, dists = dists, algo = LBFGS(),
+                        flow_th = -1; map_iters = 100, 
                         mod_name = "3_alldists_allflows_lbfgs",
                         dosamp = false, dovi = false)
 
@@ -59,3 +59,6 @@ result = testmod3(dt = dt, inits = optis, dists = dists,
 #result = testmod3(dt, optis, dists, meddist,false,false)
 
 #chain = Turing.sample(model3, Prior(), 100)
+
+#check_inits(6, 1)
+
