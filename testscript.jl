@@ -1,5 +1,5 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
-    ReverseDiff, Revise, RCall
+    ReverseDiff, Revise, RCall, LinearAlgebra
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
     StatProfilerHTML, StatsFuns, OptimizationBBO, Printf
 includet("debughelpers.jl")
@@ -15,8 +15,8 @@ includet("fitmodel3.jl")
 
 model  = "3401dists-1flow_th10itersBBO_adaptive_de_rand_1_bin"
 
-optis = CSV.read("./fitted_models/opti" * model * ".csv", DataFrame)
-
+#optis = CSV.read("./fitted_models/opti" * model * ".csv", DataFrame)
+optis = nothing
 
 dt = load_flows()
 dt.fromdist = categorical(dt.fromdist)
@@ -28,6 +28,12 @@ rename!(dt, Dict(:dist => :distance))
 ## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
 dists = CSV.read("./data/districts.csv",DataFrame)
 dists.distcode = categorical(dists.distcode)
+
+distances = [norm([dists.xcoord[i]-dists.xcoord[j],dists.ycoord[i]-dists.ycoord[j]]) for i in 1:nrow(dists) , j in 1:nrow(dists) if i != j]
+meddist = median(distances)
+distances = nothing ## free the memory
+
+popgerm = sum(dists.pop)
 
 
 # testmod3(dt, optis, dists, meddist)
@@ -52,7 +58,7 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
 result = testmod3(dt = dt, inits = optis, dists = dists, algo = LBFGS(),
                         flow_th = -1; map_iters = 1000, 
                         mod_name = "3",
-                        dosamp = false, dovi = false)
+                        dosamp = false, dovi = false, popgerm=popgerm, meddist = meddist)
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
