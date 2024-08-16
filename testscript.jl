@@ -64,7 +64,7 @@ ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "opts",
                         inits = ib[:, "inits"],
                         lowers = ib[:, "lowers"],
                         uppers = ib[:, "uppers"],
-                        iters = 100, preiters = 0, reltol = 1e-2, dosamp = true))
+                        iters = 100, preiters = 0, reltol = 1e-2, dosamp = true, test = false))
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
