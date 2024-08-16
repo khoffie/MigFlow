@@ -1,16 +1,16 @@
-# function gen_random_inits(Nages, ncoefs)
-#     inits = [
-#         rand(Normal(0.0, 1.0), Nages); #a prior Exp = 0
-#         rand(Uniform(1.5, 2.5), Nages); #c prior Exp = 2.5
-#         rand(Uniform(1.0, 10.0), Nages); #d0 prior Exp = 2.5
-#         rand(Uniform(0.25, 1), Nages); #dscale prior Exp = 1
-#         [1.5];                     # netterr prior Exp = 7.5
-#         [5.0];                    # logconst prior Exp = 0
-#         fill(0.0, Nages); #kd                prior Exp = 0
-#         fill(0.0, Nages * ncoefs) # desirecoefs prior Exp = 0
-#         ]
-#   return inits
-# end
+ function gen_random_inits(Nages, ncoefs)
+     inits = [
+         rand(Normal(0.0, 1.0), Nages); #a prior Exp = 0
+         rand(Uniform(1.5, 2.5), Nages); #c prior Exp = 2.5
+         rand(Uniform(1.0, 10.0), Nages); #d0 prior Exp = 2.5
+         rand(Uniform(0.25, 1), Nages); #dscale prior Exp = 1
+         [1.5];                     # netterr prior Exp = 7.5
+         [5.0];                    # logconst prior Exp = 0
+         fill(0.0, Nages); #kd                prior Exp = 0
+         fill(0.0, Nages * ncoefs) # desirecoefs prior Exp = 0
+         ]
+   return inits
+ end
 
 function gen_fixed_inits(Nages, ncoefs)   
 ## handpicked inits from manualinits.ipynb
