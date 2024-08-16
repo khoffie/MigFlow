@@ -1,5 +1,5 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
-    ReverseDiff, Revise, RCall, LinearAlgebra
+    ReverseDiff, Revise, RCall
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
     StatProfilerHTML, StatsFuns, OptimizationBBO, Printf
 includet("debughelpers.jl")
@@ -11,12 +11,9 @@ includet("fitmodel2.jl")
 includet("fitmodel3.jl")
 
 
-##Random.seed!(20240719)
+Random.seed!(20240719)
 
-model  = "3401dists-1flow_th10itersBBO_adaptive_de_rand_1_bin"
-
-#optis = CSV.read("./fitted_models/opti" * model * ".csv", DataFrame)
-optis = nothing
+optis = CSV.read("./fitted_models/opti3_alldists_allflows_bbo10iter.csv", DataFrame)
 
 dt = load_flows()
 dt.fromdist = categorical(dt.fromdist)
@@ -37,9 +34,9 @@ dists.distcode = categorical(dists.distcode)
 biggerdists = dists[dists.density .> median(dists.density), :]
 smallerdists = dists[dists.density .< median(dists.density), :]
 
-sampdists = biggerdists[StatsBase.sample(1:nrow(biggerdists), 25 ; replace=false),:]
+sampdists = biggerdists[StatsBase.sample(1:nrow(biggerdists),100; replace=false),:]
 sampdists = [sampdists;
-            smallerdists[StatsBase.sample(1:nrow(smallerdists), 25; replace = false),:]    
+            smallerdists[StatsBase.sample(1:nrow(smallerdists),100; replace = false),:]    
             ]
 
 
@@ -53,9 +50,18 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
                         mod_name = "3_alldists_allflows_lbfgs",
                         dosamp = false, dovi = false)
  =#
- 
- result = testmod3simpl(thedf = dt, dists = dists,
-                        iters = 1000, preiters = 10)
+
+
+ Nages = 6
+ ncoefs = 36
+
+ib = gen_inits_bounds(Nages, ncoefs, "fixed", true)
+
+ result = @time(testmod3simpl(thedf = dt, dists = dists, 
+                        inits = ib[:, "inits"],
+                        lowers = ib[:, "lowers"],
+                        uppers = ib[:, "uppers"],
+                        iters = 1000, preiters = 1))
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
@@ -67,6 +73,3 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
 #result = testmod3(dt, optis, dists, meddist,false,false)
 
 #chain = Turing.sample(model3, Prior(), 100)
-
-#check_inits(6, 1)
-
