@@ -188,10 +188,23 @@ function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, r
                                         algo = algo, iters = preiters, reltol = reltol, dt = thedf)
         inits = opts ## not necessary since no loop?
         write_out(mod_name = "SimpleBBO", opts = opts, preds = preds)
-    else
+    elseif dosamp == false
     mapfit, opts, preds = fit_map(model = model3, inits = inits, 
                                     lower = lowers, upper = uppers, 
                                     algo = LBFGS(), iters = iters, reltol = reltol, dt = thedf)
     write_out(mod_name = "SimpleLBFGS", opts = opts, preds = preds)
-    end        
+        
+    elseif dosamp == true
+        fit = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
+                            init_params = inits, lower = lowers, upper = uppers,    
+                            verbose = true, progress = true)
+        
+        opts = DataFrame(names=names(fit.values, 1), 
+                         values = fit.values.array, 
+                         inits = inits)
+        display(density(opts.values .- opts.inits))
+        dt[:, "preds"] = generated_quantities(model, opts[:, "values"])[1][1]
+        serialize("./fitted_models/sampler", fit)
+        write_out(mod_name = mod_name, opts = opts, preds = dt )
+        end
 end
