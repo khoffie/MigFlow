@@ -49,10 +49,10 @@ function gen_bounds(Nages, ncoefs)
     ne_ub = 10.0
     lc_lb = 4.0
     lc_ub = 6.0
-    kd_lb = -0.5
-    kd_ub = 0.5
-    cheby_lb = -0.01
-    cheby_ub = 0.01
+    kd_lb = -3
+    kd_ub = 3
+    cheby_lb = -1.0
+    cheby_ub = 1.0
         
     lower = [
         ##fill(a_lb, Nages); 
