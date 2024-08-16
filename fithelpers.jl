@@ -21,14 +21,14 @@ function load_flows()
     end
 end    
 
-function fit_map(; model, inits, lower, upper, algo, iters, dt)
+function fit_map(; model, inits, lower, upper, algo, iters, reltol, dt)
     @printf("Algorithm = %s\n", nameof(typeof(algo)))
     @printf("Number of iterations = %.f\n", iters)
         
     fit = maximum_a_posteriori(model, algo; 
     adtype = AutoReverseDiff(), 
     initial_params = inits, lb = lower, ub = upper,
-    maxiters = iters, maxtime = 600, reltol = .05, 
+    maxiters = iters, maxtime = 600, reltol = reltol, 
     progress = true, show_trace = true)    
     @printf("LP of fit= %.f\n", fit.lp)
     opts = DataFrame(names=names(fit.values, 1), 
