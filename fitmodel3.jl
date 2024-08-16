@@ -148,7 +148,7 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
 end
 
 
-function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters)
+function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, reltol)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
     distdens = distdens ./ maximum(distdens)

@@ -56,7 +56,7 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  ncoefs = 36
 
 ## not so great
- opts_f = "fitted_models/optiSimpleBBO.csv"
+ opts_f = "fitted_models/optiSimpleLBFGS.csv"
 ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "opts", 
                       opts_f = opts_f, show =true)
 
@@ -64,7 +64,7 @@ ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "opts",
                         inits = ib[:, "inits"],
                         lowers = ib[:, "lowers"],
                         uppers = ib[:, "uppers"],
-                        iters = 1000, preiters = 0))
+                        iters = 1000, preiters = 0, reltol = 1e-4))
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
