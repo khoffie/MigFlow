@@ -37,20 +37,20 @@ end
 
 
 function gen_bounds(Nages, ncoefs)
-    a_lb = - 5.5
-    a_ub = 5.5
-    c_lb = .05
-    c_ub = 5.0
+    a_lb = - 1.0
+    a_ub = 3.0
+    c_lb = 1.5
+    c_ub = 3.5
     d0_lb = 0.0
-    d0_ub = 60.0
+    d0_ub = 10.0
     dscale_lb = .02
     dscale_ub = 1.0
     ne_lb = .5
     ne_ub = 10.0
     lc_lb = 4.0
     lc_ub = 6.0
-    kd_lb = -2.5
-    kd_ub = 2.5
+    kd_lb = -1.0
+    kd_ub = 1.0
     cheby_lb = -0.01
     cheby_ub = 0.01
         
