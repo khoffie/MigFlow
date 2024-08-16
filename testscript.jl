@@ -29,12 +29,6 @@ rename!(dt, Dict(:dist => :distance))
 dists = CSV.read("./data/districts.csv",DataFrame)
 dists.distcode = categorical(dists.distcode)
 
-distances = [norm([dists.xcoord[i]-dists.xcoord[j],dists.ycoord[i]-dists.ycoord[j]]) for i in 1:nrow(dists) , j in 1:nrow(dists) if i != j]
-meddist = median(distances)
-distances = nothing ## free the memory
-
-popgerm = sum(dists.pop)
-
 
 # testmod3(dt, optis, dists, meddist)
 
