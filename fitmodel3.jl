@@ -198,13 +198,6 @@ function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, r
         fit = Turing.sample(model3, NUTS(500,.8; init_ϵ = 1e-6, adtype=AutoReverseDiff(true)), MCMCThreads(), 100, 3,
                             init_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
                             verbose = true, progress = true)
-        
-        opts = DataFrame(names=names(fit.values, 1), 
-                         values = fit.values.array, 
-                         inits = inits)
-        display(density(opts.values .- opts.inits))
-        dt[:, "preds"] = generated_quantities(model, opts[:, "values"])[1][1]
         serialize("./fitted_models/sampler", fit)
-        write_out(mod_name = mod_name, opts = opts, preds = dt )
-        end
+    end
 end
