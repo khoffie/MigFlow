@@ -48,11 +48,14 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#    
 
 
- ## Make reltol argument
-result = testmod3(dt = dt, inits = optis, dists = dists, algo = LBFGS(),
+ #= result = testmod3(dt = dt, inits = "", dists = dists,
                         flow_th = -1; map_iters = 1000, 
-                        mod_name = "3",
-                        dosamp = false, dovi = false, popgerm=popgerm, meddist = meddist)
+                        mod_name = "3_alldists_allflows_lbfgs",
+                        dosamp = false, dovi = false)
+ =#
+ 
+ result = testmod3simpl(thedf = dt, dists = dists,
+                        iters = 1000, preiters = 10)
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
