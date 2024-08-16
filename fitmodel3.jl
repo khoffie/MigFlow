@@ -195,7 +195,7 @@ function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, r
     write_out(mod_name = "SimpleLBFGS", opts = opts, preds = preds)
         
     elseif dosamp == true
-        fit = Turing.sample(model3, NUTS(500,.8; adtype=AutoReverseDiff(true)), 100,
+        fit = Turing.sample(model3, NUTS(500,.8; init_ϵ = 1e-6, adtype=AutoReverseDiff(true)), MCMCThreads(), 100, 3,
                             init_params = inits, lower = lowers, upper = uppers,    
                             verbose = true, progress = true)
         
