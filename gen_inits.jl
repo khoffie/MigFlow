@@ -19,7 +19,7 @@ function gen_fixed_inits(Nages, ncoefs)
     cs = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
     d0s = [.1, .1, .1, .1, .1, .1]
     dscales = [.3, .3, .5, .5, .3, .3]
-    logconst = -5
+    logconst = 4.5 ## -5 was typo
    ##as = fill(-2, Nages) =#
 
    inits = [
