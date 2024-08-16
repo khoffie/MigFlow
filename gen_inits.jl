@@ -72,14 +72,16 @@ function gen_bounds(Nages, ncoefs)
     return(lower, upper)
 end
 
-
-function show_inits(Nages, ncoefs) 
+ function gen_inits_bounds(Nages, ncoefs, type) 
     names  = [fill("a", Nages); fill("c", Nages); fill("d0", Nages); fill("dscale", Nages); 
               "netterr"; "logconst"; fill("kd", Nages); fill("desire", Nages * ncoefs)]
-
-    inits = gen_fixed_inits(Nages, ncoefs)
+    if type == "random"
+        inits = gen_random_inits(Nages, ncoefs)
+    elseif type == "fixed"
+        inits = gen_fixed_inits(Nages, ncoefs)
+    end
     lb = gen_bounds(Nages, ncoefs)[1]
     up = gen_bounds(Nages, ncoefs)[2]
-    dt = DataFrame(names = names, lower = lb, inits = inits, upper = up)
+    dt = DataFrame(names = names, lowers = lb, inits = inits, uppers = up)
     return dt
 end

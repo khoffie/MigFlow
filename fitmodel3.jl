@@ -148,7 +148,7 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
 end
 
 
-function testmod3simpl(; thedf, dists, iters, preiters)
+function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
     distdens = distdens ./ maximum(distdens)
@@ -178,11 +178,6 @@ function testmod3simpl(; thedf, dists, iters, preiters)
                         Nages,
                         dists.xcoord, dists.ycoord, distdens,dists.pop,
                         Ndist, meddist, netactual, ncoefs)
-
-    inits = gen_fixed_inits(Nages, ncoefs)                        
-    lowers = gen_bounds(Nages, ncoefs)[1]
-    uppers = gen_bounds(Nages, ncoefs)[2]
-    @printf("Inits and bounds %s\n", show_inits(Nages, 1))
 
     mapfit,opts,preds = nothing,nothing,nothing
     if preiters > 0
