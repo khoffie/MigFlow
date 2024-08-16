@@ -150,3 +150,34 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
 end
 
 
+function testmod3simpl(thedf, dists, inits, lowers, uppers, iters, preiters)
+
+    netactual = calcnet(thedf.flows,
+                        levelcode.(thedf.fromdist),
+                        levelcode.(thedf.todist),
+                        levelcode.(thedf.agegroup),
+                        Nages,
+                        Ndist)
+
+    model3 = migration3(thedf.flows, sum(thedf.flows), levelcode.(thedf.fromdist), levelcode.(thedf.todist),
+                        thedf.frompop, thedf.topop, popgerm, thedf.distance,
+                        levelcode.(thedf.agegroup),
+                        Nages,
+                        dists.xcoord, dists.ycoord, distdens,dists.pop,
+                        Ndist, meddist, netactual, ncoefs)
+
+    mapfit,opts,preds = nothing,nothing,nothing
+    if preiters > 0
+        ## pre-optimize using a non-gradient optimizer to avoid the worst types of initialization problems
+        algo = BBO_adaptive_de_rand_1_bin()
+        mapfit, opts, preds = fit_map(model = model3, inits = inits, 
+                                        lower = lowers, upper = uppers, 
+                                        algo = algo, iters = preiters, dt = thedf)
+        inits = opts
+    else
+
+    mapfit, opts, preds = fit_map(model = model3, inits = inits, 
+                                    lower = lowers, upper = uppers, 
+                                    algo = LBFGS(), iters = preiters, dt = thedf)
+                
+end
