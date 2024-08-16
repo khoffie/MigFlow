@@ -41,3 +41,9 @@ function fit_map(; model, inits, lower, upper, algo, iters, dt)
     dt[:, "preds"] = generated_quantities(model, chain)[1][1]
     return(fit, opts, dt)
 end
+
+function write_out(; mod_name, opts, preds)
+    CSV.write("./fitted_models/opti$mod_name.csv", opts)
+    CSV.write("./predictions/FlowDataPreds$mod_name.csv", preds)
+    @printf("Predicions and optims saved for model %s\n", mod_name)
+end    

@@ -186,14 +186,12 @@ function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters)
         mapfit, opts, preds = fit_map(model = model3, inits = inits, 
                                         lower = lowers, upper = uppers, 
                                         algo = algo, iters = preiters, dt = thedf)
-        inits = opts
-        CSV.write("./fitted_models/optiSimpleBBO.csv", opts)
-        CSV.write("./predictions/FlowDataPredsSimpleBBO.csv", preds)        
+        inits = opts ## not necessary since no loop?
+        write_out(mod_name = "SimpleBBO", opts = opts, preds = preds)
     else
     mapfit, opts, preds = fit_map(model = model3, inits = inits, 
                                     lower = lowers, upper = uppers, 
                                     algo = LBFGS(), iters = iters, dt = thedf)
-        CSV.write("./fitted_models/optiSimpleLBFGS.csv", opts)
-        CSV.write("./predictions/FlowDataPredsSimpleLBFGS.csv", preds)        
+    write_out(mod_name = "SimpleLBFGS", opts = opts, preds = preds)
     end        
 end
