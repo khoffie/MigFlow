@@ -1,4 +1,3 @@
-
 """
 dists should be a DataFrame with distcode, pop, density, xcoord, ycoord 
 """
@@ -26,7 +25,6 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
     dt2 = dt2[dt2.flows .> flow_th, :]
 
     ncoefs = 36
-
     Ndist = length(levels(dt2.fromdist))
     Nages = length(levels(dt2.agegroup))
     
@@ -150,13 +148,23 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
 end
 
 
-function testmod3simpl(thedf, dists, inits, lowers, uppers, iters, preiters)
+function testmod3simpl(; thedf, dists, iters, preiters)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
     distdens = distdens ./ maximum(distdens)
     distdens = distdens .- mean(distdens)
     ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
-    
+
+    dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
+    droplevels!(dt2.fromdist)
+    droplevels!(dt2.todist)
+    dt2 = dt2[dt2.flows .> -1, :]
+
+    ncoefs = 36
+    Ndist = length(levels(dt2.fromdist))
+    Nages = length(levels(dt2.agegroup))
+    popgerm = 73000
+    meddist = 293.0 
     netactual = calcnet(thedf.flows,
                         levelcode.(thedf.fromdist),
                         levelcode.(thedf.todist),
@@ -171,6 +179,11 @@ function testmod3simpl(thedf, dists, inits, lowers, uppers, iters, preiters)
                         dists.xcoord, dists.ycoord, distdens,dists.pop,
                         Ndist, meddist, netactual, ncoefs)
 
+    inits = gen_fixed_inits(Nages, ncoefs)                        
+    lowers = gen_bounds(Nages, ncoefs)[1]
+    uppers = gen_bounds(Nages, ncoefs)[2]
+    @printf("Inits and bounds %s\n", show_inits(Nages, 1))
+
     mapfit,opts,preds = nothing,nothing,nothing
     if preiters > 0
         ## pre-optimize using a non-gradient optimizer to avoid the worst types of initialization problems
@@ -179,10 +192,13 @@ function testmod3simpl(thedf, dists, inits, lowers, uppers, iters, preiters)
                                         lower = lowers, upper = uppers, 
                                         algo = algo, iters = preiters, dt = thedf)
         inits = opts
+        CSV.write("./fitted_models/optiSimpleBBO.csv", opts)
+        CSV.write("./predictions/FlowDataPredsSimpleBBO.csv", preds)        
     else
-
     mapfit, opts, preds = fit_map(model = model3, inits = inits, 
                                     lower = lowers, upper = uppers, 
-                                    algo = LBFGS(), iters = preiters, dt = thedf)
-                
+                                    algo = LBFGS(), iters = iters, dt = thedf)
+        CSV.write("./fitted_models/optiSimpleLBFGS.csv", opts)
+        CSV.write("./predictions/FlowDataPredsSimpleLBFGS.csv", preds)        
+    end        
 end
