@@ -96,7 +96,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     dscale ~ filldist(Exponential(1.0),Nages) ## something like 300 km typical scale for the decay of sensitivity, probably less
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
     logisticconst ~ Normal(0.0,30.0) # This constant isn't easy to figure out because log(topop[i]/popgerm) is numbers in the range maybe -10 to -4 
-    kd ~ MvNormal(fill(0.0, Nages), (log(5.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
+    kd ~ MvNormal(fill(0.0, Nages), (log(15.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
     ## priors for chebychev polys parameters
     desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 2.0 .* ones(ncoefs*Nages)) ## new scaling we are dividing by 10 below
@@ -148,7 +148,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     ## flows ~ poisson(expectation)
     flows ~ arraydist([Poisson(p) for p in preds])
 
-    ### both netactual and flows we optimize together. neterr
+    ### both netactual and flows we optimize together. neterr   
     ### determinies the importance of netactual for optimization. the
     ### "best prediction" for flows is biased by netactual.
     ### bathtube
