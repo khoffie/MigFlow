@@ -151,7 +151,12 @@ end
 
 
 function testmod3simpl(thedf, dists, inits, lowers, uppers, iters, preiters)
-
+    dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
+    distdens = dists.density
+    distdens = distdens ./ maximum(distdens)
+    distdens = distdens .- mean(distdens)
+    ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
+    
     netactual = calcnet(thedf.flows,
                         levelcode.(thedf.fromdist),
                         levelcode.(thedf.todist),
