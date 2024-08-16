@@ -195,12 +195,13 @@ function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, r
     write_out(mod_name = "SimpleLBFGS", opts = opts, preds = preds)
         
     elseif dosamp == true
-        if test = true
+        if test == true
             warmup = 1
             samples =1
         elseif test == false
             warmup = 500
             samples = 100
+        end
         fit = Turing.sample(model3, NUTS(warmup,.8; init_ϵ = 1e-6, 
                             adtype=AutoReverseDiff(true)), MCMCThreads(), samples, 3,
                             init_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
