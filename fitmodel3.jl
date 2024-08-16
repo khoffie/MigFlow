@@ -185,13 +185,13 @@ function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, r
         algo = BBO_adaptive_de_rand_1_bin()
         mapfit, opts, preds = fit_map(model = model3, inits = inits, 
                                         lower = lowers, upper = uppers, 
-                                        algo = algo, iters = preiters, dt = thedf)
+                                        algo = algo, iters = preiters, reltol = reltol, dt = thedf)
         inits = opts ## not necessary since no loop?
         write_out(mod_name = "SimpleBBO", opts = opts, preds = preds)
     else
     mapfit, opts, preds = fit_map(model = model3, inits = inits, 
                                     lower = lowers, upper = uppers, 
-                                    algo = LBFGS(), iters = iters, dt = thedf)
+                                    algo = LBFGS(), iters = iters, reltol = reltol, dt = thedf)
     write_out(mod_name = "SimpleLBFGS", opts = opts, preds = preds)
     end        
 end
