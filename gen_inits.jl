@@ -66,23 +66,27 @@ function gen_bounds(Nages, ncoefs)
         fill(kd_lb, Nages); 
         cheby_lb * ones(ncoefs * Nages)]
 
-    upper = [fill(a_ub, Nages); 
-            fill(c_ub, Nages); 
-            fill(d0_ub, Nages); 
-            fill(dscale_ub, Nages); #dscale in fractions of meddist
-            [ne_ub, lc_ub];
-            fill(kd_ub, Nages); 
-            cheby_ub * ones(ncoefs * Nages)]
+    upper = [
+    ##    fill(a_ub, Nages); 
+        [1.0, 3.0, 3.0, 1.0, 1.0, 1.0];
+        fill(c_ub, Nages); 
+        fill(d0_ub, Nages); 
+        fill(dscale_ub, Nages); #dscale in fractions of meddist
+        [ne_ub, lc_ub];
+        fill(kd_ub, Nages); 
+        cheby_ub * ones(ncoefs * Nages)]
     return(lower, upper)
 end
 
- function gen_inits_bounds(Nages, ncoefs, type, show) 
+ function gen_inits_bounds(; Nages, ncoefs, type, opts_f, show) 
     names  = [fill("a", Nages); fill("c", Nages); fill("d0", Nages); fill("dscale", Nages); 
               "netterr"; "logconst"; fill("kd", Nages); fill("desire", Nages * ncoefs)]
     if type == "random"
         inits = gen_random_inits(Nages, ncoefs)
     elseif type == "fixed"
         inits = gen_fixed_inits(Nages, ncoefs)
+    elseif type == "opts"
+        inits = CSV.read(opts_f, DataFrame)[:, "values"]
     end
     lb = gen_bounds(Nages, ncoefs)[1]
     up = gen_bounds(Nages, ncoefs)[2]
