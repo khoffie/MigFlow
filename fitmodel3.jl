@@ -196,7 +196,7 @@ function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, r
         
     elseif dosamp == true
         fit = Turing.sample(model3, NUTS(500,.8; init_ϵ = 1e-6, adtype=AutoReverseDiff(true)), MCMCThreads(), 100, 3,
-                            init_params = inits, lower = lowers, upper = uppers,    
+                            init_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
                             verbose = true, progress = true)
         
         opts = DataFrame(names=names(fit.values, 1), 
