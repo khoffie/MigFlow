@@ -42,25 +42,29 @@ function gen_bounds(Nages, ncoefs)
     c_lb = 1.5
     c_ub = 3.5
     d0_lb = 0.0
-    d0_ub = 10.0
-    dscale_lb = .02
-    dscale_ub = 1.0
+    d0_ub = 1.0
+    dscale_lb = .1
+    dscale_ub = .5
     ne_lb = .5
     ne_ub = 10.0
     lc_lb = 4.0
     lc_ub = 6.0
-    kd_lb = -1.0
-    kd_ub = 1.0
+    kd_lb = -0.5
+    kd_ub = 0.5
+    
+
     cheby_lb = -0.01
     cheby_ub = 0.01
         
-    lower = [fill(a_lb, Nages); 
-            fill(c_lb, Nages); 
-            fill(d0_lb, Nages); 
-            fill(dscale_lb, Nages); # dscale in fractions of meddist
-            [ne_lb, lc_lb];
-            fill(kd_lb, Nages); 
-            cheby_lb * ones(ncoefs * Nages)]
+    lower = [
+        ##fill(a_lb, Nages); 
+        [0.0, 2.0, 2.0, -.5, -1.0, -1.0]
+        fill(c_lb, Nages); 
+        fill(d0_lb, Nages); 
+        fill(dscale_lb, Nages); # dscale in fractions of meddist
+        [ne_lb, lc_lb];
+        fill(kd_lb, Nages); 
+        cheby_lb * ones(ncoefs * Nages)]
 
     upper = [fill(a_ub, Nages); 
             fill(c_ub, Nages); 
@@ -72,7 +76,7 @@ function gen_bounds(Nages, ncoefs)
     return(lower, upper)
 end
 
- function gen_inits_bounds(Nages, ncoefs, type) 
+ function gen_inits_bounds(Nages, ncoefs, type, show) 
     names  = [fill("a", Nages); fill("c", Nages); fill("d0", Nages); fill("dscale", Nages); 
               "netterr"; "logconst"; fill("kd", Nages); fill("desire", Nages * ncoefs)]
     if type == "random"
@@ -82,6 +86,10 @@ end
     end
     lb = gen_bounds(Nages, ncoefs)[1]
     up = gen_bounds(Nages, ncoefs)[2]
-    dt = DataFrame(names = names, lowers = lb, inits = inits, uppers = up)
-    return dt
+    ib = DataFrame(names = names, lowers = lb, inits = inits, uppers = up)
+    if show == true
+        ## better print one of each param
+        @printf("Inits and bounds %s\n", ib[1:40, :])
+    end
+    return ib
 end
