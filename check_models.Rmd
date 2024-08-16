@@ -25,7 +25,7 @@ library(ggplot2)
 library(MigStat)
 library(plotR)
 library(kableExtra)
-
+library(patchwork)
 source("functions.R")
 
 ```
@@ -37,8 +37,8 @@ age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 map_age <- age_lvls ## for maps
 use_age <- age_lvls ## for everything else
 
-## data <- read_data("3_alldists_allflows_bbo10iter")
-data <- read_data("3401dists-1flow_th10itersBBO_adaptive_de_rand_1_bin")
+data <- read_data("SimpleLBFGS")
+
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
@@ -226,38 +226,49 @@ plot_fit(dt, log(frompop * topop), log(actual/preds), 3, p_sample = .2)
 ```
 
 ### density
-```{r,}
+```{r, eval = FALSE}
 
 dt[density, fromdens := i.density, on = .(fromdist = region, year)]
 dt[density, todens := i.density, on = .(todist = region, year)]
 
-plot_fit(dt, log(fromdens * todens), log(actual/preds), 3, p_sample = .2)
+plt1 <- plot_fit(dt, log(fromdens), log(actual/preds), 0, p_sample = .2)
+plt2 <- plot_fit(dt, log(todens), log(actual/preds), 0, p_sample = .2)
+plt3 <- plot_fit(dt, log(fromdens * todens), log(actual/preds), 0, p_sample = .2)
+
+plt1 + plt2
 
 
-dt[, sum(actual), keyby = .(agegroup)]
+density[, dens_new := (density / max(density))]
+density[, dens_new := dens_new - mean(dens_new), bins = 20]
 
 
-plot_fit(dt[distance > 600], distance, log(actual / frompop), th_min = 0)
+
+hist(density[, dens_new], breaks = 20)
+
+## dt[, sum(actual), keyby = .(agegroup)]
 
 
-dt[distance > 600, mean(actual == 0), keyby = .(agegroup)]
-
-dt[distance < 100, mean(actual), keyby = .(agegroup)]
-
-dt[distance > 600, .(avg = mean(actual)), keyby = .(agegroup)]
-dt[distance > 600 & actual > 0, .("avg log(actual / frompop)"
-                                  = mean(log(actual / frompop))), keyby = .(agegroup)]
-
-dt[distance > 600 & actual > 0, .("avg log(topop  / popgerm)" =
-                                      mean(log(topop / 73000))), keyby = .(agegroup)]
-
-dt[actual > 0, .("avg log(topop  / popgerm)" =
-                                      mean(log(topop / 73000))), keyby = .(agegroup)]
+## plot_fit(dt[distance > 600], distance, log(actual / frompop), th_min = 0)
 
 
-plot_fit(dt[actual > 0], distance,
-         log(actual / frompop) - log(topop / 73000) ,
-         th_min = 0)
-ggsave("~/Desktop/plt.pdf")
+## dt[distance > 600, mean(actual == 0), keyby = .(agegroup)]
+
+## dt[distance < 100, mean(actual), keyby = .(agegroup)]
+
+## dt[distance > 600, .(avg = mean(actual)), keyby = .(agegroup)]
+## dt[distance > 600 & actual > 0, .("avg log(actual / frompop)"
+##                                   = mean(log(actual / frompop))), keyby = .(agegroup)]
+
+## dt[distance > 600 & actual > 0, .("avg log(topop  / popgerm)" =
+##                                       mean(log(topop / 73000))), keyby = .(agegroup)]
+
+## dt[actual > 0, .("avg log(topop  / popgerm)" =
+##                                       mean(log(topop / 73000))), keyby = .(agegroup)]
+
+
+## plot_fit(dt[actual > 0], distance,
+##          log(actual / frompop) - log(topop / 73000) ,
+##          th_min = 0)
+## ggsave("~/Desktop/plt.pdf")
 
 ```
