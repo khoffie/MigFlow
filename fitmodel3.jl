@@ -148,7 +148,7 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
 end
 
 
-function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, reltol)
+function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, reltol, dosamp, test)
     dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
     distdens = dists.density
     distdens = distdens ./ maximum(distdens)
@@ -195,9 +195,17 @@ function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, r
     write_out(mod_name = "SimpleLBFGS", opts = opts, preds = preds)
         
     elseif dosamp == true
-        fit = Turing.sample(model3, NUTS(500,.8; init_ϵ = 1e-6, adtype=AutoReverseDiff(true)), MCMCThreads(), 100, 3,
+        if test == true
+            warmup = 1
+            samples =1
+        elseif test == false
+            warmup = 500
+            samples = 100
+        end
+        fit = Turing.sample(model3, NUTS(warmup,.8; init_ϵ = 1e-6, 
+                            adtype=AutoReverseDiff(true)), MCMCThreads(), samples, 3,
                             init_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
                             verbose = true, progress = true)
-        serialize("./fitted_models/sampler", fit)
+            serialize("./fitted_models/sampler", fit)
     end
 end

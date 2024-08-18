@@ -36,6 +36,7 @@ preds_th <- 3
 age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
 map_age <- age_lvls ## for maps
 use_age <- age_lvls ## for everything else
+setwd("~/Documents/GermanMigration/")
 
 data <- read_data("SimpleLBFGS")
 
@@ -226,7 +227,7 @@ plot_fit(dt, log(frompop * topop), log(actual/preds), 3, p_sample = .2)
 ```
 
 ### density
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 
 dt[density, fromdens := i.density, on = .(fromdist = region, year)]
 dt[density, todens := i.density, on = .(todist = region, year)]
@@ -236,14 +237,7 @@ plt2 <- plot_fit(dt, log(todens), log(actual/preds), 0, p_sample = .2)
 plt3 <- plot_fit(dt, log(fromdens * todens), log(actual/preds), 0, p_sample = .2)
 
 plt1 + plt2
-
-
-density[, dens_new := (density / max(density))]
-density[, dens_new := dens_new - mean(dens_new), bins = 20]
-
-
-
-hist(density[, dens_new], breaks = 20)
+plt3
 
 ## dt[, sum(actual), keyby = .(agegroup)]
 
@@ -254,7 +248,6 @@ hist(density[, dens_new], breaks = 20)
 ## dt[distance > 600, mean(actual == 0), keyby = .(agegroup)]
 
 ## dt[distance < 100, mean(actual), keyby = .(agegroup)]
-
 ## dt[distance > 600, .(avg = mean(actual)), keyby = .(agegroup)]
 ## dt[distance > 600 & actual > 0, .("avg log(actual / frompop)"
 ##                                   = mean(log(actual / frompop))), keyby = .(agegroup)]
