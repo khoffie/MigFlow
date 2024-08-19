@@ -148,64 +148,36 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
 end
 
 
-function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, preiters, reltol, dosamp, test)
-    dists = @orderby(dists,levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
-    distdens = dists.density
-    distdens = distdens ./ maximum(distdens)
-    distdens = distdens .- mean(distdens)
-    ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
-
-    dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
-    droplevels!(dt2.fromdist)
-    droplevels!(dt2.todist)
-    dt2 = dt2[dt2.flows .> -1, :]
-
-    ncoefs = 36
-    Ndist = length(levels(dt2.fromdist))
-    Nages = length(levels(dt2.agegroup))
-    popgerm = 73000
-    meddist = 293.0 
-    netactual = calcnet(thedf.flows,
-                        levelcode.(thedf.fromdist),
-                        levelcode.(thedf.todist),
-                        levelcode.(thedf.agegroup),
-                        Nages,
-                        Ndist)
-
-    model3 = migration3(thedf.flows, sum(thedf.flows), levelcode.(thedf.fromdist), levelcode.(thedf.todist),
-                        thedf.frompop, thedf.topop, popgerm, thedf.distance,
-                        levelcode.(thedf.agegroup),
-                        Nages,
-                        dists.xcoord, dists.ycoord, distdens,dists.pop,
-                        Ndist, meddist, netactual, ncoefs)
-
+function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters, 
+                        preiters, reltol, dosamp, dosamptest, mod_name, ncoefs, flow_th)
+    model3, dt_mod = create_model3(dt = thedf, dists = dists, ncoefs = ncoefs, flow_th = flow_th)
     mapfit,opts,preds = nothing,nothing,nothing
     if preiters > 0
         ## pre-optimize using a non-gradient optimizer to avoid the worst types of initialization problems
         algo = BBO_adaptive_de_rand_1_bin()
         mapfit, opts, preds = fit_map(model = model3, inits = inits, 
                                         lower = lowers, upper = uppers, 
-                                        algo = algo, iters = preiters, reltol = reltol, dt = thedf)
+                                        algo = algo, iters = preiters, reltol = reltol, dt = dt_mod)
         inits = opts ## not necessary since no loop?
-        write_out(mod_name = "SimpleBBO", opts = opts, preds = preds)
+        write_out(mod_name = mod_name * "BBO", opts = opts, preds = preds)
     elseif dosamp == false
     mapfit, opts, preds = fit_map(model = model3, inits = inits, 
                                     lower = lowers, upper = uppers, 
-                                    algo = LBFGS(), iters = iters, reltol = reltol, dt = thedf)
-    write_out(mod_name = "SimpleLBFGS", opts = opts, preds = preds)
+                                    algo = LBFGS(), iters = iters, reltol = reltol, dt = dt_mod)
+    write_out(mod_name = mod_name * "LBFGS", opts = opts, preds = preds)
         
     elseif dosamp == true
-        if test == true
+        if dosamptest == true
             warmup = 1
             samples =1
-        elseif test == false
+        elseif dosamptest == false
             warmup = 500
             samples = 100
-        end
+        end 
         fit = Turing.sample(model3, NUTS(warmup,.8; init_ϵ = 1e-6, 
                             adtype=AutoReverseDiff(true)), MCMCThreads(), samples, 3,
                             init_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
                             verbose = true, progress = true)
-            serialize("./fitted_models/sampler", fit)
+            serialize("./fitted_models/" * mod_name * "Sampler", fit)
     end
 end
