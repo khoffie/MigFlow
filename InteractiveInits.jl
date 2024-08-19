@@ -43,11 +43,6 @@ begin
 	optis = nothing
 	
 	dt = load_flows()
-	dt.fromdist = categorical(dt.fromdist)
-	dt.todist = categorical(dt.todist)
-	dt.agegroup = categorical(dt.agegroup)
-	levels!(dt.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
-	rename!(dt, Dict(:dist => :distance))
 	
 	## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
 	dists = CSV.read("./data/districts.csv",DataFrame)
@@ -83,19 +78,17 @@ end
 # ╔═╡ b96b6fe9-99c3-436c-b275-6dae6bc1ec70
 @bind vals PlutoUI.combine() do Child
 	md"""
-	a1 = $(Child(PlutoUI.Slider(-2:.1:2, default = 0.0)))
+	a1 = $(Child(PlutoUI.Slider(-2:.1:3.0, default = 0.0)))
 	
-	a2 = $(Child(PlutoUI.Slider(-2:.1:2, default = 0.0)))
+	a2 = $(Child(PlutoUI.Slider(-2:.1:3.0, default = 0.0)))
 	
-	a3 = $(Child(PlutoUI.Slider(-2:.1:2, default = 0.0)))
+	a3 = $(Child(PlutoUI.Slider(-2:.1:3.0, default = 0.0)))
 	
-	a4 = $(Child(PlutoUI.Slider(-2:.1:2, default = 0.0)))
+	a4 = $(Child(PlutoUI.Slider(-2:.1:3.0, default = 0.0)))
 	
-	a5 = $(Child(PlutoUI.Slider(-2:.1:2, default=0.0)))
+	a5 = $(Child(PlutoUI.Slider(-2:.1:3.0, default=0.0)))
 	
-	a6 = $(Child(PlutoUI.Slider(-2:.1:2, default=0.0)))
-	
-	logconst = $(Child(PlutoUI.Slider(-5:.1:10, default = 4.5)))
+	a6 = $(Child(PlutoUI.Slider(-2:.1:3.0, default=0.0)))
 	
 	c = $(Child(PlutoUI.Slider(.01:.1:10.0, default=2.5)))
 	
@@ -113,7 +106,7 @@ values are $(collect(zip(["a1","a2","a3","a4","a5","a6","logc","c","d0","dscale"
 
 # ╔═╡ 4d3cace2-f9ac-45be-b449-998985d72946
 let    
-	(a1,a2,a3,a4,a5,a6,logisticconst,c,d0,dscale) = vals
+	(a1,a2,a3,a4,a5,a6,c,d0,dscale) = vals
 	Nages = 6
     Ncoefs = 36
     avals = [a1,a2,a3,a4,a5,a6]
@@ -125,7 +118,7 @@ let
             cs;
             d0s;   
             dscales;
-            [neterr, logisticconst];
+            [neterr];
             fill(0.0,Nages); #kd
             fill(0.0,Nages*Ncoefs)
             ]
@@ -133,7 +126,7 @@ let
              ["c[$i]" for i in 1:Nages];
              ["d0[$i]" for i in 1:Nages];
              ["dscale[$i]" for i in 1:Nages];
-             ["neterr","logisticconst"];
+             ["neterr"];
              ["kd[$i]" for i in 1:Nages];
              ["desirecoefs[$i]" for i in 1:(Ncoefs*Nages)];
              ]
@@ -196,7 +189,7 @@ Turing = "~0.33.2"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.2"
+julia_version = "1.10.4"
 manifest_format = "2.0"
 project_hash = "ce3ac9039ed9441de51f20fc3639bad9492fbc21"
 
@@ -745,7 +738,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.0+0"
+version = "1.1.1+0"
 
 [[deps.CompositeTypes]]
 git-tree-sha1 = "bce26c3dab336582805503bed209faab1c279768"

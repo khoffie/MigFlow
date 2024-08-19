@@ -140,9 +140,6 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     predmoves = sum(preds) # total predicted flow
     allmoves ~ Normal(predmoves, .01*predmoves) ## our total move predictions should be about right by around 1%
 
-    # total net flow as fraction of germany should be very close to zero: this is part of the overall prior on all parameters
-    # we might want to make the scale here be a parameter but let's start with an allowable imbalance around 50 people / million people in Germany
-    Turing.@addlogprob!(logpdf(Normal(0.0,50.0/1e6), sum(netflows) / popgerm))
 
     ## flows ~ poisson(expectation)
     flows ~ arraydist([Poisson(p) for p in preds])
@@ -154,7 +151,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
 
     ## bubble under rug, how do I get the bubble to a certain spot by
     ## stomping on the rug?
-    neterrfrac = neterr/100 ## we rescaled it to percent
-    netactual ~ arraydist([Normal(netflows[dist,age],neterrfrac*distpop[dist]) for dist in 1:Ndist, age in 1:Nages]) # neterr is in percent now
+    neterrfrac = neterr/1000 ## we rescaled it to tenths of a percent of district population
+    netactual ~ arraydist([Normal(netflows[dist,age],neterrfrac*distpop[dist]) for dist in 1:Ndist, age in 1:Nages]) 
     return((preds,netflows))
 end
