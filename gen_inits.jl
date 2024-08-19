@@ -28,7 +28,7 @@ function gen_fixed_inits(Nages, ncoefs)
     [.1, .1, .1, .1, .1, .1];
     [.3, .3, .5, .5, .3, .3];
    [1.0];
-   [4.5];
+##    [4.5];
    fill(0.0, Nages);
    fill(0.0, Nages * ncoefs)
    ]
@@ -60,7 +60,7 @@ function gen_bounds(Nages, ncoefs)
         fill(c_lb, Nages); 
         fill(d0_lb, Nages); 
         fill(dscale_lb, Nages); # dscale in fractions of meddist
-        [ne_lb, lc_lb];
+        [ne_lb];
         fill(kd_lb, Nages); 
         cheby_lb * ones(ncoefs * Nages)]
 
@@ -70,7 +70,7 @@ function gen_bounds(Nages, ncoefs)
         fill(c_ub, Nages); 
         fill(d0_ub, Nages); 
         fill(dscale_ub, Nages); #dscale in fractions of meddist
-        [ne_ub, lc_ub];
+        [ne_ub];
         fill(kd_ub, Nages); 
         cheby_ub * ones(ncoefs * Nages)]
     return(lower, upper)
@@ -78,7 +78,7 @@ end
 
  function gen_inits_bounds(; Nages, ncoefs, type, opts_f, show) 
     names  = [fill("a", Nages); fill("c", Nages); fill("d0", Nages); fill("dscale", Nages); 
-              "netterr"; "logconst"; fill("kd", Nages); fill("desire", Nages * ncoefs)]
+              "netterr"; fill("kd", Nages); fill("desire", Nages * ncoefs)]
     if type == "random"
         inits = gen_random_inits(Nages, ncoefs)
     elseif type == "fixed"
