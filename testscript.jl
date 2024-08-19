@@ -13,15 +13,7 @@ includet("fitmodel3.jl")
 
 Random.seed!(20240719)
 
-optis = CSV.read("./fitted_models/opti3_alldists_allflows_bbo10iter.csv", DataFrame)
-
 dt = load_flows()
-dt.fromdist = categorical(dt.fromdist)
-dt.todist = categorical(dt.todist)
-dt.agegroup = categorical(dt.agegroup)
-levels!(dt.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
-rename!(dt, Dict(:dist => :distance))
-
 ## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
 dists = CSV.read("./data/districts.csv",DataFrame)
 dists.distcode = categorical(dists.distcode)
@@ -56,8 +48,8 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  ncoefs = 36
 flow_th = -1
 ## not so great
- opts_f = "fitted_models/wider_kd.csv"
-ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "opts", 
+ opts_f = "fitted_models/optiNewTestBBO.csv"
+ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "optimal", 
                       opts_f = opts_f, show =true)
 
  result = @time(testmod3simpl(thedf = dt, dists = dists, 
@@ -65,7 +57,7 @@ ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "opts",
                         lowers = ib[:, "lowers"],
                         uppers = ib[:, "uppers"],
                         iters = 100, preiters = 0, reltol = 1e-2, dosamp = false, dosamptest = false,
-                        mod_name = "NewTest", ncoefs = ncoefs, flow_th = flw_th))
+                        mod_name = "NewTest", ncoefs = ncoefs, flow_th = flow_th))
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
@@ -77,7 +69,7 @@ ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "opts",
 #result = testmod3(dt, optis, dists, meddist,false,false)
 
 #chain = Turing.sample(model3, Prior(), 100)
-
+#= 
 let 
     thedf = load_flows(),
     dists = dists,
@@ -170,3 +162,4 @@ let
     serialize("fitted_models/serialinits_with_cheby.dat",inits)
     vi(model3,ADVI(10,100; adtype = AutoReverseDiff(true)); θ_init=inits)
 end
+ =#

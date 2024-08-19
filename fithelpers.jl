@@ -19,6 +19,12 @@ function load_flows()
         dt = CSV.read("data/simulations.csv", DataFrame)
         DataFramesMeta.@transform!(dt,:flows = round.(Int32,:predict),:frompop_ger = :frompop, :topop_ger = :topop)
     end
+    dt.fromdist = categorical(dt.fromdist)
+    dt.todist = categorical(dt.todist)
+    dt.agegroup = categorical(dt.agegroup)
+    levels!(dt.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
+    rename!(dt, Dict(:dist => :distance))
+    return dt
 end    
 
 function fit_map(; model, inits, lower, upper, algo, iters, reltol, dt)
