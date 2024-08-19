@@ -5,7 +5,7 @@
          rand(Uniform(1.0, 10.0), Nages); #d0 prior Exp = 2.5
          rand(Uniform(0.25, 1), Nages); #dscale prior Exp = 1
          [1.5];                     # netterr prior Exp = 7.5
-         [5.0];                    # logconst prior Exp = 0
+   ##      [5.0];                    # logconst prior Exp = 0
          fill(0.0, Nages); #kd                prior Exp = 0
          fill(0.0, Nages * ncoefs) # desirecoefs prior Exp = 0
          ]
@@ -23,10 +23,10 @@ function gen_fixed_inits(Nages, ncoefs)
    ##as = fill(-2, Nages) =#
 
    inits = [
-    [.7, 2.3, 2.5, .1, -.3, -.3];
-    [2.5, 2.5, 2.5, 2.5, 2.5, 2.5];
-    [.1, .1, .1, .1, .1, .1];
-    [.3, .3, .5, .5, .3, .3];
+    [.2, 2.1, 2.1, -.1, -.7, -1.2];
+    fill(1.6, Nages);
+    fill(0.001, Nages);
+    fill(0.7, Nages);
    [1.0];
 ##    [4.5];
    fill(0.0, Nages);
@@ -37,14 +37,14 @@ end
 
 
 function gen_bounds(Nages, ncoefs)
-    a_lb = - 1.0
+    a_lb = - 2.0
     a_ub = 3.0
     c_lb = 1.5
     c_ub = 3.5
     d0_lb = 0.0
     d0_ub = 1.0
     dscale_lb = .1
-    dscale_ub = .5
+    dscale_ub = 1.0
     ne_lb = .05
     ne_ub = 10.0
     lc_lb = 4.0
@@ -56,7 +56,7 @@ function gen_bounds(Nages, ncoefs)
         
     lower = [
         ##fill(a_lb, Nages); 
-        [0.0, 2.0, 2.0, -.5, -1.0, -1.0]
+        fill(a_lb, Nages);
         fill(c_lb, Nages); 
         fill(d0_lb, Nages); 
         fill(dscale_lb, Nages); # dscale in fractions of meddist
@@ -66,7 +66,7 @@ function gen_bounds(Nages, ncoefs)
 
     upper = [
     ##    fill(a_ub, Nages); 
-        [1.0, 3.0, 3.0, 1.0, 1.0, 1.0];
+        fill(a_ub, Nages)
         fill(c_ub, Nages); 
         fill(d0_ub, Nages); 
         fill(dscale_ub, Nages); #dscale in fractions of meddist
