@@ -54,7 +54,7 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
 
  Nages = 6
  ncoefs = 36
-
+flow_th = -1
 ## not so great
  opts_f = "fitted_models/wider_kd.csv"
 ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "opts", 
@@ -64,7 +64,8 @@ ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "opts",
                         inits = ib[:, "inits"],
                         lowers = ib[:, "lowers"],
                         uppers = ib[:, "uppers"],
-                        iters = 100, preiters = 0, reltol = 1e-2, dosamp = true, test = false))
+                        iters = 100, preiters = 0, reltol = 1e-2, dosamp = false, dosamptest = false,
+                        mod_name = "NewTest", ncoefs = ncoefs, flow_th = flw_th))
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 
