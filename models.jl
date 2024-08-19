@@ -90,8 +90,8 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     xcoord, ycoord,density,distpop,
     Ndist, meddist, netactual, ncoefs)
 
-    a ~ filldist(Normal(4.5,2.75),Nages) # center a around a typical value found by plotting the data and adjusting until the overall shift on log scale is about right
-    c ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
+    a ~ filldist(Normal(0.0,2.75),Nages) # center a around a typical value found by plotting the data and adjusting until the overall shift on log scale is about right
+    c ~ filldist(Gamma(10.0, 1.5/9.0),Nages) # c decay rate parameter between about 1 and 4 ish
     d0 ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     dscale ~ filldist(Exponential(1.0),Nages) ## something like 300 km typical scale for the decay of sensitivity, probably less
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
@@ -116,9 +116,9 @@ https://www.desmos.com/calculator/jhrgbmw9dd
                 desvals[fromdist[i], agegroup[i]])
                     for i in 1:length(flows)]
 
-    ## indiviudal flows
+    ## indiviudal flows, the 4.5 is a number we got by approximately centering the a values to make them more interpretable
     distscale = dscale .* meddist
-    preds = [frompop[i] * logistic( log(topop[i] / popgerm) + a[agegroup[i]] +
+    preds = [frompop[i] * logistic( 4.5 + log(topop[i] / popgerm) + a[agegroup[i]] +
                 log1p(1.0 / (distance[i] / distscale[agegroup[i]] + d0[agegroup[i]]/100.0)^c[agegroup[i]]) + desires[i])
                     for i in 1:length(flows)]
 
