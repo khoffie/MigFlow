@@ -93,7 +93,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     a ~ filldist(Normal(0.0,2.75),Nages) # center a around a typical value found by plotting the data and adjusting until the overall shift on log scale is about right
     c ~ filldist(Gamma(10.0, 1.5/9.0),Nages) # c decay rate parameter between about 1 and 4 ish
     d0 ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
-    dscale ~ filldist(Exponential(1.0),Nages) ## something like 300 km typical scale for the decay of sensitivity, probably less
+    dscale ~ filldist(Gamma(8.0,0.5/7.0),Nages) ## sensitive falls to same size as insensitive somewhere around 0.5 times the median distance between districts
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
     kd ~ MvNormal(fill(0.0, Nages), (log(15.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
