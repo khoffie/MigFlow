@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.45
+# v0.19.46
 
 using Markdown
 using InteractiveUtils
@@ -75,23 +75,20 @@ begin
 	
 end
 
-# ╔═╡ e9ed9022-39cb-4d3e-81ae-d44167da0147
-
-
 # ╔═╡ b96b6fe9-99c3-436c-b275-6dae6bc1ec70
-@bind vals PlutoUI.combine() do Child
+@bind thevals PlutoUI.combine() do Child
 	md"""
-	a1 = $(Child(PlutoUI.Slider(-2:.1:3.0, default = 0.0)))
+	a1 = $(Child(PlutoUI.Slider(-3.0:.1:3.0, default = 0.0)))
 	
-	a2 = $(Child(PlutoUI.Slider(-2:.1:3.0, default = 0.0)))
+	a2 = $(Child(PlutoUI.Slider(-3.0:.1:3.0, default = 0.0)))
 	
-	a3 = $(Child(PlutoUI.Slider(-2:.1:3.0, default = 0.0)))
+	a3 = $(Child(PlutoUI.Slider(-3.0:.1:3.0, default = 0.0)))
 	
-	a4 = $(Child(PlutoUI.Slider(-2:.1:3.0, default = 0.0)))
+	a4 = $(Child(PlutoUI.Slider(-3.0:.1:3.0, default = 0.0)))
 	
-	a5 = $(Child(PlutoUI.Slider(-2:.1:3.0, default=0.0)))
+	a5 = $(Child(PlutoUI.Slider(-3.0:.1:3.0, default=0.0)))
 	
-	a6 = $(Child(PlutoUI.Slider(-2:.1:3.0, default=0.0)))
+	a6 = $(Child(PlutoUI.Slider(-3.0:.1:3.0, default=0.0)))
 	
 	c = $(Child(PlutoUI.Slider(.01:.1:10.0, default=2.5)))
 	
@@ -102,20 +99,15 @@ end
 	
 end
 
-# ╔═╡ 81c9da4f-4c18-47fa-8f55-3a03cbd94003
-
-
-# ╔═╡ a650353e-fb31-4469-8be4-177c4def4f13
-
-
 # ╔═╡ 6ba174b8-8c43-474e-94b1-69a001ac201c
 md"""
-values are $(collect(zip(["a1","a2","a3","a4","a5","a6","logc","c","d0","dscale"],vals)))
+values are $(collect(zip(["a1","a2","a3","a4","a5","a6","c","c","d0","dscale"],thevals)))
 """
 
 # ╔═╡ 4d3cace2-f9ac-45be-b449-998985d72946
 let    
-	(a1,a2,a3,a4,a5,a6,c,d0,dscale) = vals
+	(a1,a2,a3,a4,a5,a6,c,d0,dscale) = thevals
+
 	Nages = 6
     Ncoefs = 36
     avals = [a1,a2,a3,a4,a5,a6]
@@ -141,8 +133,13 @@ let
              ]
     
     (preds,netflows) = generated_quantities(model3,vals,names)
-
-    scatter(dtsmall.distance, log.(dtsmall.flows ./ preds),group=dtsmall.agegroup,alpha=0.2,ylim=(-4,4))
+	flowfix = dtsmall.flows
+	for i in eachindex(flowfix)
+		if flowfix[i] == 0.0
+			flowfix[i] = rand(Lognormal(0.1,log(2.0)))
+		end
+	end
+    scatter(dtsmall.distance, log.(flowfix ./ preds),group=dtsmall.agegroup,alpha=0.2,ylim=(-4,4))
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -3357,11 +3354,8 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╠═ddfa30be-5dbc-11ef-1ed9-7371f6f9875b
 # ╠═2d8e36bd-40a7-4559-b260-5fb45b287d20
-# ╟─e9ed9022-39cb-4d3e-81ae-d44167da0147
 # ╠═b96b6fe9-99c3-436c-b275-6dae6bc1ec70
-# ╠═81c9da4f-4c18-47fa-8f55-3a03cbd94003
-# ╟─a650353e-fb31-4469-8be4-177c4def4f13
-# ╠═6ba174b8-8c43-474e-94b1-69a001ac201c
+# ╟─6ba174b8-8c43-474e-94b1-69a001ac201c
 # ╠═4d3cace2-f9ac-45be-b449-998985d72946
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
