@@ -57,16 +57,16 @@ begin
 	Nages = length(levels(dt.agegroup))
 	Ndist = nrow(dists)
 	
-	netactual = calcnet(dt.flows,
-	            levelcode.(dt.fromdist),
-	            levelcode.(dt.todist),
-	            levelcode.(dt.agegroup),
-	            Nages,
-	            Ndist)
 	Ncoefs = 36
 	
 	dtsmall = dt[rand(Bernoulli(.02),nrow(dt)),:]
 	dtsmall = dtsmall[dtsmall.flows .> 0.0,:]
+	netactual = calcnet(dtsmall.flows,
+	            levelcode.(dtsmall.fromdist),
+	            levelcode.(dtsmall.todist),
+	            levelcode.(dtsmall.agegroup),
+	            Nages,
+	            Ndist)
 	
 	model3 = migration3(dtsmall.flows,sum(dtsmall.flows),levelcode.(dtsmall.fromdist),levelcode.(dtsmall.todist),
 	                        dtsmall.frompop,dtsmall.topop, popgerm, dtsmall.distance, levelcode.(dtsmall.agegroup),Nages,
@@ -136,7 +136,7 @@ let
 	flowfix = dtsmall.flows
 	for i in eachindex(flowfix)
 		if flowfix[i] == 0.0
-			flowfix[i] = rand(Lognormal(0.1,log(2.0)))
+			flowfix[i] = rand(Lognormal(log(0.1),log(2.0)))
 		end
 	end
     scatter(dtsmall.distance, log.(flowfix ./ preds),group=dtsmall.agegroup,alpha=0.2,ylim=(-4,4))
@@ -3354,7 +3354,7 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╠═ddfa30be-5dbc-11ef-1ed9-7371f6f9875b
 # ╠═2d8e36bd-40a7-4559-b260-5fb45b287d20
-# ╠═b96b6fe9-99c3-436c-b275-6dae6bc1ec70
+# ╟─b96b6fe9-99c3-436c-b275-6dae6bc1ec70
 # ╠═6ba174b8-8c43-474e-94b1-69a001ac201c
 # ╠═4d3cace2-f9ac-45be-b449-998985d72946
 # ╟─00000000-0000-0000-0000-000000000001
