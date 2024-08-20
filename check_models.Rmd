@@ -39,7 +39,7 @@ use_age <- age_lvls ## for everything else
 setwd("~/Documents/GermanMigration/")
 
 data <- read_data("SimpleLBFGS")
-data <- read_data("NewPopBBO")
+data <- read_data("NewPopLBFGS")
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
@@ -103,10 +103,10 @@ net[, value := value / pop * 100]
 net <- dcast(net[variable == "net"], region + year + agegroup + model ~ type, value.var = "value")
 net[shp, geometry := i.geometry, on = .(region = AGS)]
 
-ggplot(net, aes(agegroup, actual, fill = agegroup)) +
-    geom_violin() +
-    ggtitle("Actual net migration rate: Net migration in % of pop of agegroup") +
-    theme_minimal()
+## ggplot(net, aes(agegroup, actual, fill = agegroup)) +
+##     geom_violin() +
+##     ggtitle("Actual net migration rate: Net migration in % of pop of agegroup") +
+##     theme_minimal()
 
 ```
 
@@ -245,7 +245,7 @@ plt1 <- plot_fit(dt, log(fromdens), log(actual/preds), 0, p_sample = .2)
 plt2 <- plot_fit(dt, log(todens), log(actual/preds), 0, p_sample = .2)
 plt3 <- plot_fit(dt, log(fromdens * todens), log(actual/preds), 0, p_sample = .2)
 
-plt1 + plt2
+## plt1 + plt2
 plt3
 
 ## dt[, sum(actual), keyby = .(agegroup)]
@@ -273,20 +273,20 @@ plt3
 ##          th_min = 0)
 ## ggsave("~/Desktop/plt.pdf")
 
-net1[, .(total_across_districts = sum(value)), keyby = variable]
-net1[variable == "net"][order(value), .(region, agegroup, type, variable, value)]
+## net1[, .(total_across_districts = sum(value)), keyby = variable]
+## net1[variable == "net"][order(value), .(region, agegroup, type, variable, value)]
 
 
-dt[, .( allmoves = sum(actual)), keyby = .(agegroup)]
+## dt[, .( allmoves = sum(actual)), keyby = .(agegroup)]
 
-age <- use_age[2]
-fit_gravity <- dt[agegroup == age, .(fit = .(glm(actual ~ log(frompop) + log(topop) + log(distance), family = poisson)))]
-fit_gravity[[1]]
+## age <- use_age[2]
+## fit_gravity <- dt[agegroup == age, .(fit = .(glm(actual ~ log(frompop) + log(topop) + log(distance), family = poisson)))]
+## fit_gravity[[1]]
 
-logistic <- function(x) {
-    1 / (1 + exp(-x))
-}
+## logistic <- function(x) {
+##     1 / (1 + exp(-x))
+## }
 
-logistic(4.5 / 1000)
+## logistic(4.5 / 1000)
 
 ```
