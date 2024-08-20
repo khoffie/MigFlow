@@ -94,7 +94,7 @@ end
 	
 	d0 = $(Child(PlutoUI.Slider(0.001:.01:20.0,default=1.5)))
 	
-	dscale = $(Child(PlutoUI.Slider(0.05:.05:2.5,default= 0.25)))
+	dscale = $(Child(PlutoUI.Slider(0.05:.05:2.5,default= 0.75)))
 	"""
 	
 end
@@ -3354,7 +3354,7 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╠═ddfa30be-5dbc-11ef-1ed9-7371f6f9875b
 # ╠═2d8e36bd-40a7-4559-b260-5fb45b287d20
-# ╟─b96b6fe9-99c3-436c-b275-6dae6bc1ec70
+# ╠═b96b6fe9-99c3-436c-b275-6dae6bc1ec70
 # ╠═6ba174b8-8c43-474e-94b1-69a001ac201c
 # ╠═4d3cace2-f9ac-45be-b449-998985d72946
 # ╟─00000000-0000-0000-0000-000000000001
