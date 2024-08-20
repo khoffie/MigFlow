@@ -27,7 +27,7 @@ function gen_fixed_inits(Nages, ncoefs)
     fill(1.6, Nages);
     fill(0.001, Nages);
     fill(0.7, Nages);
-   [1.0];
+   [8.0];
 ##    [4.5];
    fill(0.0, Nages);
    fill(0.0, Nages * ncoefs)
@@ -46,13 +46,13 @@ function gen_bounds(Nages, ncoefs)
     dscale_lb = .1
     dscale_ub = 1.0
     ne_lb = .05
-    ne_ub = 10.0
+    ne_ub = 20.0
     lc_lb = 4.0
     lc_ub = 6.0
     kd_lb = -3
     kd_ub = 3
-    cheby_lb = -1.0
-    cheby_ub = 1.0
+    cheby_lb = -0.01
+    cheby_ub = 0.01
         
     lower = [
         ##fill(a_lb, Nages); 
