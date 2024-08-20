@@ -39,7 +39,7 @@ use_age <- age_lvls ## for everything else
 setwd("~/Documents/GermanMigration/")
 
 data <- read_data("SimpleLBFGS")
-
+data <- read_data("NewPopBBO")
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
@@ -59,6 +59,10 @@ rec_ages(pop_dt)
 
 shp <- setDT(sf::read_sf(file.path(p_clean, "shapes/districts_ext.shp")))
 density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))
+
+dt[, .(all_actual = sum(actual),
+       all_predicted = sum(preds)), keyby = agegroup][
+  , rel_diff := (all_actual - all_predicted) / all_actual][]
 
 ```
 
@@ -95,9 +99,14 @@ net <- rbind(net1, net2)
 net2 <- dcast(net[variable == "net"], region + year + agegroup ~ type)
 
 net[pop_dt, pop := i.german, on = .(region, year, agegroup)]
-net[, value := value / pop * 100] # in %, pop is in 1000
+net[, value := value / pop * 100]
 net <- dcast(net[variable == "net"], region + year + agegroup + model ~ type, value.var = "value")
 net[shp, geometry := i.geometry, on = .(region = AGS)]
+
+ggplot(net, aes(agegroup, actual, fill = agegroup)) +
+    geom_violin() +
+    ggtitle("Actual net migration rate: Net migration in % of pop of agegroup") +
+    theme_minimal()
 
 ```
 
@@ -263,5 +272,21 @@ plt3
 ##          log(actual / frompop) - log(topop / 73000) ,
 ##          th_min = 0)
 ## ggsave("~/Desktop/plt.pdf")
+
+net1[, .(total_across_districts = sum(value)), keyby = variable]
+net1[variable == "net"][order(value), .(region, agegroup, type, variable, value)]
+
+
+dt[, .( allmoves = sum(actual)), keyby = .(agegroup)]
+
+age <- use_age[2]
+fit_gravity <- dt[agegroup == age, .(fit = .(glm(actual ~ log(frompop) + log(topop) + log(distance), family = poisson)))]
+fit_gravity[[1]]
+
+logistic <- function(x) {
+    1 / (1 + exp(-x))
+}
+
+logistic(4.5 / 1000)
 
 ```
