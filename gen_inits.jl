@@ -83,7 +83,7 @@ end
         inits = gen_random_inits(Nages, ncoefs)
     elseif type == "fixed"
         inits = gen_fixed_inits(Nages, ncoefs)
-    elseif type == "opts"
+    elseif type == "optimal"
         inits = CSV.read(opts_f, DataFrame)[:, "values"]
     end
     lb = gen_bounds(Nages, ncoefs)[1]
