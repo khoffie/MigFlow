@@ -47,7 +47,7 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
         rand(Uniform(2.5, 3.5), Nages); #c
         rand(Uniform(0.0, 0.03), Nages); #d0
         rand(Uniform(0.2, 1), Nages); #dscale
-        [1.5, 5.0]; # neterr and logisticconst
+        [1.5]; # neterr 
         fill(0.0, Nages); #kd
         fill(0.0, Nages * ncoefs) # desirecoefs
         ]
@@ -97,9 +97,7 @@ function testmod3(; dt, inits, dists, algo, flow_th, map_iters, mod_name, dovi, 
             ## lock the a values in place
             lower[1:Nages] = inits[1:Nages] - .05*abs.(inits[1:Nages])
             upper[1:Nages] = inits[1:Nages] + .05*abs.(inits[1:Nages])
-            #lock logisticconst in place
-            lower[1+Nages*4+1] = inits[1+Nages*4+1] - .05*abs.(inits[1+Nages*4+1])
-            upper[1+Nages*4+1] = inits[1+Nages*4+1] + .05*abs.(inits[1+Nages*4+1])
+
             algo = algo2
         else
             lower, upper = gen_bounds(Nages, ncoefs, -1.0,1.0)

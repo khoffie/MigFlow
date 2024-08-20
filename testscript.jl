@@ -81,7 +81,7 @@ let
         fill(2.0,Nages); #c
         fill(0.1,Nages); #d0
         fill(.2,Nages); #dscale
-        [2.0, 4.5]; #[neterr, logisticconst]
+        [2.0]; #[neterr]
         fill(0.0,Nages); #kd
         fill(0.0,Nages*Ncoefs); #desirecoefs
     ],
@@ -115,7 +115,7 @@ let
     lb[logistindx] = inits[logistindx] .- 3.0
     ub[logistindx] = inits[logistindx] .+ 3.0
 
-    ## first make logisticconst and a values be approximately correct
+    ## first make a values be approximately correct
     vals = maximum_a_posteriori(model3,BBO_adaptive_de_rand_1_bin_radiuslimited(),
                         init_params=inits,lb=lb,ub=ub,maxiters = 50, maxtime = 120, progress=true)
     inits = vals.value.array
