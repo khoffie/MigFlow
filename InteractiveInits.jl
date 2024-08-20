@@ -101,7 +101,7 @@ end
 
 # ╔═╡ 6ba174b8-8c43-474e-94b1-69a001ac201c
 md"""
-values are $(collect(zip(["a1","a2","a3","a4","a5","a6","c","c","d0","dscale"],thevals)))
+values are $(collect(zip(["a1","a2","a3","a4","a5","a6","c","d0","dscale"],thevals)))
 """
 
 # ╔═╡ 4d3cace2-f9ac-45be-b449-998985d72946
@@ -3354,8 +3354,8 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╠═ddfa30be-5dbc-11ef-1ed9-7371f6f9875b
 # ╠═2d8e36bd-40a7-4559-b260-5fb45b287d20
-# ╟─b96b6fe9-99c3-436c-b275-6dae6bc1ec70
-# ╟─6ba174b8-8c43-474e-94b1-69a001ac201c
+# ╠═b96b6fe9-99c3-436c-b275-6dae6bc1ec70
+# ╠═6ba174b8-8c43-474e-94b1-69a001ac201c
 # ╠═4d3cace2-f9ac-45be-b449-998985d72946
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
