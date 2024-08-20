@@ -68,7 +68,9 @@ function create_model3(; dt, dists, ncoefs, flow_th)
 
     Ndist = length(levels(dt2.fromdist))
     Nages = length(levels(dt2.agegroup))
-    popgerm = 73000
+    ## summing here is bad if we subset data
+    popgerm = sum(dists.pop)
+    popgerm = 73e6
     meddist = 293.0 
     netactual = calcnet(dt2.flows,
                         levelcode.(dt2.fromdist),
@@ -76,12 +78,13 @@ function create_model3(; dt, dists, ncoefs, flow_th)
                         levelcode.(dt2.agegroup),
                         Nages,
                         Ndist)
-
-    model3 = migration3(dt2.flows, sum(dt2.flows), levelcode.(dt2.fromdist), levelcode.(dt2.todist),
-                        dt2.frompop, dt2.topop, popgerm, dt2.distance,
-                        levelcode.(dt2.agegroup),
-                        Nages,
-                        dists.xcoord, dists.ycoord, distdens,dists.pop,
-                        Ndist, meddist, netactual, ncoefs)
+    
+    model3 = migration3(flows = dt2.flows, allmoves = sum(dt2.flows),
+                        fromdist = levelcode.(dt2.fromdist), todist = levelcode.(dt2.todist),
+                        frompop = dt2.frompop, topop = dt2.topop, popgerm = popgerm,
+                        distance = dt2.distance, agegroup = levelcode.(dt2.agegroup),
+                        Nages = Nages, xcoord = dists.xcoord, ycoord = dists.ycoord,
+                        density = distdens, distpop = dists.pop,
+                        Ndist = Ndist, meddist = meddist, netactual = netactual, ncoefs = ncoefs)
     return (model3, dt2)
 end
