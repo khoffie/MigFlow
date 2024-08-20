@@ -3,6 +3,8 @@ library(MigStat)
 library(sfheaders)
 library(sf)
 
+source("functions.R")
+
 p_clean <- "~/Diss/inst/extdata/clean/"
 flows <- fread(file.path(p_clean, "flows_districts/districts_2000_2017_ger.csv"))
 age_for <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
@@ -25,17 +27,17 @@ flows <- add_mising_flows(flows, flows[, unique(fromdist)],
 ### hard to explain for the model
 flows <- flows[fromdist != todist]
 
-
 flows <- flows[order(fromdist, todist, year, agegroup)]
-flows[age_for, frompop := i.german / 1e3, on = .(fromdist = region, year, agegroup)]
-flows[age_for, topop := i.german / 1e3, on = .(todist = region, year, agegroup)]
+flows[age_for, frompop := i.german, on = .(fromdist = region, year, agegroup)]
+flows[age_for, topop := i.german, on = .(todist = region, year, agegroup)]
 
 shp[, pos := sf::st_point_on_surface(geometry)]
 shp[, x := st_coordinates(pos)[, 1]]
 shp[, y := st_coordinates(pos)[, 2]]
-dt_coords <- shp[, .(distcode = AGS, year, name = GEN, xcoord = x / 1e3, ycoord = y / 1e3)]
 dt_coords[density, density := i.density, on = .(distcode = region, year)]
-dt_coords[age_for[agegroup == "all", ], pop := i.german / 1e3, on = .(distcode = region, year)]
+dt_coords[age_for[agegroup == "all", ], pop := i.german, on = .(distcode = region, year)]
+## dt_coords <- shp[, .(distcode = AGS, year, name = GEN, pop, density, xcoord = x / 1e3, ycoord = y / 1e3,
+##                      bl_name, bl_ags)]
 
 ### check if districts are the same
 all(flows[, unique(fromdist)] == flows[order(todist), unique(todist)] )
@@ -43,13 +45,6 @@ all(flows[, unique(fromdist)] == dt_coords[, distcode])
 
 dt_coords[distcode %in% c(5315, 2000, 11000, 14713, 9162, 1001),
           .(name, xcoord = xcoord, ycoord = ycoord)]
-### make sure coords are alright
-## need to join name and geometry
-## dt_coords[, lbl := substring(name, 1, 2)]
-## ggplot(set_geom(dt_coords, F)) +
-##     geom_sf() +
-##     geom_point(aes(xcoord, ycoord)) +
-##     geom_label(aes(xcoord, ycoord, label = lbl))
 
 regions  <- dt_coords[, unique(distcode)]
 distances <- CJ(fromdist = regions, todist = regions)
@@ -61,25 +56,6 @@ flows[distances, dist := as.integer(round(i.distance)), on = .(fromdist, todist)
 dt_coords[, .(min = min(xcoord), max = max(xcoord))]
 dt_coords[, .(min = min(ycoord), max = max(ycoord))]
 
+dt_coords <- dt_coords[, .(distcode, year, pop, density, name, xcoord, ycoord, bl_ags, bl_name)]
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(dt_coords, "~/Documents/GermanMigration/data/districts.csv")
-
-library(ggplot2)
-
-ggplot(flows[year == 2017], aes(log(flows))) +
-    geom_density() +
-    facet_wrap(vars(agegroup)) +
-    theme_minimal()
-
-ggplot(flows[year == 2017], aes(log(flows))) +
-    geom_histogram() +
-    facet_wrap(vars(agegroup)) +
-    theme_minimal()
-
-ggplot(flows[year == 2017], aes((flows))) +
-    geom_histogram() +
-    xlim(c(0, 50)) +
-    facet_wrap(vars(agegroup)) +
-    theme_minimal()
-
-log(1)
