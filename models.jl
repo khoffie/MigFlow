@@ -84,7 +84,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
 =#
 
 
-@model function migration3(flows, allmoves, fromdist, todist,
+@model function migration3(; flows, allmoves, fromdist, todist,
     frompop, topop, popgerm, distance,
     agegroup, Nages,
     xcoord, ycoord,density,distpop,
@@ -118,7 +118,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
 
     ## indiviudal flows, the 4.5 is a number we got by approximately centering the a values to make them more interpretable
     distscale = dscale .* meddist
-    preds = [frompop[i] * logistic( 4.5 + log(topop[i] / popgerm) + a[agegroup[i]] +
+    preds = [frompop[i] * logistic( -7 + log(topop[i] / popgerm) + a[agegroup[i]] +
                 log1p(1.0 / (distance[i] / distscale[agegroup[i]] + d0[agegroup[i]]/100.0)^c[agegroup[i]]) + desires[i])
                     for i in 1:length(flows)]
 
@@ -138,8 +138,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     netflows = calcnet(preds,fromdist,todist,agegroup,Nages,Ndist)
 
     predmoves = sum(preds) # total predicted flow
-    allmoves ~ Normal(predmoves, .01*predmoves) ## our total move predictions should be about right by around 1%
-
+    allmoves ~ Normal(predmoves, .01 * predmoves) ## our total move predictions should be about right by around 1%
 
     ## flows ~ poisson(expectation)
     flows ~ arraydist([Poisson(p) for p in preds])
