@@ -18,7 +18,6 @@ dt = load_flows()
 dists = CSV.read("./data/districts.csv",DataFrame)
 dists.distcode = categorical(dists.distcode)
 
-
 # testmod3(dt, optis, dists, meddist)
 
 ## try it out:
@@ -44,20 +43,21 @@ sampdists = dists[in.(dists.distcode, Ref(choosen_dists)), :]
  =#
 
 
- Nages = 6
- ncoefs = 36
+Nages = 6
+ncoefs = 36
 flow_th = -1
 ## not so great
- opts_f = "fitted_models/optiNewTestBBO.csv"
+opts_f = "fitted_models/optiNewPopLBFGS.csv"
 ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "optimal", 
                       opts_f = opts_f, show =true)
 
- result = @time(testmod3simpl(thedf = dt, dists = dists, 
-                        inits = ib[:, "inits"],
-                        lowers = ib[:, "lowers"],
-                        uppers = ib[:, "uppers"],
-                        iters = 100, preiters = 0, reltol = 1e-2, dosamp = false, dosamptest = false,
-                        mod_name = "NewTest", ncoefs = ncoefs, flow_th = flow_th))
+result = @time(testmod3simpl(thedf = dt, dists = dists, 
+                             inits = ib[:, "inits"],
+                             lowers = ib[:, "lowers"],
+                             uppers = ib[:, "uppers"],
+                             iters = 1000, preiters = 0, reltol = 1e-2,
+                             dosamp = false, dosamptest = false,
+                             mod_name = "NewPop", ncoefs = ncoefs, flow_th = flow_th))
 
 #@profilehtml result = testmod3(dt, optis, sampdists, 1, 3, false, false)
 

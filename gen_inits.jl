@@ -38,7 +38,7 @@ end
 
 function gen_bounds(Nages, ncoefs)
     a_lb = - 2.0
-    a_ub = 3.0
+    a_ub = 4.0
     c_lb = 1.5
     c_ub = 3.5
     d0_lb = 0.0
