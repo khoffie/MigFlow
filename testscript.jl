@@ -48,6 +48,7 @@ ncoefs = 36
 flow_th = -1
 ## not so great
 opts_f = "fitted_models/optiNewPopLBFGS.csv"
+>>>>>>> 8b9efff6cf061b6636397a618b47f3daf34f6117
 ib = gen_inits_bounds(Nages = Nages, ncoefs = ncoefs, type = "optimal", 
                       opts_f = opts_f, show =true)
 
