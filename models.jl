@@ -119,7 +119,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     ## indiviudal flows, the 4.5 is a number we got by approximately centering the a values to make them more interpretable
     distscale = dscale .* meddist
 
-    preds = [frompop[i] * logistic( 12.5 + log(topop[i] / popgerm) + a[agegroup[i]] +
+    preds = [frompop[i] * logistic( -3.0 + log(topop[i] / popgerm) + a[agegroup[i]] +
                 log1p(1.0 / (distance[i] / distscale[agegroup[i]] + d0[agegroup[i]]/100.0)^c[agegroup[i]]) + desires[i])
                     for i in 1:length(flows)]
 
