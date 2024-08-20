@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.19.45
 
 using Markdown
 using InteractiveUtils
@@ -80,6 +80,9 @@ begin
 	
 end
 
+# ╔═╡ e9ed9022-39cb-4d3e-81ae-d44167da0147
+
+
 # ╔═╡ b96b6fe9-99c3-436c-b275-6dae6bc1ec70
 @bind vals PlutoUI.combine() do Child
 	md"""
@@ -105,6 +108,12 @@ end
 	"""
 	
 end
+
+# ╔═╡ 81c9da4f-4c18-47fa-8f55-3a03cbd94003
+
+
+# ╔═╡ a650353e-fb31-4469-8be4-177c4def4f13
+
 
 # ╔═╡ 6ba174b8-8c43-474e-94b1-69a001ac201c
 md"""
@@ -196,7 +205,7 @@ Turing = "~0.33.2"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.2"
+julia_version = "1.10.4"
 manifest_format = "2.0"
 project_hash = "ce3ac9039ed9441de51f20fc3639bad9492fbc21"
 
@@ -745,7 +754,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.0+0"
+version = "1.1.1+0"
 
 [[deps.CompositeTypes]]
 git-tree-sha1 = "bce26c3dab336582805503bed209faab1c279768"
@@ -3355,8 +3364,11 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╠═ddfa30be-5dbc-11ef-1ed9-7371f6f9875b
 # ╠═2d8e36bd-40a7-4559-b260-5fb45b287d20
-# ╟─b96b6fe9-99c3-436c-b275-6dae6bc1ec70
-# ╟─6ba174b8-8c43-474e-94b1-69a001ac201c
-# ╟─4d3cace2-f9ac-45be-b449-998985d72946
+# ╟─e9ed9022-39cb-4d3e-81ae-d44167da0147
+# ╠═b96b6fe9-99c3-436c-b275-6dae6bc1ec70
+# ╠═81c9da4f-4c18-47fa-8f55-3a03cbd94003
+# ╟─a650353e-fb31-4469-8be4-177c4def4f13
+# ╠═6ba174b8-8c43-474e-94b1-69a001ac201c
+# ╠═4d3cace2-f9ac-45be-b449-998985d72946
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
