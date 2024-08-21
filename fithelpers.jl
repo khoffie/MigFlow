@@ -1,3 +1,5 @@
+using LinearAlgebra
+
 function gen_preds(mapmodel, optis)
     ## expects values in col2, names in col1
     chain = Chains([optis[: , 2]], optis[: , 1]) 
@@ -26,6 +28,14 @@ function load_flows()
     rename!(dt, Dict(:dist => :distance))
     return dt
 end    
+
+function median_distance()
+    df = CSV.read("data/districts.csv",DataFrame)
+    distances = [norm([dists.xcoord[i]-dists.xcoord[j],dists.ycoord[i]-dists.ycoord[j]]) for i in 1:nrow(dists) , j in 1:nrow(dists) if i != j]
+	meddist = median(distances)
+    return meddist
+end
+
 
 function fit_map(; model, inits, lower, upper, algo, iters, reltol, dt)
     @printf("Algorithm = %s\n", nameof(typeof(algo)))
@@ -71,7 +81,7 @@ function create_model3(; dt, dists, ncoefs, flow_th)
     alldists = CSV.read("data/districts.csv",DataFrame) # even if we subset districts, make sure we calculate population of germany properly
     popgerm = sum(alldists.pop)
 
-    meddist = 293.0 
+    meddist = median_distance()
     netactual = calcnet(dt2.flows,
                         levelcode.(dt2.fromdist),
                         levelcode.(dt2.todist),
