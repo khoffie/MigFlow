@@ -155,7 +155,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
 end
 
 
-function plotfit(vals,model)
+function plotfit(vals,model, ylim)
     dist = model.args.distance
     flow = Float64.(copy(model.args.flows))
     preds,netflow = generated_quantities(model,vals.values.array,names(vals.values)[1])
@@ -165,7 +165,7 @@ function plotfit(vals,model)
             flow[i] = preds[i] * rand(LogNormal(-15.0,log(2.0)))
         end
     end
-    scatter(dist,log.(flow ./ preds); color = model.args.agegroup,alpha=0.1)
+    scatter(dist,log.(flow ./ preds); color = model.args.agegroup,alpha=0.1, ylim)
 end
 
 
@@ -190,10 +190,12 @@ function runtest()
     #algo = NLopt.LN_NELDERMEAD()
     #algo = NLopt.LN_COBYLA()
     algo = NLopt.LN_BOBYQA()
-    init,model = test(2000; alg = algo, niter = 500,nsecs = 600,
+    init,model = test(200000; alg = algo, niter = 500,nsecs = 600,
             pctzero = 1.0); 
     println("plotting fit...."); 
-    display(plotfit(init,model))
+    display(plotfit(init,model, (-4, 4)))
     displayvals(init.values);
     (init,model)
 end
+
+runtest()
