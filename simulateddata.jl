@@ -55,7 +55,7 @@ function simdatafromtemplate(rng,templfile)
     desir = rand(rng,Gamma(5.0,1.0/4.0),length(levels(flowtemp.todist)))
     flowtemp.fromdesir = desir[levelcode.(flowtemp.fromdist)]
     flowtemp.todesir = desir[levelcode.(flowtemp.todist)]
-    meddist = median(flowtemp.distance)
+    meddist = median_distance()
     flowtemp.meddist = fill(meddist,nrow(flowtemp))
     simdataset!(rng,flowtemp,abcrate)
     (flows = flowtemp, desirability = desir)
