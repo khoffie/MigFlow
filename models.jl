@@ -95,6 +95,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     d0 ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     dscale ~ filldist(Gamma(8.0,0.5/7.0),Nages) ## sensitive falls to same size as insensitive somewhere around 0.5 times the median distance between districts
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
+    mm ~ LocationScale(0.0,1000,Beta(10,100))
     kd ~ MvNormal(fill(0.0, Nages), (log(15.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
     ## priors for chebychev polys parameters
@@ -142,7 +143,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     allmoves ~ Normal(predmoves, .01 * predmoves) ## our total move predictions should be about right by around 1%
 
     ## flows ~ poisson(expectation)
-    flows ~ arraydist([Poisson(p) for p in preds])
+    flows ~ arraydist([MixtureModel([Poisson(p),Poisson(0.0)],[mm/1000.0,1.0-mm/1000.0]) for p in preds])
 
     ### both netactual and flows we optimize together. neterr   
     ### determinies the importance of netactual for optimization. the
