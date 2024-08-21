@@ -174,7 +174,7 @@ function testmod3simpl(; thedf, dists, inits, lowers, uppers, iters,
         end 
         fit = Turing.sample(model3, NUTS(warmup,.8; init_ϵ = 1e-6, 
                             adtype=AutoReverseDiff(true)), MCMCThreads(), samples, 3,
-                            init_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
+                            initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
                             verbose = true, progress = true)
             serialize("./fitted_models/" * mod_name * "Sampler", fit)
     end
