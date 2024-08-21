@@ -12,7 +12,7 @@ levels!(dt.agegroup,["below18","18-25","25-30","30-50","50-65","above65"])
 rename!(dt, Dict(:dist => :distance))
 
 Nages = 6
-meddist = 293
+meddist = median_distance()
 
 dt2 = dt[dt.flows .> 0, :]
 Ndist = length(unique(dt2.fromdist))
