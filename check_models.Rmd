@@ -1,8 +1,8 @@
 ---
 site: bookdown::bookdown_site
-bookdown::pdf_book:
-  base_format: rmarkdown::beamer_presentation
-<!-- documentclass: book -->
+<!-- bookdown::pdf_book: -->
+<!--   base_format: rmarkdown::beamer_presentation -->
+documentclass: book
 always_allow_html: true
 ---
 
@@ -201,8 +201,9 @@ prettify(resid_plt, main = "Individual Flows",
 ```
 
 ## distance
-```{r, flows-distance, eval = TRUE}
+```{r, flows-distance1, eval = TRUE, fig.cap = caption}
 
+caption <- "actualimp: True 0 flows were imputed using lognormal with mean = -15"
 dt[, actual_imp := as.double(actual)]
 rnds <- rlnorm(dt[actual == 0, .N], -15, log(2.0))
 dt[actual == 0, actual_imp := rnds]
@@ -210,18 +211,30 @@ dt[actual == 0, actual_imp := rnds]
 plot_fit(dt, distance, log(actual_imp / preds), th_min = 0, smooth = FALSE, p_sample = 1)
 w <- 8
 ggsave("~/Desktop/plot_imp.pdf", width = w, height = w / 1.6)
+
+```
+
+```{r, flows-distance2, fig.cap = caption}
+
+caption <- "Here actuals are shown, that means all 0 flows are missing."
 plot_fit(dt, distance, log(actual / preds), th_min = 0, smooth = TRUE, p_sample = 1)
 w <- 8
 ggsave("~/Desktop/plot_noimp.pdf", width = w, height = w / 1.6)
+
+## plot_fit(dt, preds, (actual - preds) / preds, th_min = 3, th_max = 50, p_sample = 1, smooth = FALSE) 
+## plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = 1, smooth = FALSE)
+
+```
+
+```{r, flows-distance3, fig.cap = caption}
+
+caption <- "actualimp2, actual 0 flows were imputed using lognormal with mean 0."
 dt[, actual_imp2 := as.double(actual)]
 rnds <- rlnorm(dt[actual == 0, .N], 0, log(2.0))
 dt[actual == 0, actual_imp2 := rnds]
 plot_fit(dt, distance, log(actual_imp2 / preds), th_min = 0, smooth = TRUE, p_sample = 1)
 w <- 8
 ggsave("~/Desktop/plot_imp2.pdf", width = w, height = w / 1.6)
-
-## plot_fit(dt, preds, (actual - preds) / preds, th_min = 3, th_max = 50, p_sample = 1, smooth = FALSE) 
-## plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = 1, smooth = FALSE)
 
 ```
 
