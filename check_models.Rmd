@@ -38,9 +38,13 @@ map_age <- age_lvls ## for maps
 use_age <- age_lvls ## for everything else
 setwd("~/Documents/GermanMigration/")
 
-data <- read_data("SimpleLBFGS")
-data <- read_data("NewPopLBFGS")
+data <- read_data("works")
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
+
+glm(actual ~ 1 + (log(topop/1e3)) + (log(frompop/1e3)) +log(distance),
+    family = poisson,
+    data = dt[agegroup == use_age[1]],)
+
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
 dt <- dt[agegroup %in% use_age]
