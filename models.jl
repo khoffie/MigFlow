@@ -124,9 +124,9 @@ https://www.desmos.com/calculator/jhrgbmw9dd
                 log1p(1.0 / (distance[i] / distscale[agegroup[i]] + d0[agegroup[i]]/100.0)^c[agegroup[i]]) + desires[i])
                     for i in 1:length(flows)]
 
-    if typeof(a[1]) != Float64
-        @printf "a1 = %.2f, c1 = %.2f, d0_1 = %.2f, neterr = %.2f\n"  a[1].value c[1].value d0[1].value neterr.value
-    end
+    #if typeof(a[1]) != Float64
+    #    @printf "a1 = %.2f, c1 = %.2f, d0_1 = %.2f, neterr = %.2f\n"  a[1].value c[1].value d0[1].value neterr.value
+    #end
 
 
     #if typeof(a[1]) != Float64
