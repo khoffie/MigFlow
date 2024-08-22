@@ -14,22 +14,26 @@ kable(dt[, .(frac_0 = mean(actual == 0)), keyby = .(agegroup)], digits = 2)
 
 dt[dists, frombl := i.bl_ags, on = .(fromdist = distcode)]
 dt[dists, tobl := i.bl_ags, on = .(todist = distcode)]
+dt[dists, fromdens := i.density, on = .(fromdist = distcode)]
+dt[dists, todens := i.density, on = .(todist = distcode)]
 
 
 all <- dt[, .(all = sum(actual)), keyby = .(agegroup, year)]
 dt[all, ww := actual / i.all, on = .(agegroup, year)]
-n
+dt[, fromsax := fifelse(frombl == 14, TRUE, FALSE)]
+dt[, tosax := fifelse(tobl == 14, TRUE, FALSE)]
 
-sample_in <- dt[frombl != 14 & tobl == 14][sample(1:.N, size = 1e3, prob = ww)]
-sample_in[, type := "toSaxony"]
-sample_out <- dt[frombl == 14 & tobl != 14][sample(1:.N, size = 1e3, prob = ww)]
-sample_out[, type := "fromSaxony"]
+test <- dt[(fromsax == TRUE & tosax == FALSE) | (fromsax == FALSE & tosax == TRUE),
+   .SD[sample(.N, size = min(.N, 1e3))], keyby = .(tosax, fromsax)]
 
-dt[ .I[sample(1:.N, size = 1e3, prob = ww)]]
+melt(test[, .(tosax, fromsax, agegroup, distance)],
+     id.vars = "agegroup", )
 
-sample_in[, min(distance)]
-sample_out[, min(distance)]
-
+ggplot(test,
+       aes(distance) +
+    geom_density(linewidth = 2) +
+    facet_wrap(vars(agegroup)) +
+    theme_minimal()
 
 ggplot(rbind(sample_in, sample_out),
        aes(distance, color = type)) +

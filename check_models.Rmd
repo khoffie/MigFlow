@@ -1,7 +1,6 @@
----
+--- 
 site: bookdown::bookdown_site
-<!-- bookdown::pdf_book: -->
-<!--   base_format: rmarkdown::beamer_presentation -->
+output: bookdown::gitbook
 documentclass: book
 always_allow_html: true
 ---
@@ -161,7 +160,7 @@ lapply(map_age, function(age) make_net_map(netm[agegroup == age & type %in% c("a
 ```
 
 ## Net chart
-```{r net-plot}
+```{r net-plot, eval = FALSE}
 
 make_net_plot(net, type = "univariate", scales = "free") 
 ## net[, cor(actual, preds), keyby = .(agegroup, year, model)]
@@ -263,9 +262,6 @@ plt3
 
 ```{r, eval = FALSE}
 
-
-dt <- fread("data/FlowDataGermans.csv")
-dt <-setnames(dt, c("flows", "dist"), c("actual", "distance"), skip_absent = TRUE)
 
 
 coefs <- dt[, .(fits = .(broom::tidy(fit_gravity(.SD, offset = FALSE)))), keyby = agegroup]
