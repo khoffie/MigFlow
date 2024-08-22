@@ -1,5 +1,5 @@
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
-    ReverseDiff, Revise, RCall
+    ReverseDiff, Revise, RCall, NamedArrays
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
     StatProfilerHTML, StatsFuns, OptimizationBBO, Printf,OptimizationNLopt,NLopt
 includet("debughelpers.jl")
@@ -44,6 +44,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     thedf = alldf[StatsBase.sample(1:nrow(alldf),nflow; replace=false),:]
     thedf.rand = rand(Bernoulli(pctzero),nrow(thedf))
     thedf = thedf[thedf.flows .!= 0 .|| thedf.rand .== 1,:]
+    
 
     @printf("smallest distance: %.2f\n",minimum(thedf.distance))
     @printf("fraction of zeros: %.3f\n",sum(thedf.flows .== 0)/nrow(thedf))
@@ -97,15 +98,22 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     displayvals(inits)
 #    vals = maximum_a_posteriori(model3, alg; adtype = AutoForwardDiff(),
 #        initial_params=inits,lb=lb,ub=ub,maxiters = niter, maxtime = nsecs, reltol=1e-5, progress=true)
-    vals = maximum_a_posteriori(model3, alg; adtype = AutoForwardDiff(),
+    fit = maximum_a_posteriori(model3, alg; adtype = AutoForwardDiff(),
                         initial_params=inits,
                         lb=lb,ub=ub,
                         maxiters = niter, maxtime = nsecs, reltol=1e-9, progress=true)
+    opts = DataFrame(names=names(fit.values, 1), 
+                    values = fit.values.array, 
+                    inits = inits)
+    
+    chain = Chains([opts[: , 2]], opts[: , 1])
+    thedf[:, "preds"] = generated_quantities(model3, chain)[1][1]
+    write_out(mod_name = "works", opts = opts, preds = thedf)
 
+##    serialize("fitted_models/serial_init_finding.dat", )
+    return fit, model3
 
-    return vals,model3
-
-
+#= 
     vals = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin_radiuslimited(),
                         initial_params=inits,lb=lb,ub=ub,maxiters = 50, maxtime = 120, progress=true)
 
@@ -132,7 +140,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     inits = vals.value.array
 
     serialinits = copy(inits)
-    serialize("fitted_models/serial_init_finding.dat",serialinits)
+    ## serialize("fitted_models/serial_init_finding",serialinits)
 
     ## narrow the window on c and dscale and d0
     lb[cindx] .= inits[cindx] .- .1
@@ -150,12 +158,13 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     vals = maximum_a_posteriori(model3,BBO_adaptive_de_rand_1_bin_radiuslimited(),
                     init_params=inits,lb=lb,ub=ub,maxiters = 100, maxtime = 120, progress=true)
     inits = vals.value.array
-    serialize("fitted_models/serialinits_with_cheby.dat",inits)
+    serialize("fitted_models/serialinits_with_cheby.dat", inits)
     vi(model3,ADVI(10,100; adtype = AutoReverseDiff(true)); θ_init=inits)
+ =#
 end
 
 
-function plotfit(vals,model, ylim)
+function plotfit(vals,model)
     dist = model.args.distance
     flow = Float64.(copy(model.args.flows))
     preds,netflow = generated_quantities(model,vals.values.array,names(vals.values)[1])
@@ -165,11 +174,9 @@ function plotfit(vals,model, ylim)
             flow[i] = preds[i] * rand(LogNormal(-15.0,log(2.0)))
         end
     end
-    scatter(dist,log.(flow ./ preds); color = model.args.agegroup,alpha=0.1, ylim)
+    scatter(dist,log.(flow ./ preds); color = model.args.agegroup,alpha=0.1)
 end
 
-
-using NamedArrays
 function displayvals(vals)
     names = NamedArrays.names(vals)[1] 
     for i in 1:33 
@@ -190,10 +197,11 @@ function runtest()
     #algo = NLopt.LN_NELDERMEAD()
     #algo = NLopt.LN_COBYLA()
     algo = NLopt.LN_BOBYQA()
-    init,model = test(200000; alg = algo, niter = 500,nsecs = 600,
+    init,model = test(2000; alg = algo, niter = 500,nsecs = 600,
             pctzero = 1.0); 
     println("plotting fit...."); 
-    display(plotfit(init,model, (-4, 4)))
+    display(plotfit(init,model))
+    savefig("fitted_models/fit.pdf")
     displayvals(init.values);
     (init,model)
 end
