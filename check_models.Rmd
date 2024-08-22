@@ -27,6 +27,7 @@ library(plotR)
 library(kableExtra)
 library(patchwork)
 source("functions.R")
+source("functions_plots.R")
 
 ```
 
@@ -40,10 +41,29 @@ setwd("~/Documents/GermanMigration/")
 
 data <- read_data("works")
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
+dists <- fread("data/districts.csv")
+shp <- setDT(sf::read_sf(file.path(p_clean, "shapes/districts_ext.shp")))
 
-## glm(actual ~ 1 + (log(topop/1e3)) + (log(frompop/1e3)) +log(distance),
-##     family = poisson,
-##     data = dt[agegroup == use_age[1]],)
+## Think about extracting all of this from actually used data!
+## p_clean <- "~/Diss/inst/extdata/clean/"
+## pop_dt <- fread(file.path(p_clean, "aux_data/age17for.csv"))
+## setnames(pop_dt, "age_group", "agegroup")
+## rec_ages(pop_dt)
+
+```
+
+```{r, fit-gravity}
+
+dt_grav <- copy(dt)
+dt_grav[, preds := predict(fit_gravity(.SD, offset = FALSE), type = "response"),
+        keyby = .(agegroup)]
+dt_grav[, model := "gravity"]
+
+dt <- rbind(dt, dt_grav)
+
+```
+
+```{r, merge-data}
 
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
@@ -56,19 +76,15 @@ dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 dt_coefs <- data$coefs
 dt_coefs[, diff := values - inits]
 
-## Think about extracting all of this from actually used data!
+```
 
-## p_clean <- "~/Diss/inst/extdata/clean/"
-## pop_dt <- fread(file.path(p_clean, "aux_data/age17for.csv"))
-## setnames(pop_dt, "age_group", "agegroup")
-## rec_ages(pop_dt)
+```{r, invent-flows}
 
-dists <- fread("data/districts.csv")
-shp <- setDT(sf::read_sf(file.path(p_clean, "shapes/districts_ext.shp")))
-
-dt[, .(all_actual = sum(actual),
-       all_predicted = sum(preds)), keyby = agegroup][
+invent <- dt[, .(all_actual = sum(actual),
+                 all_predicted = sum(preds)), keyby = .(agegroup, model)][
   , rel_diff := (all_actual - all_predicted) / all_actual][]
+kbl(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
+    caption = "Do our models invent flows?")
 
 ```
 
@@ -115,38 +131,10 @@ net[shp, geometry := i.geometry, on = .(region = AGS)]
 
 ```
 
-```{r, coef-table, results = "show"}
+```{r, coef-table, results = "show", eval = FALSE}
 
 kbl(dt_coefs, digits = 2, booktabs = TRUE, longtable = TRUE,
     caption = "Parameters")
-
-```
-
-```{r, kable-preds, results = "show"}
-
-kbl(head(dt[order(actual)], 10),
-    caption = "Predictions for smallest actual od-flows",
-    digits = 2, booktabs = TRUE)
-kbl(head(dt[order(- actual)], 10),
-    caption = "Predictions for largest actual od-flows",
-    digits = 2, booktabs = TRUE)
-
-max_reg <- dt[actual == max(actual), .(fromdist, todist)]
-
-## should have done a join
-dt_sym1 <- dt[fromdist == max_reg[[1]] & todist == max_reg[[2]]]
-dt_sym1[, type := "fromto"]
-dt_sym2 <- dt[fromdist == max_reg[[2]] & todist == max_reg[[1]]]
-dt_sym2[, type := "tofrom"]
-dt_sym <- rbind(dt_sym1, dt_sym2)
-
-dt_sym <- melt(dt_sym[, -c(1,2)],
-     id.vars = c("agegroup", "year", "distance", "type"),
-     value.var = c("preds", "actual"))
-
-kbl(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
-    caption = "Are our predictions symmetric?",
-    digits = 2, booktabs = TRUE)
 
 ```
 
@@ -166,17 +154,8 @@ lapply(map_age, function(age) make_net_map(netm[agegroup == age & type %in% c("a
 ## Net chart
 ```{r net-plot}
 
-make_net_plot(net, scales = "free") +
-    facet_wrap(vars(agegroup))
-
-## make_net_plot(net, scales = "fixed") +
-##     coord_fixed()
-
-ggplot(netm[type != "diff"], aes(value, fill = type)) +
-    geom_density(alpha = .2) +
-    facet_wrap(vars(agegroup), scales = "free") +
-    ggtitle("Distribution of net migration rate") +
-    theme_minimal()
+make_net_plot(net, type = "univariate", scales = "free") 
+## net[, cor(actual, preds), keyby = .(agegroup, year, model)]
 
 ```
 
