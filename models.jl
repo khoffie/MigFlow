@@ -143,7 +143,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     allmoves ~ Normal(predmoves, .01 * predmoves) ## our total move predictions should be about right by around 1%
 
     ## flows ~ poisson(expectation)
-    flows ~ arraydist([MixtureModel([Poisson(p[i]),Poisson(0.0)],[mm[agegroup[i]]/1000.0,1.0-mm[agegroup[i]]/1000.0]) for i in eachindex(preds)])
+    flows ~ arraydist([MixtureModel([Poisson(preds[i]),Poisson(0.0)],[mm[agegroup[i]]/1000.0,1.0-mm[agegroup[i]]/1000.0]) for i in eachindex(preds)])
 
     ### both netactual and flows we optimize together. neterr   
     ### determinies the importance of netactual for optimization. the
