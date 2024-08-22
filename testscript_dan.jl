@@ -29,7 +29,8 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
         fill(2.0,6); #c
         fill(1.2,6); #d0
         fill(.75,6); #dscale
-        [6.0,400.0]; #[neterr, mm]
+        [6.0];
+        fill(400.0,6); # mm, per age
         fill(0.0,6); #kd
         fill(0.0,6*Ncoefs); #desirecoefs
     ]
@@ -55,8 +56,8 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     d0indx = cindx .+ Nages
     dscindx = d0indx .+ Nages
     neterridx = Nages*4+1
-    mmindx = neterridx+1
-    kdidx = mmindx+1:mmindx+1+Nages
+    mmindx = (neterridx+1):(neterridx+1+Nages)
+    kdidx = last(mmindx)+1:last(mmindx)+1+Nages
     desiridx = last(kdidx)+1:length(inits)
     lb = inits .- .1
     ub = inits .+ .1
@@ -81,8 +82,8 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     ub[aindx] .=  4.0
     lb[cindx] .= 1.0
     ub[cindx] .= 3.0
-    lb[mmindx] = 0.0
-    ub[mmindx] = 500
+    lb[mmindx] .= 10.0
+    ub[mmindx] .= 800
     lb[d0indx] .= 0.0
     ub[d0indx] .= 2.0
     println("""
@@ -97,7 +98,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     displayvals(inits)
 #    vals = maximum_a_posteriori(model3, alg; adtype = AutoForwardDiff(),
 #        initial_params=inits,lb=lb,ub=ub,maxiters = niter, maxtime = nsecs, reltol=1e-5, progress=true)
-    vals = maximum_a_posteriori(model3, alg; adtype = AutoForwardDiff(),
+    vals = maximum_a_posteriori(model3, alg; #adtype = AutoForwardDiff(),
                         initial_params=inits,
                         lb=lb,ub=ub,
                         maxiters = niter, maxtime = nsecs, reltol=1e-9, progress=true)
@@ -184,7 +185,7 @@ end
 
 
 function runtest()
-    algo = BBO_de_rand_1_bin_radiuslimited()
+    #algo = BBO_de_rand_1_bin_radiuslimited()
     #algo = LBFGS()
     #algo = IPNewton();
     #algo = NLopt.LN_NELDERMEAD()
