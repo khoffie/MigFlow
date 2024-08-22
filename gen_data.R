@@ -34,7 +34,8 @@ flows[age_for, topop := i.german, on = .(todist = region, year, agegroup)]
 shp[, pos := sf::st_point_on_surface(geometry)]
 shp[, x := st_coordinates(pos)[, 1]]
 shp[, y := st_coordinates(pos)[, 2]]
-dt_coords <- shp[, .(distcode = AGS, year, name = GEN, density, xcoord = x / 1e3, ycoord = y / 1e3,
+dt_coords <- shp[, .(distcode = AGS, year, name = GEN, 
+                     xcoord = x / 1e3, ycoord = y / 1e3,
                      bl_name, bl_ags)]
 
 dt_coords[density, density := i.density, on = .(distcode = region, year)]
