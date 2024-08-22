@@ -29,7 +29,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
         fill(2.0,6); #c
         fill(1.2,6); #d0
         fill(.75,6); #dscale
-        [6.0,400.0]; #[neterr, mm]
+        [6.0, 500.0]; #[neterr, mm]
         fill(0.0,6); #kd
         fill(0.0,6*Ncoefs); #desirecoefs
     ]
@@ -55,8 +55,8 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     cindx = aindx .+ Nages
     d0indx = cindx .+ Nages
     dscindx = d0indx .+ Nages
-    neterridx = Nages*4+1
-    mmindx = neterridx+1
+    neterrindx = Nages*4+1
+    mmindx = neterrindx+1
     kdidx = mmindx+1:mmindx+1+Nages
     desiridx = last(kdidx)+1:length(inits)
     lb = inits .- .1
@@ -74,24 +74,37 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
                         dists.xcoord, dists.ycoord, distdens,dists.pop,
                         Ndist, meddist, netactual, Ncoefs)
 
-    lb[dscindx] .= 0.02
-    ub[dscindx] .= 2.0
-    lb[d0indx] .= 0.0
-    ub[d0indx] .= 10.0
     lb[aindx] .= -4.0
     ub[aindx] .=  4.0
     lb[cindx] .= 1.0
     ub[cindx] .= 3.0
-    lb[mmindx] = 0.0
-    ub[mmindx] = 500
     lb[d0indx] .= 0.0
     ub[d0indx] .= 2.0
+    lb[dscindx] .= 0.02
+    ub[dscindx] .= 2.0
+    lb[mmindx] = 0.0
+    ub[mmindx] = 1000
     println("""
     a lower bounds are: $(lb[aindx])
     a upper bounds are: $(ub[aindx])
     
     c lower bounds are: $(lb[cindx])
     c upper bounds are: $(ub[cindx])
+
+    d0 lower bounds are: $(lb[d0indx])
+    d0 upper bounds are: $(ub[d0indx])
+
+    dscale lower bounds are: $(lb[dscindx])
+    dscale upper bounds are: $(ub[dscindx])
+
+
+    neterr lower bounds are: $(lb[neterrindx])
+    neterr upper bounds are: $(ub[neterrindx])
+
+    mm lower bounds are: $(lb[mmindx])
+    mm upper bounds are: $(ub[mmindx])
+
+
     """)
     ## first make a values be approximately correct
     println("starting optimize run from\n");
@@ -197,7 +210,7 @@ function runtest()
     #algo = NLopt.LN_NELDERMEAD()
     #algo = NLopt.LN_COBYLA()
     algo = NLopt.LN_BOBYQA()
-    init,model = test(2000; alg = algo, niter = 500,nsecs = 600,
+    init,model = test(50000; alg = algo, niter = 500, nsecs = 600,
             pctzero = 1.0); 
     println("plotting fit...."); 
     display(plotfit(init,model))
