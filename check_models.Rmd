@@ -41,9 +41,9 @@ setwd("~/Documents/GermanMigration/")
 data <- read_data("works")
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
 
-glm(actual ~ 1 + (log(topop/1e3)) + (log(frompop/1e3)) +log(distance),
-    family = poisson,
-    data = dt[agegroup == use_age[1]],)
+## glm(actual ~ 1 + (log(topop/1e3)) + (log(frompop/1e3)) +log(distance),
+##     family = poisson,
+##     data = dt[agegroup == use_age[1]],)
 
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
@@ -56,13 +56,16 @@ dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 dt_coefs <- data$coefs
 dt_coefs[, diff := values - inits]
 
-p_clean <- "~/Diss/inst/extdata/clean/"
-pop_dt <- fread(file.path(p_clean, "aux_data/age17for.csv"))
-setnames(pop_dt, "age_group", "agegroup")
-rec_ages(pop_dt)
+## Think about extracting all of this from actually used data!
 
+## p_clean <- "~/Diss/inst/extdata/clean/"
+## pop_dt <- fread(file.path(p_clean, "aux_data/age17for.csv"))
+## setnames(pop_dt, "age_group", "agegroup")
+## rec_ages(pop_dt)
+## density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))
+
+dists <- fread("data/districts.csv")
 shp <- setDT(sf::read_sf(file.path(p_clean, "shapes/districts_ext.shp")))
-density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))
 
 dt[, .(all_actual = sum(actual),
        all_predicted = sum(preds)), keyby = agegroup][
@@ -217,7 +220,7 @@ prettify(resid_plt, main = "Individual Flows",
 plot_fit(dt, distance, log(actual/preds), 0) +
     facet_wrap(vars(agegroup, model), scale = "free", ncol = 2) 
 
-plot_fit(dt, log(preds), log(actual/preds), 3, p_sample = .2)
+plot_fit(dt, log(preds), log(actual/preds), 0, p_sample = .2)
 plot_fit(dt, preds, (actual - preds) / preds, 3, 50, p_sample = .2) 
 plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = .2)
 
@@ -227,7 +230,7 @@ plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) /
 
 ```{r,}
 
-plot_fit(dt, distance, log(actual/preds), 0, p_sample = .2)
+plot_fit(dt[actual > 0], distance, log(actual/preds), 0, p_sample = .2)
 
 ```
 
@@ -252,45 +255,58 @@ plt3 <- plot_fit(dt, log(fromdens * todens), log(actual/preds), 0, p_sample = .2
 ## plt1 + plt2
 plt3
 
-## dt[, sum(actual), keyby = .(agegroup)]
+```
+
+```{r,}
+
+fit_gravity <- function(dt, offset) {
+    if(offset == TRUE) {
+        fit <- glm(actual ~ offset(log(frompop)) +
+                       offset(log(topop)) + log(distance),
+                   family = poisson, data = dt)
+    }
+    if(offset == FALSE) {
+        fit <- glm(actual ~ log(frompop) +
+                       log(topop) + log(distance),
+                   family = poisson, data = dt)
+    }
+    return(fit)
+}
+
+logistic <- function(x)
+    1 / (1 + exp(-x))
+
+dt <- fread("data/FlowDataGermans.csv")
+dt <-setnames(dt, c("flows", "dist"), c("actual", "distance"), skip_absent = TRUE)
 
 
-## plot_fit(dt[distance > 600], distance, log(actual / frompop), th_min = 0)
+coefs <- dt[, .(fits = .(broom::tidy(fit_gravity(.SD, offset = FALSE)))), keyby = agegroup]
+coefs <- rbindlist(coefs[, fits])
+coefs[, mean(estimate), keyby = .(term)]
+coefs[term == "(Intercept)"]
+
+logistic(-11)
+
+exp(-11)
+
+dt[, actual_imp := as.double(actual)]
+rnds <- rlnorm(dt[actual == 0, .N], -15, log(2.0))
+dt[actual == 0, actual_imp := rnds]
+
+plot_fit(dt, distance, log(actual_imp / preds), th_min = 0, smooth = FALSE)
+w <- 8
+ggsave("~/Desktop/plot.pdf", width = w, height = w / 1.6)
 
 
-## dt[distance > 600, mean(actual == 0), keyby = .(agegroup)]
-
-## dt[distance < 100, mean(actual), keyby = .(agegroup)]
-## dt[distance > 600, .(avg = mean(actual)), keyby = .(agegroup)]
-## dt[distance > 600 & actual > 0, .("avg log(actual / frompop)"
-##                                   = mean(log(actual / frompop))), keyby = .(agegroup)]
-
-## dt[distance > 600 & actual > 0, .("avg log(topop  / popgerm)" =
-##                                       mean(log(topop / 73000))), keyby = .(agegroup)]
-
-## dt[actual > 0, .("avg log(topop  / popgerm)" =
-##                                       mean(log(topop / 73000))), keyby = .(agegroup)]
+dt[actual == 0, actual_imp := rnorm(1, 0, 100)]
 
 
-## plot_fit(dt[actual > 0], distance,
-##          log(actual / frompop) - log(topop / 73000) ,
-##          th_min = 0)
-## ggsave("~/Desktop/plt.pdf")
+dt[actual == 0 & actual_imp != 0]
+dt[, mean(actual == 0), keyby = agegroup]
 
-## net1[, .(total_across_districts = sum(value)), keyby = variable]
-## net1[variable == "net"][order(value), .(region, agegroup, type, variable, value)]
+ggplot(dt, aes(distance, log(actual_imp, preds))) +
+    geom_point() +
+    facet_wrap(~agegroup)
 
-
-## dt[, .( allmoves = sum(actual)), keyby = .(agegroup)]
-
-## age <- use_age[2]
-## fit_gravity <- dt[agegroup == age, .(fit = .(glm(actual ~ log(frompop) + log(topop) + log(distance), family = poisson)))]
-## fit_gravity[[1]]
-
-## logistic <- function(x) {
-##     1 / (1 + exp(-x))
-## }
-
-## logistic(4.5 / 1000)
 
 ```
