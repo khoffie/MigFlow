@@ -1,7 +1,8 @@
---- 
+---
 site: bookdown::bookdown_site
-output: bookdown::gitbook
-documentclass: book
+bookdown::pdf_book:
+  base_format: rmarkdown::beamer_presentation
+<!-- documentclass: book -->
 always_allow_html: true
 ---
 
@@ -14,6 +15,14 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.width = 8,
                       fig.asp = 0.7,
                       out.width = "120%")
+
+## ---
+## title: "Using bookdown with Beamer"
+## output:
+##   bookdown::pdf_book:
+##     base_format: "function(..., number_sections) rmarkdown::beamer_presentation(...)"
+##     number_sections: false
+## ---
 
 ```
 
@@ -78,13 +87,13 @@ dt_coefs[, diff := values - inits]
 
 ```
 
-```{r, invent-flows}
+```{r, invent-flows, results = "show"}
 
 invent <- dt[, .(all_actual = sum(actual),
                  all_predicted = sum(preds)), keyby = .(agegroup, model)][
   , rel_diff := (all_actual - all_predicted) / all_actual][]
 kbl(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
-    caption = "Do our models invent flows?")
+    caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
 
 ```
 
@@ -131,7 +140,7 @@ net[shp, geometry := i.geometry, on = .(region = AGS)]
 
 ```
 
-```{r, coef-table, results = "show", eval = FALSE}
+```{r, coef-table, results = "show", eval = TRUE}
 
 kbl(dt_coefs, digits = 2, booktabs = TRUE, longtable = TRUE,
     caption = "Parameters")
@@ -191,22 +200,28 @@ prettify(resid_plt, main = "Individual Flows",
 
 ```
 
-```{r, preds-resid, eval = TRUE}
+## distance
+```{r, flows-distance, eval = TRUE}
 
 dt[, actual_imp := as.double(actual)]
 rnds <- rlnorm(dt[actual == 0, .N], -15, log(2.0))
 dt[actual == 0, actual_imp := rnds]
 
-plot_fit(dt, preds, (actual - preds) / preds, th_min = 3, th_max = 50, p_sample = 1, smooth = FALSE) 
-plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = 1, smooth = FALSE)
+plot_fit(dt, distance, log(actual_imp / preds), th_min = 0, smooth = FALSE, p_sample = 1)
+w <- 8
+ggsave("~/Desktop/plot_imp.pdf", width = w, height = w / 1.6)
+plot_fit(dt, distance, log(actual / preds), th_min = 0, smooth = TRUE, p_sample = 1)
+w <- 8
+ggsave("~/Desktop/plot_noimp.pdf", width = w, height = w / 1.6)
+dt[, actual_imp2 := as.double(actual)]
+rnds <- rlnorm(dt[actual == 0, .N], 0, log(2.0))
+dt[actual == 0, actual_imp2 := rnds]
+plot_fit(dt, distance, log(actual_imp2 / preds), th_min = 0, smooth = TRUE, p_sample = 1)
+w <- 8
+ggsave("~/Desktop/plot_imp2.pdf", width = w, height = w / 1.6)
 
-```
-
-### Distance
-
-```{r, flows-distance}
-
-plot_fit(dt, distance, log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
+## plot_fit(dt, preds, (actual - preds) / preds, th_min = 3, th_max = 50, p_sample = 1, smooth = FALSE) 
+## plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = 1, smooth = FALSE)
 
 ```
 
@@ -250,9 +265,6 @@ logistic(-11)
 exp(-11)
 
 
-plot_fit(dt, distance, log(actual_imp / preds), th_min = 0, smooth = FALSE)
-w <- 8
-ggsave("~/Desktop/plot.pdf", width = w, height = w / 1.6)
 
 
 dt[actual == 0, actual_imp := rnorm(1, 0, 100)]
