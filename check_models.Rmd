@@ -62,7 +62,6 @@ dt_coefs[, diff := values - inits]
 ## pop_dt <- fread(file.path(p_clean, "aux_data/age17for.csv"))
 ## setnames(pop_dt, "age_group", "agegroup")
 ## rec_ages(pop_dt)
-## density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))
 
 dists <- fread("data/districts.csv")
 shp <- setDT(sf::read_sf(file.path(p_clean, "shapes/districts_ext.shp")))
@@ -102,11 +101,10 @@ net1 <- calculate_net(dt, col = "actual", by = c("year", "agegroup", "model"),
 net2 <- calculate_net(dt, col = "preds", by = c("year", "agegroup", "model"),
                       long = TRUE, type = "preds")
 net <- rbind(net1, net2)
-
 net2 <- dcast(net[variable == "net"], region + year + agegroup ~ type)
 
-net[pop_dt, pop := i.german, on = .(region, year, agegroup)]
-net[, value := value / pop * 100]
+## net[pop_dt, pop := i.german, on = .(region, year, agegroup)]
+## net[, value := value / pop * 100]
 net <- dcast(net[variable == "net"], region + year + agegroup + model ~ type, value.var = "value")
 net[shp, geometry := i.geometry, on = .(region = AGS)]
 
@@ -153,7 +151,7 @@ kbl(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
 ```
 
 ## Maps
-```{r make-maps, out.width = "99%"}
+```{r make-maps, out.width = "99%", eval = FALSE}
 
 net[, diff := actual - preds]
 netm <- melt(net,
@@ -171,8 +169,8 @@ lapply(map_age, function(age) make_net_map(netm[agegroup == age & type %in% c("a
 make_net_plot(net, scales = "free") +
     facet_wrap(vars(agegroup))
 
-make_net_plot(net, scales = "fixed") +
-    coord_fixed()
+## make_net_plot(net, scales = "fixed") +
+##     coord_fixed()
 
 ggplot(netm[type != "diff"], aes(value, fill = type)) +
     geom_density(alpha = .2) +
@@ -184,10 +182,9 @@ ggplot(netm[type != "diff"], aes(value, fill = type)) +
 
 ## Individual Flows
 
-```{r,}
+```{r, flows-marginal}
 
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
-
 ggplot(dtm, aes(log(value), color = variable)) +
     geom_density() +
     facet_wrap(vars(agegroup))
@@ -217,64 +214,48 @@ prettify(resid_plt, main = "Individual Flows",
 
 ```{r, preds-resid, eval = TRUE}
 
-plot_fit(dt, distance, log(actual/preds), 0) +
-    facet_wrap(vars(agegroup, model), scale = "free", ncol = 2) 
+dt[, actual_imp := as.double(actual)]
+rnds <- rlnorm(dt[actual == 0, .N], -15, log(2.0))
+dt[actual == 0, actual_imp := rnds]
 
-plot_fit(dt, log(preds), log(actual/preds), 0, p_sample = .2)
-plot_fit(dt, preds, (actual - preds) / preds, 3, 50, p_sample = .2) 
-plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = .2)
+plot_fit(dt, preds, (actual - preds) / preds, th_min = 3, th_max = 50, p_sample = 1, smooth = FALSE) 
+plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = 1, smooth = FALSE)
 
 ```
 
 ### Distance
 
-```{r,}
+```{r, flows-distance}
 
-plot_fit(dt[actual > 0], distance, log(actual/preds), 0, p_sample = .2)
+plot_fit(dt, distance, log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
 
 ```
 
 ### Population
 
-```{r,}
+```{r, flows-pop}
 
-plot_fit(dt, log(frompop * topop), log(actual/preds), 3, p_sample = .2)
+plot_fit(dt, log(frompop * topop), log(actual_imp/preds), th_min = 0, p_sample = 1, smooth = FALSE)
 
 ```
 
 ### density
-```{r, eval = TRUE}
+```{r, flows-density, eval = TRUE}
 
 dt[density, fromdens := i.density, on = .(fromdist = region, year)]
 dt[density, todens := i.density, on = .(todist = region, year)]
 
-plt1 <- plot_fit(dt, log(fromdens), log(actual/preds), 0, p_sample = .2)
-plt2 <- plot_fit(dt, log(todens), log(actual/preds), 0, p_sample = .2)
-plt3 <- plot_fit(dt, log(fromdens * todens), log(actual/preds), 0, p_sample = .2)
+plt1 <- plot_fit(dt, log(fromdens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
+plt2 <- plot_fit(dt, log(todens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
+plt3 <- plot_fit(dt, log(fromdens * todens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
 
 ## plt1 + plt2
 plt3
 
 ```
 
-```{r,}
+```{r, eval = FALSE}
 
-fit_gravity <- function(dt, offset) {
-    if(offset == TRUE) {
-        fit <- glm(actual ~ offset(log(frompop)) +
-                       offset(log(topop)) + log(distance),
-                   family = poisson, data = dt)
-    }
-    if(offset == FALSE) {
-        fit <- glm(actual ~ log(frompop) +
-                       log(topop) + log(distance),
-                   family = poisson, data = dt)
-    }
-    return(fit)
-}
-
-logistic <- function(x)
-    1 / (1 + exp(-x))
 
 dt <- fread("data/FlowDataGermans.csv")
 dt <-setnames(dt, c("flows", "dist"), c("actual", "distance"), skip_absent = TRUE)
@@ -289,9 +270,6 @@ logistic(-11)
 
 exp(-11)
 
-dt[, actual_imp := as.double(actual)]
-rnds <- rlnorm(dt[actual == 0, .N], -15, log(2.0))
-dt[actual == 0, actual_imp := rnds]
 
 plot_fit(dt, distance, log(actual_imp / preds), th_min = 0, smooth = FALSE)
 w <- 8
@@ -307,6 +285,5 @@ dt[, mean(actual == 0), keyby = agegroup]
 ggplot(dt, aes(distance, log(actual_imp, preds))) +
     geom_point() +
     facet_wrap(~agegroup)
-
 
 ```

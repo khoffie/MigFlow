@@ -74,7 +74,7 @@ make_net_plot <- function(net, scales = "free") {
     return(plt)
 }
 
-plot_fit <- function(dt, x, y, th_min, th_max = NULL, p_sample = NULL) {
+plot_fit <- function(dt, x, y, th_min, smooth = TRUE, th_max = NULL, p_sample = NULL) {
     main <- "Individual flows "
     if(!is.null(p_sample)) {
         dt <- dt[sample(1:.N, size = as.integer(p_sample * .N))]
@@ -84,7 +84,6 @@ plot_fit <- function(dt, x, y, th_min, th_max = NULL, p_sample = NULL) {
     plt <- ggplot(dt[preds > th_min], aes({{x}}, {{y}})) +
         geom_hline(yintercept = 0) +
         geom_point(pch = ".", alpha = .3) +
-        geom_smooth(se = FALSE) +
         facet_wrap(vars(model, agegroup), scale = "free") +
         ggtitle(main) +
         theme_minimal()
@@ -92,6 +91,9 @@ plot_fit <- function(dt, x, y, th_min, th_max = NULL, p_sample = NULL) {
         main <- sprintf(paste(main, "and < %s"), th_max)
         plt <- plt + xlim(c(0, th_max)) +
             ggtitle(main)
+    }
+    if(smooth == TRUE) {
+        plt <- plt + geom_smooth(se = FALSE) 
     }
     return(plt)
 }
@@ -135,3 +137,23 @@ add_mising_flows <- function(flows, regions, agegroups, years) {
     flows[is.na(flows), flows := 0]
     return(flows)
 }
+
+fit_gravity <- function(dt, offset) {
+    if(offset == TRUE) {
+        fit <- glm(actual ~ offset(log(frompop)) +
+                       offset(log(topop)) + log(distance),
+                   family = poisson, data = dt)
+    }
+    if(offset == FALSE) {
+        fit <- glm(actual ~ log(frompop) +
+                       log(topop) + log(distance),
+                   family = poisson, data = dt)
+    }
+    return(fit)
+}
+
+logistic <- function(x) {
+    y <- 1 / (1 + exp(-x))
+    return(y)
+}
+
