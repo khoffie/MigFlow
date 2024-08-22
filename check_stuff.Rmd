@@ -1,0 +1,42 @@
+```{r}
+
+ggsavew <- function(w = 8, ...) {
+    w <- w
+    h <- w / 1.6
+    ggsave(..., width = w, height = h)
+}
+
+dt <- fread("data/FlowDataGermans.csv")
+dt <-setnames(dt, c("flows", "dist"), c("actual", "distance"), skip_absent = TRUE)
+dists <- fread("data/districts.csv")
+
+kable(dt[, .(frac_0 = mean(actual == 0)), keyby = .(agegroup)], digits = 2)
+
+dt[dists, frombl := i.bl_ags, on = .(fromdist = distcode)]
+dt[dists, tobl := i.bl_ags, on = .(todist = distcode)]
+
+
+all <- dt[, .(all = sum(actual)), keyby = .(agegroup, year)]
+dt[all, ww := actual / i.all, on = .(agegroup, year)]
+n
+
+sample_in <- dt[frombl != 14 & tobl == 14][sample(1:.N, size = 1e3, prob = ww)]
+sample_in[, type := "toSaxony"]
+sample_out <- dt[frombl == 14 & tobl != 14][sample(1:.N, size = 1e3, prob = ww)]
+sample_out[, type := "fromSaxony"]
+
+dt[ .I[sample(1:.N, size = 1e3, prob = ww)]]
+
+sample_in[, min(distance)]
+sample_out[, min(distance)]
+
+
+ggplot(rbind(sample_in, sample_out),
+       aes(distance, color = type)) +
+    geom_density(linewidth = 2) +
+    facet_wrap(~agegroup) +
+    theme_minimal()
+
+ggsavew(filename = "~/Desktop/inout.pdf")
+
+```
