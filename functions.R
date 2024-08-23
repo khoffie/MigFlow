@@ -101,6 +101,13 @@ fit_gravity <- function(dt, offset) {
     return(fit)
 }
 
+fit_zeroinfl <- function(dt) {
+    fit <- pscl::zeroinfl(actual ~ log(frompop) + log(topop) + log(distance),
+                          dist = "poisson", link = "logit", data = dt #, start = c(1, 1, -2)
+                          )
+    return(fit)
+}
+
 logistic <- function(x) {
     y <- 1 / (1 + exp(-x))
     return(y)

@@ -67,3 +67,9 @@ make_net_map <- function(net) {
         theme_minimal() 
     return(plt)
 }
+
+ggsavew <- function(w = 8, ...) {
+    w <- w
+    h <- w / 1.6
+    ggsave(..., width = w, height = h)
+}
