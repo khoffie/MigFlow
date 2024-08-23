@@ -1,16 +1,60 @@
-```{r}
+```{r, packages}
 
-ggsavew <- function(w = 8, ...) {
-    w <- w
-    h <- w / 1.6
-    ggsave(..., width = w, height = h)
-}
+library(data.table)
+library(sf)
+library(ggplot2)
+library(MigStat)
+library(plotR)
+library(kableExtra)
+library(patchwork)
+library(pscl)
+source("functions.R")
+source("functions_plots.R")
+
+```
+
+```{r}
 
 dt <- fread("data/FlowDataGermans.csv")
 dt <-setnames(dt, c("flows", "dist"), c("actual", "distance"), skip_absent = TRUE)
 dists <- fread("data/districts.csv")
 
 kable(dt[, .(frac_0 = mean(actual == 0)), keyby = .(agegroup)], digits = 2)
+
+```
+
+```{r zero-inflated-poisson}
+
+
+
+fits_zero <- dt[, .(fits = .(fit_zeroinfl(.SD))), keyby = .(agegroup)]
+fits_zero[, fits][[6]]
+
+summary(fits_zero[, 2][[1]][[2]])
+
+dt[, actual_imp := as.double(actual)]
+rnds <- rlnorm(dt[actual == 0, .N], -15, log(2.0))
+dt[actual == 0, actual_imp := rnds]
+
+dt[, preds_zero := predict(fit_zeroinfl(.SD), type = "response"), keyby = .(agegroup)]
+##dt[, model := "zeroinfl"]
+plt_zero <- plot_fit(dt, distance, log(actual_imp / preds), th_min = 0, p_sample = .2, smooth = FALSE)
+
+dt[, preds_grav := predict(fit_gravity(.SD, offset = FALSE), type = "response"), keyby = .(agegroup)]
+dt[, model := "gravity"]
+plt_grav <- plot_fit(dt, distance, log(actual_imp / preds), th_min = 0, p_sample = .2, smooth = FALSE)
+
+ggsavew(w = 12, file = "./plots/zero_grav.pdf")
+
+dt[, cor(actual, preds_zero), keyby = agegroup]
+dt[, cor(actual, preds_grav), keyby = agegroup]
+
+plot_fit(dt, distance, log(actual_imp / preds_grav), th_min = 0, p_sample = .2, smooth = FALSE)
+
+```
+
+```{r distance-state-plot}
+
 
 dt[dists, frombl := i.bl_ags, on = .(fromdist = distcode)]
 dt[dists, tobl := i.bl_ags, on = .(todist = distcode)]
