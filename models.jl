@@ -157,3 +157,38 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     netactual ~ arraydist([Normal(netflows[dist,age],neterrfrac*distpop[dist]) for dist in 1:Ndist, age in 1:Nages]) 
     return((preds,netflows))
 end
+
+@model function migration4(flows, allmoves, fromdist, todist,
+    frompop, topop, popgerm, distance,
+    agegroup, Nages,
+    xcoord, ycoord,density,distpop,
+    Ndist, meddist, netactual, ncoefs)
+
+    a ~ filldist(Normal(0.0,2.75),Nages) # center a around a typical value found by plotting the data and adjusting until the overall shift on log scale is about right
+    c ~ filldist(Gamma(10.0, 1.5/9.0),Nages) # c decay rate parameter between about 1 and 4 ish
+    d0 ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
+    dscale ~ filldist(Gamma(8.0,0.5/7.0),Nages) ## sensitive falls to same size as insensitive somewhere around 0.5 times the median distance between districts
+    neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
+    mm ~ filldist(LocationScale(0.0,1000.0,Beta(2,5)),Nages)
+##     mm ~ LocationScale(0.0,1000.0,Beta(2,5))
+
+    distscale = dscale .* meddist
+    preds = [frompop[i] * logistic( -3.0 + log(topop[i] / popgerm) + a[agegroup[i]] +
+        log1p(1.0 / (distance[i] / distscale[agegroup[i]] + d0[agegroup[i]]/100.0)^c[agegroup[i]]))
+             for i in 1:length(flows)]
+
+    if any(isnan,preds)
+        println("NaN in predictions")
+    end
+    ## matrix dist, age
+    netflows = calcnet(preds,fromdist,todist,agegroup,Nages,Ndist)
+
+    predmoves = sum(preds) # total predicted flow
+    allmoves ~ Normal(predmoves, .01 * predmoves) ## our total move predictions should be about right by around 1%
+
+    ## flows ~ poisson(expectation)
+    flows ~ arraydist([MixtureModel([Poisson(preds[i]), Poisson(0.0)],
+                                    [mm[agegroup[i]]/1000.0,1.0-mm[agegroup[i]]/1000.0])
+                       for i in eachindex(preds)])
+    return(preds)
+end
