@@ -11,7 +11,7 @@ includet("fitmodel2.jl")
 includet("fitmodel3.jl")
 
 
-Random.seed!(20240719)
+## Random.seed!(20240719)
 
 ## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
 dists = CSV.read("./data/districts.csv",DataFrame)
@@ -25,13 +25,14 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     Ncoefs = 36
 
     inits = [
-        fill(0.0,6); #a
-        fill(2.0,6); #c
-        fill(1.2,6); #d0
-        fill(.75,6); #dscale
-        [6.0, 500.0]; #[neterr, mm]
-        fill(0.0,6); #kd
-        fill(0.0,6*Ncoefs); #desirecoefs
+        fill(0.0, Nages); #a
+        fill(2.0, Nages); #c
+        fill(1.2, Nages); #d0
+        fill(.75, Nages); #dscale
+        [6.0]; #[neterr, mm]
+        fill(600.0, Nages); # mm, per age
+        fill(0.0, Nages); #kd
+        fill(0.0, Nages * Ncoefs); #desirecoefs
     ]
 
     alldf = load_flows()
@@ -48,19 +49,8 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
 
     @printf("smallest distance: %.2f\n",minimum(thedf.distance))
     @printf("fraction of zeros: %.3f\n",sum(thedf.flows .== 0)/nrow(thedf))
-    Ndist = nrow(dists)
-    aindx = 1:Nages
-    inits[aindx] .= avals
+    Ndist = nrow(dists)    
 
-    cindx = aindx .+ Nages
-    d0indx = cindx .+ Nages
-    dscindx = d0indx .+ Nages
-    neterrindx = Nages*4+1
-    mmindx = neterrindx+1
-    kdidx = mmindx+1:mmindx+1+Nages
-    desiridx = last(kdidx)+1:length(inits)
-    lb = inits .- .1
-    ub = inits .+ .1
     netactual = calcnet(thedf.flows,
                         levelcode.(thedf.fromdist),
                         levelcode.(thedf.todist),
@@ -74,6 +64,19 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
                         dists.xcoord, dists.ycoord, distdens,dists.pop,
                         Ndist, meddist, netactual, Ncoefs)
 
+    aindx = 1:Nages
+    
+
+    cindx = copy(aindx) .+ Nages
+    d0indx = copy(cindx) .+ Nages
+    dscindx = copy(d0indx) .+ Nages
+    neterrindx = last(dscindx) .+ 1
+    mmindx = copy(dscindx) .+ (1 + Nages)
+    kdidx = copy(mmindx) .+ Nages
+    desiridx = last(kdidx)+1:length(inits)
+
+    lb = inits .- .1
+    ub = inits .+ .1
     lb[aindx] .= -4.0
     ub[aindx] .=  4.0
     lb[cindx] .= 1.0
@@ -82,8 +85,12 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     ub[d0indx] .= 2.0
     lb[dscindx] .= 0.02
     ub[dscindx] .= 2.0
-    lb[mmindx] = 0.0
-    ub[mmindx] = 1000
+    lb[neterrindx] = 0.0
+    ub[neterrindx] = 20.0
+    lb[mmindx] .= 0.0
+    ub[mmindx] .= 1000
+    @show mmindx
+    inits[aindx] .= avals
     println("""
     a lower bounds are: $(lb[aindx])
     a upper bounds are: $(ub[aindx])
