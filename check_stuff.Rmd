@@ -1,4 +1,11 @@
-```{r, packages}
+--- 
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+always_allow_html: true
+---
+
+```{r, packages-check}
 
 library(data.table)
 library(sf)
@@ -7,48 +14,132 @@ library(MigStat)
 library(plotR)
 library(kableExtra)
 library(patchwork)
-library(pscl)
 source("functions.R")
 source("functions_plots.R")
 
 ```
 
-```{r}
 
-## dt <- fread("data/FlowDataGermans.csv")
-## dt <-setnames(dt, c("flows", "dist"), c("actual", "distance"), skip_absent = TRUE)
+```{r global_knitr, echo = FALSE, eval = TRUE}
+
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE,
+                      results = "hide",
+                      fig.width = 8,
+                      fig.asp = 0.7,
+                      out.width = "120%")
+
+## ---
+## title: "Using bookdown with Beamer"
+## output:
+##   bookdown::pdf_book:
+##     base_format: "function(..., number_sections) rmarkdown::beamer_presentation(...)"
+##     number_sections: false
+## ---
+
+```
+
+```{r, message = TRUE}
+
 setwd("~/Documents/GermanMigration/")
-
-data <- read_data("works")
-dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
-
+mod_name <- "works50k"
+data <- read_data(mod_name)
+dt <- setnames(data$preds, c("flows", "preds"), c("actual", mod_name), skip_absent = TRUE)
+dt[, model := NULL]
+coefs <- data$coefs[, diff := values - inits]
 dists <- fread("data/districts.csv")
 
 kable(dt[, .(frac_0 = mean(actual == 0)), keyby = .(agegroup)], digits = 2)
 
 ```
 
-```{r zero-inflated-poisson}
+```{r, real-data, eval = FALSE}
 
-dt[, actual_imp := as.double(actual)]
-rnds <- rlnorm(dt[actual == 0, .N], -15, log(2.0))
-dt[actual == 0, actual_imp := rnds]
+flows <- fread("data/FlowDataGermans.csv")
+dt[flows, real := i.flows, on = .(fromdist, todist, year, agegroup)]
+dt[real != 0][, mean(actual == real)]
 
-dt[, zeroinfl := predict(fit_zeroinfl(.SD), type = "response"), keyby = .(agegroup)]
-dt[, gravity := predict(fit_gravity(.SD, offset = FALSE), type = "response"), keyby = .(agegroup)]
-dtm <- melt(dt, measure.vars = c("zeroinfl", "gravity"),
-            variable.name = "model", value.name = "preds")
-plot_fit(dtm, distance, log(actual_imp / preds), th_min = 0, p_sample = .2, smooth = FALSE)
-cors <- dcast(dtm[distance > 0, .(correlations = cor(actual, preds)),
-                  keyby = .(agegroup, model)], agegroup ~ model)
-kable(cors, digits = 2)
-
-ggsavew(w = 12, file = "./plots/zero_grav.pdf")
-
+kable(flows[, .(frac_0 = mean(flows == 0)), keyby = .(agegroup)], digits = 2)
 
 ```
 
-```{r distance-state-plot}
+```{r coef-plt}
+
+coef_plt <- coefs[1:30]
+barplot(coef_plt[, diff])
+
+```
+
+```{r opti-ini-plot, results = "show"}
+
+kable(coef_plt[, .(names, values, inits)], digits = 2, caption = "Optis and inits")
+
+```
+
+```{r, invent-flows, results = "show"}
+
+invent <- dtm[, .(all_actual = sum(actual),
+                 all_predicted = sum(preds)), keyby = .(agegroup, model)][
+  , rel_diff := (all_actual - all_predicted) / all_actual][]
+kable(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
+    caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
+
+```
+
+```{r zero-inflated-poisson}
+
+
+dt[, gravity := predict(fit_gravity(.SD, offset = FALSE), type = "response"), keyby = .(agegroup)]
+dtm <- melt(dt, measure.vars = c("gravity", mod_name),
+            variable.name = "model", value.name = "preds")
+
+p <- 1
+sm <- FALSE
+dtm[, actual_imp := as.double(actual)]
+rnds <- rlnorm(dtm[actual == 0, .N], -5, log(2.0))
+dtm[actual == 0, actual_imp := rnds]
+plot_fit(dtm[model == mod_name],
+         distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = sm)
+ggsavew(w = 8, file = sprintf("./plots/%s.pdf", mod_name))
+plot_fit(dtm[model == "gravity"],
+         distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = sm)
+ggsavew(w = 8, file = "./plots/gravity.pdf")
+
+dtm[, actual_imp := as.double(actual)]
+rnds <- rlnorm(dtm[actual == 0, .N], 0, log(2.0))
+dtm[actual == 0, actual_imp := rnds]
+plot_fit(dtm[model %in% c(mod_name, "gravity")],
+         distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = TRUE)
+ggsavew(w = 8, file = sprintf("./plots/%s_gravity.pdf", mod_name))
+
+```
+
+```{r frac0}
+
+age_dt <- data.table(age = c("below18", "18-25", "25-30", "30-50", "50-65", "above65"),
+                     julia = coef_plt[25:30, names])
+
+frac0 <- dtm[model == mod_name, .(actual_frac0 = mean(actual == 0)), keyby = .(agegroup)]
+
+model0 <- coef_plt[25:30, .(names, model_frac0 =  1 - (values / 1000))]
+model0[age_dt, age := i.age, on = .(names = julia)]
+frac0[model0, model_frac0 := model_frac0, on = .(agegroup = age)]
+kable(frac0, digits = 2)
+
+dtm[model == mod_name, ][order(preds)]
+
+```
+
+```{r}
+
+cors <- dcast(dtm[distance > 0, .(correlations = cor(log(actual_imp), log(preds))),
+                  keyby = .(agegroup, model)], agegroup ~ model)
+kable(cors, digits = 2, caption = "Correlation with actual flows")
+
+```
+
+```{r distance-state-plot, eval = FALSE}
 
 
 dt[dists, frombl := i.bl_ags, on = .(fromdist = distcode)]
