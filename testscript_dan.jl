@@ -32,7 +32,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
         fill(2.0,6); #c
         fill(1.2,6); #d0
         fill(.75,6); #dscale
-        [6.0,400.0]; #[neterr, mm]
+        [6.0,150.0]; #[neterr, mm]
         fill(0.0,6); #kd
         fill(0.0,6*Ncoefs); #desirecoefs
     ]
@@ -61,8 +61,8 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     mmindx = neterridx+1
     kdidx = mmindx+1:mmindx+1+Nages
     desiridx = last(kdidx)+1:length(inits)
-    lb = inits .- .1
-    ub = inits .+ .1
+    lb = inits .- 1.0
+    ub = inits .+ 1.0
     netactual = calcnet(thedf.flows,
                         levelcode.(thedf.fromdist),
                         levelcode.(thedf.todist),
@@ -84,8 +84,8 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     ub[aindx] .=  4.0
     lb[cindx] .= 1.0
     ub[cindx] .= 3.0
-    lb[mmindx] = 0.0
-    ub[mmindx] = 500
+    lb[mmindx] = 1.0
+    ub[mmindx] = 500.0
     lb[d0indx] .= 0.0
     ub[d0indx] .= 2.0
     println("""
@@ -105,14 +105,16 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
                         lb=lb,ub=ub,
                         maxiters = niter, maxtime = nsecs, reltol=1e-9, progress=true)
     println("Saving optimum values to fitted_models/serial_init_finding.dat")
-
-
     serialize("fitted_models/serial_init_finding.dat",vals)
+
+    println("ended optimize run at\n");
+    displayvals(vals.values.array)
 
     println("Starting variational inference sample")
 
-    vimod = vi(model3,ADVI(10,100; adtype = AutoReverseDiff(true)))
-    visamp = rand(vimod,100)
+#    vimod = vi(model3,ADVI(10,100; adtype = AutoReverseDiff(true)))
+#    visamp = rand(vimod,100)
+    vimod = visamp = nothing
     return vals,model3,vimod,visamp
 
 end
@@ -153,7 +155,7 @@ function runtest()
     #algo = NLopt.LN_NELDERMEAD()
     #algo = NLopt.LN_COBYLA()
     algo = NLopt.LN_BOBYQA()
-    init,model,vimod,visamp = test(5000; alg = algo, niter = 500,nsecs = 600,
+    init,model,vimod,visamp = test(20000; alg = algo, niter = 500,nsecs = 600,
             pctzero = 1.0); 
     println("plotting fit...."); 
     display(plotfit(init,model))
