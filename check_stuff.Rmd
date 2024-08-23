@@ -15,8 +15,13 @@ source("functions_plots.R")
 
 ```{r}
 
-dt <- fread("data/FlowDataGermans.csv")
-dt <-setnames(dt, c("flows", "dist"), c("actual", "distance"), skip_absent = TRUE)
+## dt <- fread("data/FlowDataGermans.csv")
+## dt <-setnames(dt, c("flows", "dist"), c("actual", "distance"), skip_absent = TRUE)
+setwd("~/Documents/GermanMigration/")
+
+data <- read_data("works")
+dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
+
 dists <- fread("data/districts.csv")
 
 kable(dt[, .(frac_0 = mean(actual == 0)), keyby = .(agegroup)], digits = 2)
