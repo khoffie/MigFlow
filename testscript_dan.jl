@@ -2,6 +2,9 @@ using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
     ReverseDiff, Revise, RCall
 using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
     StatProfilerHTML, StatsFuns, OptimizationBBO, Printf,OptimizationNLopt,NLopt
+
+using LogDensityProblems,LogDensityProblemsAD
+
 includet("debughelpers.jl")
 includet("fithelpers.jl")
 includet("gen_inits.jl")
@@ -106,64 +109,19 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     vals = maximum_a_posteriori(model3, alg; #adtype = AutoForwardDiff(),
                         initial_params=inits,
                         lb=lb,ub=ub,
-                        maxiters = niter, maxtime = nsecs, reltol=1e-9, 
-                        progress=true)
-    println("ended optimization at: ")
+                        maxiters = niter, maxtime = nsecs, reltol=1e-9, progress=true)
+    println("Saving optimum values to fitted_models/serial_init_finding.dat")
+    serialize("fitted_models/serial_init_finding.dat",vals)
+
+    println("ended optimize run at\n");
     displayvals(vals.values.array)
-    display(density(vals.values.array .- inits;title="Difference between inits and post opt"))
 
-    return vals,model3
+    println("Starting variational inference sample")
 
-
-    vals = maximum_a_posteriori(model3, BBO_adaptive_de_rand_1_bin_radiuslimited(),
-                        initial_params=inits,lb=lb,ub=ub,maxiters = 50, maxtime = 120, progress=true)
-
-
-    inits = vals.values.array
-    # lock those values in place:
-    lb[aindx] .= inits[aindx] .- .05
-    ub[aindx] .= inits[aindx] .+ .05
-    lb[logistindx] = inits[logistindx] .- 0.05
-    ub[logistindx] = inits[logistindx] .+ 0.05
-
-    # relax c, dscale, d0, kd
-    lb[cindx] .= 0.25 
-    ub[cindx] .= 5 
-    lb[dscindx] .= .1
-    ub[dscindx] .= 2.0
-    lb[d0indx] .= .02
-    ub[d0indx] .= 3.0
-    lb[kdidx] .= -10.0
-    ub[kdidx] .= 10.0
-
-    vals = maximum_a_posteriori(model3,BBO_adaptive_de_rand_1_bin_radiuslimited(),
-                    init_params=inits,lb=lb,ub=ub,maxiters = 50, maxtime = 120, progress=true)
-    inits2 = vals.value.array
-    
-    return vals,model3
-
-    serialinits = copy(inits)
-    serialize("fitted_models/serial_init_finding.dat",serialinits)
-
-    ## narrow the window on c and dscale and d0
-    lb[cindx] .= inits[cindx] .- .1
-    ub[cindx] .= inits[cindx] .- .1
-    lb[dscindx] .= inits[dscindx] .- .05
-    ub[dscindx] .= inits[dscindx] .+ .05
-    lb[d0indx] .= inits[d0indx] .- .01
-    ub[d0indx] .= inits[d0indx] .+ .01
-    lb[kdidx] .= inits[kdidx] .- 1.0
-    ub[kdidx] .= inits[kdidx] .+ 1.0
-
-    ## winden the box on the chebyshev coefficients
-    lb[desiridx] .= -10.0
-    ub[desiridx] .= 10.0
-    vals = maximum_a_posteriori(model3,BBO_adaptive_de_rand_1_bin_radiuslimited(),
-                    init_params=inits,lb=lb,ub=ub,maxiters = 100, maxtime = 120, progress=true)
-    inits3 = vals.value.array
-
-    serialize("fitted_models/serialinits_with_cheby.dat",inits)
-    vi(model3,ADVI(10,100; adtype = AutoReverseDiff(true)); θ_init=inits)
+#    vimod = vi(model3,ADVI(10,100; adtype = AutoReverseDiff(true)))
+#    visamp = rand(vimod,100)
+    vimod = visamp = nothing
+    return vals,model3,vimod,visamp
 end
 
 
@@ -203,9 +161,51 @@ function runtest()
     #algo = NLopt.LN_COBYLA()
     algo = NLopt.LN_BOBYQA()
     init,model = test(5000; alg = algo, niter = 500,nsecs = 600,
-            pctzero = 1.0); 
+                      pctzero = 1.0); 
     println("plotting fit...."); 
     display(plotfit(init,model))
     displayvals(init.values);
-    (init,model)
+    (init,model,vimod,visamp)
+end
+
+function testgradient(model,init)
+
+    vec = init.values.array 
+    #vec = vec .+ 0.01 * rand(length(vec))
+    ld = LogDensityFunction(model)
+    ldg = ADgradient(AutoForwardDiff(),ld)
+    (ldval,ldgrad) = LogDensityProblems.logdensity_and_gradient(ldg,vec)
+    @show (ldval,ldgrad)
+
+    println("testing gradient at initial condition: ")
+    @show init.values.array
+
+    for i in 1:length(vec)
+        dx = 1e-11
+        dvec = copy(vec)
+        dvec[i] = dvec[i] + dx
+        lddy = LogDensityProblems.logdensity(ldg,dvec)
+        gradi = (lddy - ldval)/dx
+        @printf("gradient estimate for dimension %d is %.3f , ADest = %.3f, relerr = %.3f\n",i,gradi,ldgrad[i],(gradi - ldgrad[i])/ldgrad[i])
+    end
+
+    println("testing at perturbed condition: ")
+    vec = init.values.array .+ rand(Normal(0.0,.001),length(vec))
+    (ldval,ldgrad) = LogDensityProblems.logdensity_and_gradient(ldg,vec)
+    for i in 1:length(vec)
+        dx = 1e-7
+        dvec = copy(vec)
+        dvec[i] = dvec[i] + dx
+        lddy = LogDensityProblems.logdensity(ldg,dvec)
+        gradi = (lddy - ldval)/dx
+        @printf("gradient estimate for dimension %d is %.3f , ADest = %.3f, relerr = %.3f\n",i,gradi,ldgrad[i],(gradi - ldgrad[i])/ldgrad[i])
+    end
+
+end
+
+
+function testsampling(mod,val)
+
+    Turing.sample(mod,MH(.05^2*I(length(val.values))),MCMCThreads(),1000,4;init_parameters=Iterators.repeated(val.values.array),thinning = 10, discard_initial=300)
+#    Turing.sample(mod,NUTS(100,.7),500;init_parameters=val.values.array)
 end

@@ -96,6 +96,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     dscale ~ filldist(Gamma(8.0,0.5/7.0),Nages) ## sensitive falls to same size as insensitive somewhere around 0.5 times the median distance between districts
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
     mm ~ filldist(LocationScale(0.0,1000.0,Beta(2,5)),Nages)
+##     mm ~ LocationScale(0.0,1000.0,Beta(2,5))
     kd ~ MvNormal(fill(0.0, Nages), (log(15.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
 
     ## priors for chebychev polys parameters

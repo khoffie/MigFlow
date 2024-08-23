@@ -15,6 +15,14 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.asp = 0.7,
                       out.width = "120%")
 
+## ---
+## title: "Using bookdown with Beamer"
+## output:
+##   bookdown::pdf_book:
+##     base_format: "function(..., number_sections) rmarkdown::beamer_presentation(...)"
+##     number_sections: false
+## ---
+
 ```
 
 ```{r, packages}
@@ -27,6 +35,7 @@ library(plotR)
 library(kableExtra)
 library(patchwork)
 source("functions.R")
+source("functions_plots.R")
 
 ```
 
@@ -38,9 +47,32 @@ map_age <- age_lvls ## for maps
 use_age <- age_lvls ## for everything else
 setwd("~/Documents/GermanMigration/")
 
-data <- read_data("SimpleLBFGS")
-data <- read_data("NewPopLBFGS")
+data <- read_data("works")
 dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
+dists <- fread("data/districts.csv")
+shp <- setDT(sf::read_sf(file.path(p_clean, "shapes/districts_ext.shp")))
+
+## Think about extracting all of this from actually used data!
+## p_clean <- "~/Diss/inst/extdata/clean/"
+## pop_dt <- fread(file.path(p_clean, "aux_data/age17for.csv"))
+## setnames(pop_dt, "age_group", "agegroup")
+## rec_ages(pop_dt)
+
+```
+
+```{r, fit-gravity}
+
+dt_grav <- copy(dt)
+dt_grav[, preds := predict(fit_gravity(.SD, offset = FALSE), type = "response"),
+        keyby = .(agegroup)]
+dt_grav[, model := "gravity"]
+
+dt <- rbind(dt, dt_grav)
+
+```
+
+```{r, merge-data}
+
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
 ## order_models(dt)
 dt <- dt[agegroup %in% use_age]
@@ -52,17 +84,15 @@ dt[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 dt_coefs <- data$coefs
 dt_coefs[, diff := values - inits]
 
-p_clean <- "~/Diss/inst/extdata/clean/"
-pop_dt <- fread(file.path(p_clean, "aux_data/age17for.csv"))
-setnames(pop_dt, "age_group", "agegroup")
-rec_ages(pop_dt)
+```
 
-shp <- setDT(sf::read_sf(file.path(p_clean, "shapes/districts_ext.shp")))
-density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))
+```{r, invent-flows, results = "show"}
 
-dt[, .(all_actual = sum(actual),
-       all_predicted = sum(preds)), keyby = agegroup][
+invent <- dt[, .(all_actual = sum(actual),
+                 all_predicted = sum(preds)), keyby = .(agegroup, model)][
   , rel_diff := (all_actual - all_predicted) / all_actual][]
+kbl(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
+    caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
 
 ```
 
@@ -95,11 +125,10 @@ net1 <- calculate_net(dt, col = "actual", by = c("year", "agegroup", "model"),
 net2 <- calculate_net(dt, col = "preds", by = c("year", "agegroup", "model"),
                       long = TRUE, type = "preds")
 net <- rbind(net1, net2)
-
 net2 <- dcast(net[variable == "net"], region + year + agegroup ~ type)
 
-net[pop_dt, pop := i.german, on = .(region, year, agegroup)]
-net[, value := value / pop * 100]
+## net[pop_dt, pop := i.german, on = .(region, year, agegroup)]
+## net[, value := value / pop * 100]
 net <- dcast(net[variable == "net"], region + year + agegroup + model ~ type, value.var = "value")
 net[shp, geometry := i.geometry, on = .(region = AGS)]
 
@@ -110,43 +139,15 @@ net[shp, geometry := i.geometry, on = .(region = AGS)]
 
 ```
 
-```{r, coef-table, results = "show"}
+```{r, coef-table, results = "show", eval = TRUE}
 
 kbl(dt_coefs, digits = 2, booktabs = TRUE, longtable = TRUE,
     caption = "Parameters")
 
 ```
 
-```{r, kable-preds, results = "show"}
-
-kbl(head(dt[order(actual)], 10),
-    caption = "Predictions for smallest actual od-flows",
-    digits = 2, booktabs = TRUE)
-kbl(head(dt[order(- actual)], 10),
-    caption = "Predictions for largest actual od-flows",
-    digits = 2, booktabs = TRUE)
-
-max_reg <- dt[actual == max(actual), .(fromdist, todist)]
-
-## should have done a join
-dt_sym1 <- dt[fromdist == max_reg[[1]] & todist == max_reg[[2]]]
-dt_sym1[, type := "fromto"]
-dt_sym2 <- dt[fromdist == max_reg[[2]] & todist == max_reg[[1]]]
-dt_sym2[, type := "tofrom"]
-dt_sym <- rbind(dt_sym1, dt_sym2)
-
-dt_sym <- melt(dt_sym[, -c(1,2)],
-     id.vars = c("agegroup", "year", "distance", "type"),
-     value.var = c("preds", "actual"))
-
-kbl(dcast(dt_sym, variable + type ~ agegroup, value.var = "value"),
-    caption = "Are our predictions symmetric?",
-    digits = 2, booktabs = TRUE)
-
-```
-
 ## Maps
-```{r make-maps, out.width = "99%"}
+```{r make-maps, out.width = "99%", eval = FALSE}
 
 net[, diff := actual - preds]
 netm <- melt(net,
@@ -159,28 +160,18 @@ lapply(map_age, function(age) make_net_map(netm[agegroup == age & type %in% c("a
 ```
 
 ## Net chart
-```{r net-plot}
+```{r net-plot, eval = FALSE}
 
-make_net_plot(net, scales = "free") +
-    facet_wrap(vars(agegroup))
-
-make_net_plot(net, scales = "fixed") +
-    coord_fixed()
-
-ggplot(netm[type != "diff"], aes(value, fill = type)) +
-    geom_density(alpha = .2) +
-    facet_wrap(vars(agegroup), scales = "free") +
-    ggtitle("Distribution of net migration rate") +
-    theme_minimal()
+make_net_plot(net, type = "univariate", scales = "free") 
+## net[, cor(actual, preds), keyby = .(agegroup, year, model)]
 
 ```
 
 ## Individual Flows
 
-```{r,}
+```{r, flows-marginal}
 
 dtm <- melt(dt, measure.vars = c("actual", "preds"))
-
 ggplot(dtm, aes(log(value), color = variable)) +
     geom_density() +
     facet_wrap(vars(agegroup))
@@ -208,85 +199,91 @@ prettify(resid_plt, main = "Individual Flows",
 
 ```
 
-```{r, preds-resid, eval = TRUE}
+## distance
+```{r, flows-distance1, eval = TRUE, fig.cap = caption}
 
-plot_fit(dt, distance, log(actual/preds), 0) +
-    facet_wrap(vars(agegroup, model), scale = "free", ncol = 2) 
+caption <- "actualimp: True 0 flows were imputed using lognormal with mean = -15"
+dt[, actual_imp := as.double(actual)]
+rnds <- rlnorm(dt[actual == 0, .N], -15, log(2.0))
+dt[actual == 0, actual_imp := rnds]
 
-plot_fit(dt, log(preds), log(actual/preds), 3, p_sample = .2)
-plot_fit(dt, preds, (actual - preds) / preds, 3, 50, p_sample = .2) 
-plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = .2)
+plot_fit(dt, distance, log(actual_imp / preds), th_min = 0, smooth = FALSE, p_sample = 1)
+w <- 8
+ggsave("~/Desktop/plot_imp.pdf", width = w, height = w / 1.6)
 
 ```
 
-### Distance
+```{r, flows-distance2, fig.cap = caption}
 
-```{r,}
+caption <- "Here actuals are shown, that means all 0 flows are missing."
+plot_fit(dt, distance, log(actual / preds), th_min = 0, smooth = TRUE, p_sample = 1)
+w <- 8
+ggsave("~/Desktop/plot_noimp.pdf", width = w, height = w / 1.6)
 
-plot_fit(dt, distance, log(actual/preds), 0, p_sample = .2)
+## plot_fit(dt, preds, (actual - preds) / preds, th_min = 3, th_max = 50, p_sample = 1, smooth = FALSE) 
+## plot_fit(dt, preds, sign((actual - preds) / preds) * log(0 + ((actual - preds) / preds)) , 1, 50, p_sample = 1, smooth = FALSE)
+
+```
+
+```{r, flows-distance3, fig.cap = caption}
+
+caption <- "actualimp2, actual 0 flows were imputed using lognormal with mean 0."
+dt[, actual_imp2 := as.double(actual)]
+rnds <- rlnorm(dt[actual == 0, .N], 0, log(2.0))
+dt[actual == 0, actual_imp2 := rnds]
+plot_fit(dt, distance, log(actual_imp2 / preds), th_min = 0, smooth = TRUE, p_sample = 1)
+w <- 8
+ggsave("~/Desktop/plot_imp2.pdf", width = w, height = w / 1.6)
 
 ```
 
 ### Population
 
-```{r,}
+```{r, flows-pop}
 
-plot_fit(dt, log(frompop * topop), log(actual/preds), 3, p_sample = .2)
+plot_fit(dt, log(frompop * topop), log(actual_imp/preds), th_min = 0, p_sample = 1, smooth = FALSE)
 
 ```
 
 ### density
-```{r, eval = TRUE}
+```{r, flows-density, eval = TRUE}
 
 dt[density, fromdens := i.density, on = .(fromdist = region, year)]
 dt[density, todens := i.density, on = .(todist = region, year)]
 
-plt1 <- plot_fit(dt, log(fromdens), log(actual/preds), 0, p_sample = .2)
-plt2 <- plot_fit(dt, log(todens), log(actual/preds), 0, p_sample = .2)
-plt3 <- plot_fit(dt, log(fromdens * todens), log(actual/preds), 0, p_sample = .2)
+plt1 <- plot_fit(dt, log(fromdens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
+plt2 <- plot_fit(dt, log(todens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
+plt3 <- plot_fit(dt, log(fromdens * todens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
 
 ## plt1 + plt2
 plt3
 
-## dt[, sum(actual), keyby = .(agegroup)]
+```
+
+```{r, eval = FALSE}
 
 
-## plot_fit(dt[distance > 600], distance, log(actual / frompop), th_min = 0)
+
+coefs <- dt[, .(fits = .(broom::tidy(fit_gravity(.SD, offset = FALSE)))), keyby = agegroup]
+coefs <- rbindlist(coefs[, fits])
+coefs[, mean(estimate), keyby = .(term)]
+coefs[term == "(Intercept)"]
+
+logistic(-11)
+
+exp(-11)
 
 
-## dt[distance > 600, mean(actual == 0), keyby = .(agegroup)]
-
-## dt[distance < 100, mean(actual), keyby = .(agegroup)]
-## dt[distance > 600, .(avg = mean(actual)), keyby = .(agegroup)]
-## dt[distance > 600 & actual > 0, .("avg log(actual / frompop)"
-##                                   = mean(log(actual / frompop))), keyby = .(agegroup)]
-
-## dt[distance > 600 & actual > 0, .("avg log(topop  / popgerm)" =
-##                                       mean(log(topop / 73000))), keyby = .(agegroup)]
-
-## dt[actual > 0, .("avg log(topop  / popgerm)" =
-##                                       mean(log(topop / 73000))), keyby = .(agegroup)]
 
 
-## plot_fit(dt[actual > 0], distance,
-##          log(actual / frompop) - log(topop / 73000) ,
-##          th_min = 0)
-## ggsave("~/Desktop/plt.pdf")
-
-## net1[, .(total_across_districts = sum(value)), keyby = variable]
-## net1[variable == "net"][order(value), .(region, agegroup, type, variable, value)]
+dt[actual == 0, actual_imp := rnorm(1, 0, 100)]
 
 
-## dt[, .( allmoves = sum(actual)), keyby = .(agegroup)]
+dt[actual == 0 & actual_imp != 0]
+dt[, mean(actual == 0), keyby = agegroup]
 
-## age <- use_age[2]
-## fit_gravity <- dt[agegroup == age, .(fit = .(glm(actual ~ log(frompop) + log(topop) + log(distance), family = poisson)))]
-## fit_gravity[[1]]
-
-## logistic <- function(x) {
-##     1 / (1 + exp(-x))
-## }
-
-## logistic(4.5 / 1000)
+ggplot(dt, aes(distance, log(actual_imp, preds))) +
+    geom_point() +
+    facet_wrap(~agegroup)
 
 ```
