@@ -39,24 +39,52 @@ source("functions_plots.R")
 
 ```
 
-```{r read-data, message = TRUE}
 
-preds_th <- 3
-age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
-map_age <- age_lvls ## for maps
-use_age <- age_lvls ## for everything else
+```{r, message = TRUE}
+
 setwd("~/Documents/GermanMigration/")
-
-data <- read_data("works")
-dt <-setnames(data$preds, c("flows", "preds3"), c("actual", "preds"), skip_absent = TRUE)
+mod_name <- "works50k"
+data <- read_data(mod_name)
+dt <- setnames(data$preds, c("flows", "preds"), c("actual", mod_name), skip_absent = TRUE)
+dt[, model := NULL]
+coefs <- data$coefs[, diff := values - inits]
 dists <- fread("data/districts.csv")
-shp <- setDT(sf::read_sf(file.path(p_clean, "shapes/districts_ext.shp")))
 
-## Think about extracting all of this from actually used data!
-## p_clean <- "~/Diss/inst/extdata/clean/"
-## pop_dt <- fread(file.path(p_clean, "aux_data/age17for.csv"))
-## setnames(pop_dt, "age_group", "agegroup")
-## rec_ages(pop_dt)
+kable(dt[, .(frac_0 = mean(actual == 0)), keyby = .(agegroup)], digits = 2)
+
+```
+
+```{r, real-data, eval = FALSE}
+
+flows <- fread("data/FlowDataGermans.csv")
+dt[flows, real := i.flows, on = .(fromdist, todist, year, agegroup)]
+dt[real != 0][, mean(actual == real)]
+
+kable(flows[, .(actual_non0 = 1 - mean(flows == 0)), keyby = .(agegroup)], digits = 2)
+kable(flows[, .(actual0 = mean(flows == 0)), keyby = .(agegroup)], digits = 2)
+
+```
+
+```{r coef-plt}
+
+coef_plt <- coefs[1:30]
+barplot(coef_plt[, diff])
+
+```
+
+```{r opti-ini-plot, results = "show"}
+
+kable(coef_plt[, .(names, values, inits)], digits = 2, caption = "Optis and inits")
+
+```
+
+```{r, invent-flows, results = "show"}
+
+invent <- dtm[, .(all_actual = sum(actual),
+                 all_predicted = sum(preds)), keyby = .(agegroup, model)][
+  , rel_diff := (all_actual - all_predicted) / all_actual][]
+kable(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
+    caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
 
 ```
 
