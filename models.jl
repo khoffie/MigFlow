@@ -168,8 +168,10 @@ end
     c ~ filldist(Gamma(10.0, 1.5/9.0),Nages) 
     d0 ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     dscale ~ filldist(Gamma(8.0,0.5/7.0),Nages) 
-    mm ~ filldist(LocationScale(0.0,1000.0,Beta(2,5)),Nages)
-
+##    mm ~ filldist(LocationScale(0.0, 1000.0, Beta(2,5)), Nages)
+    mm ~ filldist(LocationScale(0.0, 1000.0, Beta(5,15)), Nages)
+##     mm ~ filldist(Normal(350.0, 100.0), Nages)
+  
     distscale = dscale .* meddist
     preds = [frompop[i] * logistic( -3.0 + log(topop[i] / popgerm) + a[agegroup[i]] +
         log1p(1.0 / (distance[i] / distscale[agegroup[i]] + d0[agegroup[i]]/100.0)^c[agegroup[i]]))
