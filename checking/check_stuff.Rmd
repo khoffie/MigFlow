@@ -5,21 +5,6 @@ documentclass: book
 always_allow_html: true
 ---
 
-```{r, packages-check}
-
-library(data.table)
-library(sf)
-library(ggplot2)
-library(MigStat)
-library(plotR)
-library(kableExtra)
-library(patchwork)
-source("functions.R")
-source("functions_plots.R")
-
-```
-
-
 ```{r global_knitr, echo = FALSE, eval = TRUE}
 
 knitr::opts_chunk$set(echo = FALSE,
@@ -40,7 +25,21 @@ knitr::opts_chunk$set(echo = FALSE,
 
 ```
 
-```{r, message = TRUE}
+```{r, packages-check}
+
+library(data.table)
+library(sf)
+library(ggplot2)
+library(MigStat)
+library(plotR)
+library(kableExtra)
+library(patchwork)
+source("../functions.R")
+source("../functions_plots.R")
+
+```
+
+```{r load-data}
 
 setwd("~/Documents/GermanMigration/")
 mod_name <- "works50k"
@@ -60,32 +59,16 @@ flows <- fread("data/FlowDataGermans.csv")
 dt[flows, real := i.flows, on = .(fromdist, todist, year, agegroup)]
 dt[real != 0][, mean(actual == real)]
 
-kable(flows[, .(actual_non0 = 1 - mean(flows == 0)), keyby = .(agegroup)], digits = 2)
-kable(flows[, .(actual0 = mean(flows == 0)), keyby = .(agegroup)], digits = 2)
+kable(flows[, .(frac_0 = mean(flows == 0)), keyby = .(agegroup)], digits = 2)
 
 ```
 
-```{r coef-plt}
+```{r opti-ini-plot}
 
 coef_plt <- coefs[1:30]
 barplot(coef_plt[, diff])
 
-```
-
-```{r opti-ini-plot, results = "show"}
-
-kable(coef_plt[, .(names, values, inits)], digits = 2, caption = "Optis and inits")
-
-```
-
-```{r, invent-flows, results = "show"}
-
-invent <- dtm[, .(all_actual = sum(actual),
-                 all_predicted = sum(preds)), keyby = .(agegroup, model)][
-  , rel_diff := (all_actual - all_predicted) / all_actual][]
-kable(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
-    caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
-
+kable(coef_plt[, .(names, values, inits)], digits = 2)
 ```
 
 ```{r zero-inflated-poisson}
@@ -102,17 +85,17 @@ rnds <- rlnorm(dtm[actual == 0, .N], -5, log(2.0))
 dtm[actual == 0, actual_imp := rnds]
 plot_fit(dtm[model == mod_name],
          distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = sm)
-ggsavew(w = 8, file = sprintf("./plots/%s.pdf", mod_name))
+ggsavew(w = 8, file = sprintf("../plots/%s.pdf", mod_name))
 plot_fit(dtm[model == "gravity"],
          distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = sm)
-ggsavew(w = 8, file = "./plots/gravity.pdf")
+ggsavew(w = 8, file = "../plots/gravity.pdf")
 
 dtm[, actual_imp := as.double(actual)]
 rnds <- rlnorm(dtm[actual == 0, .N], 0, log(2.0))
 dtm[actual == 0, actual_imp := rnds]
 plot_fit(dtm[model %in% c(mod_name, "gravity")],
          distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = TRUE)
-ggsavew(w = 8, file = sprintf("./plots/%s_gravity.pdf", mod_name))
+ggsavew(w = 8, file = sprintf("../plots/%s_gravity.pdf", mod_name))
 
 ```
 
