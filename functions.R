@@ -54,47 +54,6 @@ calculate_net <- function(dt, col, by, o = "fromdist", d = "todist",
     return(dt_in)
 }
 
-make_map <- function(netm, age) {
-    plt <- ggplot(set_geom(netm[agegroup == age], F)) +
-        geom_sf(aes(fill = value)) +
-        facet_wrap(~variable) +
-        ggtitle(sprintf("Actual and predicted nmr (normalized by pop of Germans) for age group %s", age)) +
-        theme_minimal() 
-    return(plt)
-}
-
-make_net_plot <- function(net, scales = "free") {
-    plt <- ggplot(net, aes(preds, actual)) +
-        geom_hline(yintercept = 0, col = "blue", linewidth = .2) +
-        geom_vline(xintercept = 0, col = "blue", linewidth = .2) +        
-        geom_point(alpha = .5) +
-        facet_wrap(vars(agegroup, year), scales = scales) +
-        theme_minimal() +
-        ggtitle("Net migration rate(400 regions, normalized by pop of Germans)")
-    return(plt)
-}
-
-plot_fit <- function(dt, x, y, th_min, th_max = NULL, p_sample = NULL) {
-    main <- "Individual flows "
-    if(!is.null(p_sample)) {
-        dt <- dt[sample(1:.N, size = as.integer(p_sample * .N))]
-        main <- sprintf("%s percent sample of individual flows", p_sample * 100)
-    }
-    main <- sprintf(paste(main, "for preds > %s"), th_min)
-    plt <- ggplot(dt[preds > th_min], aes({{x}}, {{y}})) +
-        geom_hline(yintercept = 0) +
-        geom_point(pch = ".", alpha = .3) +
-        geom_smooth(se = FALSE) +
-        facet_wrap(vars(model, agegroup), scale = "free") +
-        ggtitle(main) +
-        theme_minimal()
-    if(is.null(th_max) == FALSE) {
-        main <- sprintf(paste(main, "and < %s"), th_max)
-        plt <- plt + xlim(c(0, th_max)) +
-            ggtitle(main)
-    }
-    return(plt)
-}
 
 order_models <- function(dt) {
     model_names <- dt[, unique(model)]
@@ -113,14 +72,6 @@ rec_ages <- function(dt) {
   return(NULL)
 }
 
-make_net_map <- function(net) {
-    plt <- ggplot(set_geom(net, F)) +
-        geom_sf(aes(fill = value)) +
-        facet_wrap(vars(model, type, agegroup)) +
-        theme_minimal() 
-    return(plt)
-}
-
 add_mising_flows <- function(flows, regions, agegroups, years) {
     ### in flows data all 0 flows are missing. We add them now to make
     ### sure all origins have the same destinations for all age groups and
@@ -135,3 +86,23 @@ add_mising_flows <- function(flows, regions, agegroups, years) {
     flows[is.na(flows), flows := 0]
     return(flows)
 }
+
+fit_gravity <- function(dt, offset) {
+    if(offset == TRUE) {
+        fit <- glm(actual ~ offset(log(frompop)) +
+                       offset(log(topop)) + log(distance),
+                   family = poisson, data = dt)
+    }
+    if(offset == FALSE) {
+        fit <- glm(actual ~ log(frompop) +
+                       log(topop) + log(distance),
+                   family = poisson, data = dt)
+    }
+    return(fit)
+}
+
+logistic <- function(x) {
+    y <- 1 / (1 + exp(-x))
+    return(y)
+}
+

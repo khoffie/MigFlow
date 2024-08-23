@@ -34,10 +34,12 @@ flows[age_for, topop := i.german, on = .(todist = region, year, agegroup)]
 shp[, pos := sf::st_point_on_surface(geometry)]
 shp[, x := st_coordinates(pos)[, 1]]
 shp[, y := st_coordinates(pos)[, 2]]
+dt_coords <- shp[, .(distcode = AGS, year, name = GEN, 
+                     xcoord = x / 1e3, ycoord = y / 1e3,
+                     bl_name, bl_ags)]
+
 dt_coords[density, density := i.density, on = .(distcode = region, year)]
 dt_coords[age_for[agegroup == "all", ], pop := i.german, on = .(distcode = region, year)]
-## dt_coords <- shp[, .(distcode = AGS, year, name = GEN, pop, density, xcoord = x / 1e3, ycoord = y / 1e3,
-##                      bl_name, bl_ags)]
 
 ### check if districts are the same
 all(flows[, unique(fromdist)] == flows[order(todist), unique(todist)] )
