@@ -39,15 +39,19 @@ source("../functions_plots.R")
 
 ```
 
-```{r load-data}
+```{r load-data, message = TRUE}
 
-setwd("~/Documents/GermanMigration/")
-mod_name <- "works50k"
+setwd("/home/konstantin/Documents/GermanMigration/")
+mod_name <- "works50k_mm"
 data <- read_data(mod_name)
 dt <- setnames(data$preds, c("flows", "preds"), c("actual", mod_name), skip_absent = TRUE)
 dt[, model := NULL]
 coefs <- data$coefs[, diff := values - inits]
 dists <- fread("data/districts.csv")
+
+dt[, gravity := predict(fit_gravity(.SD, offset = FALSE), type = "response"), keyby = .(agegroup)]
+dtm <- melt(dt, measure.vars = c("gravity", mod_name),
+            variable.name = "model", value.name = "preds")
 
 kable(dt[, .(frac_0 = mean(actual == 0)), keyby = .(agegroup)], digits = 2)
 
@@ -56,6 +60,7 @@ kable(dt[, .(frac_0 = mean(actual == 0)), keyby = .(agegroup)], digits = 2)
 ```{r, real-data, eval = FALSE}
 
 flows <- fread("data/FlowDataGermans.csv")
+setnames(flows, "dist", "distance")
 dt[flows, real := i.flows, on = .(fromdist, todist, year, agegroup)]
 dt[real != 0][, mean(actual == real)]
 
@@ -63,20 +68,26 @@ kable(flows[, .(frac_0 = mean(flows == 0)), keyby = .(agegroup)], digits = 2)
 
 ```
 
-```{r opti-ini-plot}
+```{r opti-ini-plot, results = "show"}
 
-coef_plt <- coefs[1:30]
-barplot(coef_plt[, diff])
+coefs_plt <- coefs[1:30]
+kable(coefs_plt[, .(names, values, inits)], digits = 2, caption = "Optis and inits")
 
-kable(coef_plt[, .(names, values, inits)], digits = 2)
 ```
 
-```{r zero-inflated-poisson}
+```{r, invent-flows, results = "show"}
+
+invent <- dtm[, .(all_actual = sum(actual),
+                 all_predicted = sum(preds)), keyby = .(agegroup, model)][
+  , rel_diff := (all_actual - all_predicted) / all_actual][]
+kable(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
+    caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
+
+```
 
 
-dt[, gravity := predict(fit_gravity(.SD, offset = FALSE), type = "response"), keyby = .(agegroup)]
-dtm <- melt(dt, measure.vars = c("gravity", mod_name),
-            variable.name = "model", value.name = "preds")
+```{r plots-fits}
+
 
 p <- 1
 sm <- FALSE
@@ -99,23 +110,22 @@ ggsavew(w = 8, file = sprintf("../plots/%s_gravity.pdf", mod_name))
 
 ```
 
-```{r frac0}
+```{r frac0, results = "show"}
 
 age_dt <- data.table(age = c("below18", "18-25", "25-30", "30-50", "50-65", "above65"),
-                     julia = coef_plt[25:30, names])
+                     julia = coefs_plt[25:30, names])
 
 frac0 <- dtm[model == mod_name, .(actual_frac0 = mean(actual == 0)), keyby = .(agegroup)]
 
-model0 <- coef_plt[25:30, .(names, model_frac0 =  1 - (values / 1000))]
+model0 <- coefs_plt[25:30, .(names, model_frac0 =  1 - (values / 1000))]
 model0[age_dt, age := i.age, on = .(names = julia)]
-frac0[model0, model_frac0 := model_frac0, on = .(agegroup = age)]
+frac0[model0, "one-mm" := model_frac0, on = .(agegroup = age)]
 kable(frac0, digits = 2)
 
-dtm[model == mod_name, ][order(preds)]
 
 ```
 
-```{r}
+```{r correlations}
 
 cors <- dcast(dtm[distance > 0, .(correlations = cor(log(actual_imp), log(preds))),
                   keyby = .(agegroup, model)], agegroup ~ model)
@@ -156,5 +166,18 @@ ggplot(rbind(sample_in, sample_out),
     theme_minimal()
 
 ggsavew(filename = "~/Desktop/inout.pdf")
+
+```
+
+```{r distance-zeroflows, eval = FALSE}
+
+flows[, zero_flows := fifelse(flows == 0, TRUE, FALSE)]
+
+
+ggplot(flows[distance > 150], aes(distance, fill = zero_flows)) +
+    geom_density(alpha = .2) +
+    facet_wrap(~agegroup) +
+    theme_minimal()
+ggsavew(filename = "plots/distance_zero.pdf")
 
 ```
