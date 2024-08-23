@@ -174,7 +174,7 @@ end
 
 
     ## desirability for given age at coordinates as ratio of dest / from
-    desires = [(kd[agegroup[i]] * (density[todist[i]] - density[fromdist[i]])
+    desires = [(kd[agegroup[i]] * (density[todist[i]] - density[fromdist[i]]))
                     for i in 1:length(flows)]
 
     ## indiviudal flows, the 3.0 is a number we got by approximately centering the a values to make them more interpretable
