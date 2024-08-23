@@ -19,7 +19,7 @@ dists.distcode = categorical(dists.distcode)
 
 function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300, 
                 avals = [-1.1,1.1,1.5,-0.6,-1.4,-1.3],
-                pctzero = .02, mod_name)
+                pctzero = .02)
 
     Nages = 6
     Ncoefs = 36
@@ -39,10 +39,10 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     distdens = distdens .- mean(distdens)
     meddist = median_distance()
 
-    thedf = alldf[StatsBase.sample(1:nrow(alldf),nflow; replace=false),:]
-    thedf.rand = rand(Bernoulli(pctzero),nrow(thedf))
-    thedf = thedf[thedf.flows .!= 0 .|| thedf.rand .== 1,:]
-##    thedf = alldf
+    # thedf = alldf[StatsBase.sample(1:nrow(alldf),nflow; replace=false),:]
+    # thedf.rand = rand(Bernoulli(pctzero),nrow(thedf))
+    # thedf = thedf[thedf.flows .!= 0 .|| thedf.rand .== 1,:]
+    thedf = alldf
 
     @printf("smallest distance: %.2f\n",minimum(thedf.distance))
     @printf("fraction of zeros: %.3f\n",sum(thedf.flows .== 0)/nrow(thedf))
@@ -75,7 +75,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     lb[cindx] .= 1.0
     ub[cindx] .= 3.0
     lb[d0indx] .= 0.0
-    ub[d0indx] .= 10.0
+    ub[d0indx] .= 2.0
     lb[dscindx] .= 0.02
     ub[dscindx] .= 2.0
     lb[mmindx] .= 500.0
@@ -119,7 +119,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     preds = generated_quantities(model3, chain)
 ##    print(preds[1:10])
     thedf[:, "preds"] = preds[1]
-    write_out(mod_name = mod_name, opts = opts, preds = thedf)
+    write_out(mod_name = "works_allflows", opts = opts, preds = thedf)
 
 ##    serialize("fitted_models/serial_init_finding.dat", )
     return fit, model3
@@ -161,7 +161,7 @@ function runtest()
     #algo = NLopt.LN_COBYLA()
     algo = NLopt.LN_BOBYQA()
     init,model = test(50000; alg = algo, niter = 5000, nsecs = 6000,
-            pctzero = 1.0, mod_name = "works50k"); 
+            pctzero = 1.0); 
     println("plotting fit...."); 
     display(plotfit(init,model))
     savefig("fitted_models/fit.pdf")
