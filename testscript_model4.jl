@@ -161,7 +161,7 @@ function runtest()
     #algo = NLopt.LN_COBYLA()
     algo = NLopt.LN_BOBYQA()
     init,model = test(50000; alg = algo, niter = 5000, nsecs = 6000,
-            pctzero = 1.0, mod_name = "works50k_mm"); 
+            pctzero = 1.0, mod_name = "esa"); 
     println("plotting fit...."); 
     display(plotfit(init,model))
     savefig("fitted_models/fit.pdf")
