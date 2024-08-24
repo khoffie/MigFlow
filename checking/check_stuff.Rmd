@@ -95,7 +95,7 @@ dtm[, actual_imp := as.double(actual)]
 rnds <- rlnorm(dtm[actual == 0, .N], -5, log(2.0))
 dtm[actual == 0, actual_imp := rnds]
 plot_fit(dtm[model == mod_name],
-         distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = sm)
+         distance, log(actual_imp / preds, base = 10), th_min = 0, p_sample = p, smooth = sm)
 ggsavew(w = 8, file = sprintf("../plots/%s.pdf", mod_name))
 plot_fit(dtm[model == "gravity"],
          distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = sm)
@@ -171,13 +171,42 @@ ggsavew(filename = "~/Desktop/inout.pdf")
 
 ```{r distance-zeroflows, eval = FALSE}
 
-flows[, zero_flows := fifelse(flows == 0, TRUE, FALSE)]
+flows[, zero_flows := fifelse(flows == 0, "zeroflow", "nonzeroflow")]
+setnames(flows, "dist", "distance")
+flows[dists, fromdens := i.density, on = .(fromdist = distcode)]
+flows[dists, todens := i.density, on = .(todist = distcode)]
 
-
-ggplot(flows[distance > 150], aes(distance, fill = zero_flows)) +
+ggplot(flows, aes(distance, fill = zero_flows)) +
     geom_density(alpha = .2) +
     facet_wrap(~agegroup) +
     theme_minimal()
 ggsavew(filename = "plots/distance_zero.pdf")
+
+?geom_hex
+
+flows[, distance_cut := cut_qs(distance, 6)]
+
+ggplot(flows[agegroup == "18-25" & zero_flows == "zeroflow"], aes(log(fromdens), log(todens)) ) +
+    geom_hex() +
+    facet_wrap(vars(distance_cut, agegroup), scales = "free")
+ggsavew(filename = "plots/zero_hex.pdf")
+
+ggplot(flows[agegroup == "18-25"],
+       aes(log(frompop), log(topop)) ) +
+    geom_hex() +
+    facet_wrap(vars(zero_flows, agegroup), scales = "free")
+
+
+
+flows[flows == 0, .(min_dist = min(distance)), keyby = .(agegroup)]
+flows[flows == 0 & distance == 21]
+
+?geom_hex
+
+ggplot(flows, aes(agegroup, distance, fill = agegroup)) +
+    geom_violin() +
+    facet_wrap(~zero_flows) +
+    theme_minimal()
+ggsavew(filename = "plots/zero_violin.pdf")
 
 ```
