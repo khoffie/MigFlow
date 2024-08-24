@@ -113,3 +113,34 @@ logistic <- function(x) {
     return(y)
 }
 
+
+cut_probs <- function(low = .01, high = .99, step = .2) {
+    p_low <- low
+    p_high <- high
+    ps <- seq(0, 1, step)
+    ps <- unique(sort(c(0, p_low, p_high, ps, 1)))
+    return(ps)
+}
+
+cut_qs <- function(x, num_quantiles = NULL, probs = cut_probs(), labels = NULL, lab = FALSE) {
+    if(!is.null(probs)) {
+        qs <- quantile(x,  probs = probs,  na.rm = TRUE)
+    }
+    if(!is.null(num_quantiles)) {
+        qs <- quantile(x,  probs = seq(0, 1, length.out = num_quantiles + 1),
+                   na.rm = TRUE)
+    }
+    qs <- unique(qs)
+    if (is.null(labels)) {
+        labels <- paste0("Q", seq(length(qs) - 1))
+    }
+    if (lab == TRUE) {
+        y <- cut(x, breaks = qs, labels = labels, include.lowest = TRUE)
+    }
+    if (lab == FALSE)  {
+        y <- cut(x, breaks = qs, include.lowest = TRUE)
+    }
+  
+  return(y)
+}
+
