@@ -169,7 +169,7 @@ end
     d0 ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     dscale ~ filldist(Gamma(8.0,0.5/7.0),Nages) 
 ##    mm ~ filldist(LocationScale(0.0, 1000.0, Beta(2,5)), Nages)
-    mm ~ filldist(LocationScale(0.0, 1000.0, Beta(5,15)), Nages)
+#     mm ~ filldist(LocationScale(0.0, 1000.0, Beta(5,15)), Nages)
 ##     mm ~ filldist(Normal(350.0, 100.0), Nages)
   
     distscale = dscale .* meddist
@@ -182,8 +182,9 @@ end
     end
     predmoves = sum(preds) # total predicted flow
     allmoves ~ Normal(predmoves, .01 * predmoves) ## our total move predictions should be about right by around 1%
-    flows ~ arraydist([MixtureModel([Poisson(preds[i]), Poisson(0.0)],
-                                    [mm[agegroup[i]]/1000.0,1.0-mm[agegroup[i]]/1000.0])
-                       for i in eachindex(preds)])
+    # flows ~ arraydist([MixtureModel([Poisson(preds[i]), Poisson(0.0)],
+    #                                 [mm[agegroup[i]]/1000.0,1.0-mm[agegroup[i]]/1000.0])
+    #                    for i in eachindex(preds)])
+    flows ~ arraydist([Poisson(p) for p in preds])
     return(preds)
 end

@@ -29,7 +29,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
         fill(2.0, Nages); #c
         fill(1.2, Nages); #d0
         fill(.75, Nages); #dscale
-        fill(600.0, Nages); # mm, per age
+##        fill(600.0, Nages); # mm, per age
     ]
 
     alldf = load_flows()
@@ -67,7 +67,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     d0indx = copy(cindx) .+ Nages
     dscindx = copy(d0indx) .+ Nages
 ##    neterrindx = last(dscindx) .+ 1
-    mmindx = copy(dscindx) .+ Nages
+  ##  mmindx = copy(dscindx) .+ Nages
 
     lb = inits .- .1
     ub = inits .+ .1
@@ -79,9 +79,9 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     ub[d0indx] .= 10.0
     lb[dscindx] .= 0.02
     ub[dscindx] .= 2.0
-    lb[mmindx] .= 500.0
-    ub[mmindx] .= 800.0
-    @show mmindx
+    # lb[mmindx] .= 500.0
+    # ub[mmindx] .= 800.0
+    # @show mmindx
     inits[aindx] .= avals
     println("""
     a lower bounds are: $(lb[aindx])
@@ -96,11 +96,10 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
     dscale lower bounds are: $(lb[dscindx])
     dscale upper bounds are: $(ub[dscindx])
 
-    mm lower bounds are: $(lb[mmindx])
-    mm upper bounds are: $(ub[mmindx])
-
-
     """)
+        # mm lower bounds are: $(lb[mmindx])
+    # mm upper bounds are: $(ub[mmindx])
+
     ## first make a values be approximately correct
     println("starting optimize run from\n");
 ##     displayvals(inits)
