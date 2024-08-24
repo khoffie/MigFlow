@@ -5,12 +5,11 @@ We should try to make the probability of a flow drop a bunch when density in the
 
 2) drop the mixture model and actually model the individual flows using density
 
-3) Create a Julia diagnostic plotting routine, that shows log(flow/pred) vs distance, hexbin(log(fromdens),log(todens)), maps of germany
+3) Create a Julia diagnostic plotting routine, that shows log(flow/pred) vs distance, hexbin(log(fromdens),log(todens)), maps of germany, other stuff
 
-4) Further investigation of why optimization doesn't work well
+4) Further investigation of why optimization doesn't work well on simulated data.
 
 5) A new simulator for data? Use Turing prior predictive?
 
 6) A Radial Basis Function expansion instead of Chebyshev?
 
-7) A cloud computer with Julia and the dataset, where 
