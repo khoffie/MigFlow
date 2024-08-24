@@ -42,7 +42,7 @@ source("../functions_plots.R")
 ```{r load-data, message = TRUE}
 
 setwd("/home/konstantin/Documents/GermanMigration/")
-mod_name <- "works50k_mm"
+mod_name <- "esa"
 data <- read_data(mod_name)
 dt <- setnames(data$preds, c("flows", "preds"), c("actual", mod_name), skip_absent = TRUE)
 dt[, model := NULL]
@@ -90,7 +90,7 @@ kable(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
 
 
 p <- 1
-sm <- FALSE
+sm <- TRUE
 dtm[, actual_imp := as.double(actual)]
 rnds <- rlnorm(dtm[actual == 0, .N], -5, log(2.0))
 dtm[actual == 0, actual_imp := rnds]
@@ -130,6 +130,47 @@ kable(frac0, digits = 2)
 cors <- dcast(dtm[distance > 0, .(correlations = cor(log(actual_imp), log(preds))),
                   keyby = .(agegroup, model)], agegroup ~ model)
 kable(cors, digits = 2, caption = "Correlation with actual flows")
+
+```
+
+```{r for-speech}
+
+dtm[agegroup == "18-25"]
+dtm[model == "gravity", model := "gravity1.0"]
+dtm[model == "esa", model := "gravity2.0"]
+
+
+plot_speech <- function(dt, age, main, color = TRUE) {    
+    if(color == TRUE) {
+        fit <-  ggplot(dt[agegroup == age],
+                       aes(distance, log(actual/preds, base = 10),
+                           color = model))
+    }
+    if(color == FALSE) {
+        fit <-  ggplot(dt[agegroup == age],
+                       aes(distance, log(actual/preds, base = 10)))
+    }
+    fit <- fit +
+        geom_hline(yintercept = 0) +
+        geom_point(alpha = .05, size =.5) +
+        geom_smooth(se = FALSE, linewidth = 2) +
+        theme_minimal() +
+        ggtitle(main) +
+        labs(caption = "internal migration flows of 30-50 year olds \nGermany, 2017, n = 50k") +
+        xlab("distance in km")
+   return(fit)
+}
+
+
+plot_speech(dtm, "30-50", main = "Comparison: Models for positive flows")
+ggsavew(filename = "../plots/esa_both.pdf")
+
+plot_speech(dtm[model == "gravity2.0"], "30-50", main = "Gravity 2.0", color = FALSE)
+ggsavew(filename = "../plots/esa_gravity2.0.pdf")
+
+plot_speech(dtm[model == "gravity1.0"], "30-50", main = "Gravity 1.0", color = FALSE)
+ggsavew(filename = "../plots/esa_gravity1.0.pdf")
+
 
 ```
 
