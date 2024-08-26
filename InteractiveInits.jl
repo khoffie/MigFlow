@@ -45,12 +45,9 @@ begin
 	dt = load_flows()
 	
 	## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
-	dists = CSV.read("./data/districts.csv",DataFrame)
-	dists.distcode = categorical(dists.distcode)
+	dists = load_dists()
 	
-	distances = [norm([dists.xcoord[i]-dists.xcoord[j],dists.ycoord[i]-dists.ycoord[j]]) for i in 1:nrow(dists) , j in 1:nrow(dists) if i != j]
 	meddist = median_distance()
-	distances = nothing ## free the memory
 	
 	popgerm = sum(dists.pop)
 	
@@ -70,7 +67,7 @@ begin
 	
 	model3 = migration3(dtsmall.flows,sum(dtsmall.flows),levelcode.(dtsmall.fromdist),levelcode.(dtsmall.todist),
 	                        dtsmall.frompop,dtsmall.topop, popgerm, dtsmall.distance, levelcode.(dtsmall.agegroup),Nages,
-	                        dists.xcoord,dists.ycoord,dists.density,dists.pop,Ndist,meddist,netactual,Ncoefs)
+	                        dists.xcoord,dists.ycoord,dists.logreldens,dists.pop,Ndist,meddist,netactual,Ncoefs)
 	
 	
 end

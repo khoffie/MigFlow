@@ -36,6 +36,17 @@ function median_distance()
     return meddist
 end
 
+function load_dists()
+    df = CSV.read("data/districts.csv",DataFrame)
+	dists.distcode = categorical(dists.distcode)
+    popgerm = sum(df.pop)
+    areagerm = sum(df.area)
+    df.logreldens = log.((df.pop ./ df.area) ./ (popgerm/areagerm))
+    df
+end
+
+
+
 
 function fit_map(; model, inits, lower, upper, algo, iters, reltol, dt)
     @printf("Algorithm = %s\n", nameof(typeof(algo)))
@@ -66,10 +77,7 @@ end
 
 function create_model3(; dt, dists, ncoefs, flow_th)
     dists = @orderby(dists, levelcode.(dists.distcode)) ## make sure the district dataframe is sorted by the level code of the dists
-    distdens = dists.density
-    distdens = distdens ./ maximum(distdens)
-    distdens = distdens .- mean(distdens)
-    ## ditrict density on a scale definitely between -1 and 1 most likely more like -0.5, 0.5 but not exactly
+
 
     dt2 = dt[in.(dt.fromdist, Ref(dists.distcode)) .&& in.(dt.todist, Ref(dists.distcode)), :]
     droplevels!(dt2.fromdist)
@@ -78,9 +86,8 @@ function create_model3(; dt, dists, ncoefs, flow_th)
 
     Ndist = length(levels(dt2.fromdist))
     Nages = length(levels(dt2.agegroup))
-    alldists = CSV.read("data/districts.csv",DataFrame) # even if we subset districts, make sure we calculate population of germany properly
+    alldists = load_dists()
     popgerm = sum(alldists.pop)
-
     meddist = median_distance()
     netactual = calcnet(dt2.flows,
                         levelcode.(dt2.fromdist),
@@ -94,7 +101,7 @@ function create_model3(; dt, dists, ncoefs, flow_th)
                         dt2.frompop, dt2.topop, popgerm,
                         dt2.distance, levelcode.(dt2.agegroup),
                         Nages, dists.xcoord, dists.ycoord,
-                        distdens, dists.pop,
+                        dists.logreldens, dists.pop,
                         Ndist, meddist, netactual, ncoefs)
     return (model3, dt2)
 end

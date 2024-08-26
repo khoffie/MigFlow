@@ -15,8 +15,7 @@ Random.seed!(20240719)
 
 dt = load_flows()
 ## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
-dists = CSV.read("./data/districts.csv",DataFrame)
-dists.distcode = categorical(dists.distcode)
+dists = load_dists()
 
 # testmod3(dt, optis, dists, meddist)
 

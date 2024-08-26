@@ -88,16 +88,15 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     frompop, topop, popgerm, distance,
     agegroup, Nages,
     xcoord, ycoord,density,distpop,
-    Ndist, meddist, netactual, ncoefs)
+    Ndist, meddist, netactual, ncoefs,ndenscoef)
 
-    a ~ filldist(Normal(0.0,2.75),Nages) # center a around a typical value found by plotting the data and adjusting until the overall shift on log scale is about right
     c ~ filldist(Gamma(10.0, 1.5/9.0),Nages) # c decay rate parameter between about 1 and 4 ish
     d0 ~ filldist(Gamma(5.0, 2.0/4.0),Nages)
     dscale ~ filldist(Gamma(8.0,0.5/7.0),Nages) ## sensitive falls to same size as insensitive somewhere around 0.5 times the median distance between districts
     neterr ~ Gamma(3.0, 5/2.0) ## this is in percent
-    mm ~ LocationScale(0.0,1000.0,Beta(5,15))
-    kd ~ MvNormal(fill(0.0, Nages), (log(15.0) / 0.5) / 2 * ones(Nages)) # density ranges mostly in the range -0.5 to 0.5, so a full-scale change in density could multiply the flow by around 5.0
-
+    
+    kd ~ MvNormal(zeros(ndenscoef),10.0^2 * I(ndenscoef*Nages))
+    kdre = reshape(kd,(ndenscoef,Nages))
     ## priors for chebychev polys parameters
     desirecoefs ~ MvNormal(zeros(ncoefs*Nages), 2.0 .* ones(ncoefs*Nages)) ## new scaling we are dividing by 10 below
     desirecoefsre = reshape(desirecoefs, (ncoefs,Nages)) ## vec -> matrix
@@ -106,22 +105,21 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     desfuns = [Fun(Chebyshev(300.0 .. 1000.0) * Chebyshev(5000.0 .. 6200.0), desirecoefsre[:,i] ./ 10) for i in 1:Nages]
     desvals = [desfuns[age](xcoord,ycoord) for (xcoord,ycoord) in zip(xcoord,ycoord), age in 1:Nages]
 
+    densfuns = [Fun(Chebyshev(-10..10) * Chebyshev(-10 .. 10), kdre[:,i]) for i in 1:Nages]
+
     ## as prior for the coefficients, let's tell it that desvals should be near 0 and have standard deviation 1 ish.
     Turing.@addlogprob!(logpdf(Normal(0.0,0.25),mean(desvals)))
     Turing.@addlogprob!(logpdf(Exponential(1.0),std(desvals)))
 
     ## desirability for given age at coordinates as ratio of dest / from
-    desires = [(kd[agegroup[i]] * density[todist[i]] +
-                desvals[todist[i], agegroup[i]]) -
-                (kd[agegroup[i]] * density[fromdist[i]] +
-                desvals[fromdist[i], agegroup[i]])
+    desires = [desvals[todist[i], agegroup[i]] - desvals[fromdist[i], agegroup[i]]
                     for i in 1:length(flows)]
 
     ## indiviudal flows, the 3.0 is a number we got by approximately centering the a values to make them more interpretable
     distscale = dscale .* meddist
 
     preds = [frompop[i] * logistic( -3.0 + log(topop[i] / popgerm) + a[agegroup[i]] +
-                log1p(1.0 / (distance[i] / distscale[agegroup[i]] + d0[agegroup[i]]/100.0)^c[agegroup[i]]) + desires[i])
+                log1p(1.0 / (distance[i] / distscale[agegroup[i]] + d0[agegroup[i]]/100.0)^c[agegroup[i]]) + desires[i] + densfuns[agegroup[i]](density[fromdist[i]],density[todist[i]]))
                     for i in 1:length(flows)]
 
     #if typeof(a[1]) != Float64
@@ -143,7 +141,7 @@ https://www.desmos.com/calculator/jhrgbmw9dd
     allmoves ~ Normal(predmoves, .01 * predmoves) ## our total move predictions should be about right by around 1%
 
     ## flows ~ poisson(expectation)
-    flows ~ arraydist([MixtureModel([Poisson(p),Poisson(0.0)],[mm/1000.0,1.0-mm/1000.0]) for p in preds])
+    flows ~ arraydist([Poisson(p) for p in preds])
 
     ### both netactual and flows we optimize together. neterr   
     ### determinies the importance of netactual for optimization. the
