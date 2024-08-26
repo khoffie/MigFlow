@@ -1,4 +1,5 @@
 using CSV,DataFrames,StatsPlots,Distributions,Turing,StatsBase,StatsFuns,FixedWidthTables,DataFramesMeta
+using Printf, CategoricalArrays
 #using DuckDB
 
 
@@ -18,6 +19,8 @@ using CSV,DataFrames,StatsPlots,Distributions,Turing,StatsBase,StatsFuns,FixedWi
 
 =#
 
+const non48fips = (2,11,15,72) #fips for AK, HI, DC, PR
+
 function getUSflows()
     wd = pwd()
     cd("data")
@@ -28,7 +31,12 @@ function getUSflows()
     end
 end
 
-function loadUSflows()
+function countycode(stfips,cofips)
+    @sprintf("%d_%d",stfips,cofips)
+end
+
+
+function loadUS48flows()
     flows = FixedWidthTables.read("data/CtyxCty_US_2016-2020.txt", (
         STATEFP = (1:3, String),
         COUNTYFP = (4:6, String),
@@ -42,6 +50,14 @@ function loadUSflows()
     flows.STATEFP = tryparse.(Int32,flows.STATEFP)
     flows.COUNTYFP = tryparse.(Int32,flows.COUNTYFP)
     flows.RES1YRCOUNTYFP = tryparse.(Int32,flows.RES1YRCOUNTYFP)
+    flows = @chain flows begin
+        @subset( .! in.(:STATEFP,Ref(non48fips)) .&& .! in.(:RES1YRSTATEFP,Ref(non48fips)))
+        @transform(@byrow begin :fromcounty = countycode(:RES1YRSTATEFP,:RES1YRCOUNTYFP)
+            :tocounty = countycode(:STATEFP,:COUNTYFP)
+        end )
+    end
+    flows.fromcounty = categorical(flows.fromcounty)
+    flows.tocounty = categorical(flows.tocounty)
     flows
 end
 
@@ -65,7 +81,7 @@ end
 function loadUSgeog()
     geog = CSV.read("data/2020_Gaz_counties_national.tsv",DataFrame; delim="\t")
     countyid = @select(CSV.read("data/national_county2020.txt",DataFrame),:STATE,:STATEFP,:COUNTYFP,:COUNTYNS)
-    leftjoin(geog,countyid,on = :ANSICODE => :COUNTYNS)
+    geog = leftjoin(geog,countyid,on = :ANSICODE => :COUNTYNS)
 end
 
 
@@ -79,12 +95,9 @@ function getUScountypop()
     end
 end
 
+
+
 function loadUScountypop()
     countypop = @subset(CSV.read("data/co-est2020-alldata.csv",DataFrame),:COUNTY .!= 0) # filter out state level estimates
     rename!(countypop,Dict(:STATE => :STATEFP,:COUNTY => :COUNTYFP)) # rename the FIPS code columns to indicate they are FIPS and match the geog etc columns
-end
-
-
-function loadUSflows()
-
 end
