@@ -36,7 +36,7 @@ function countycode(stfips,cofips)
 end
 
 
-function loadUS48flows()
+function loadUS48flows(geog = loadUS48geog())
     flows = FixedWidthTables.read("data/CtyxCty_US_2016-2020.txt", (
         STATEFP = (1:3, String),
         COUNTYFP = (4:6, String),
@@ -58,6 +58,10 @@ function loadUS48flows()
     end
     flows.fromcounty = categorical(flows.fromcounty)
     flows.tocounty = categorical(flows.tocounty)
+    levels!(flows.fromcounty,geog.countyid)
+    levels!(flows.tocounty,geog.countyid)
+    rename!(flows,:MOVERSWINFLOW => :COUNT)
+    select!(flows,[:COUNT,:fromcounty,:tocounty])
     flows
 end
 
@@ -82,6 +86,16 @@ function loadUSgeog()
     geog = CSV.read("data/2020_Gaz_counties_national.tsv",DataFrame; delim="\t")
     countyid = @select(CSV.read("data/national_county2020.txt",DataFrame),:STATE,:STATEFP,:COUNTYFP,:COUNTYNS)
     geog = leftjoin(geog,countyid,on = :ANSICODE => :COUNTYNS)
+    geog.countyid = categorical(countycode.(geog.STATEFP,geog.COUNTYFP))
+    sort!(geog,[:countyid])
+end
+
+function loadUS48geog()
+    g = loadUSgeog()
+    g = g[.! in.(g.STATE,Ref(("AK","HI","PR","DC"))),: ]
+    droplevels!(g.countyid)
+    sort!(g,[:countyid])
+    g
 end
 
 
@@ -101,3 +115,31 @@ function loadUScountypop()
     countypop = @subset(CSV.read("data/co-est2020-alldata.csv",DataFrame),:COUNTY .!= 0) # filter out state level estimates
     rename!(countypop,Dict(:STATE => :STATEFP,:COUNTY => :COUNTYFP)) # rename the FIPS code columns to indicate they are FIPS and match the geog etc columns
 end
+
+
+
+function loadallUSdata()
+
+    flows = loadUS48flows()
+    geog = loadUS48geog()
+    pop = loadUScountypop()
+    pop = DataFramesMeta.@select!(pop,:STATEFP,:COUNTYFP,:POPESTIMATE2016)
+    geog = leftjoin(geog,pop,on = [:STATEFP,:COUNTYFP])
+
+    meddens = median(geog.POPESTIMATE2016 ./ geog.ALAND)
+    geog.logreldens = log.(geog.POPESTIMATE2016 ./ geog.ALAND / meddens)
+    geog
+
+    flowset = Set((f.fromcounty,f.tocounty) for f in eachrow(flows))
+    zerosamp = DataFrame((COUNT = 0,fromcounty = f,tocounty = t) for (f,t) in 
+        zip(sample(geog.countyid,10000),sample(geog.countyid,10000)) if !((f,t)  in flowset))
+
+    (geog=geog, county = geog, flows = flows, zerosamp=zerosamp)
+end
+
+#=
+
+densdict = Dict(alldata.county.countyid .=> alldata.county.logreldens)
+histogram2d([densdict[f] for f in alldata.flows.fromcounty],[densdict[f] for f in alldata.flows.tocounty])
+
+=#
