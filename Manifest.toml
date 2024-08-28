@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "3e9c47dce0cdc188e1bc45660288d95099a4f3d6"
+project_hash = "d4dd78b9ec78b765925cdad7f03aa50585e24734"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "6778bcc27496dae5723ff37ee30af451db8b35fe"
@@ -2431,6 +2431,12 @@ deps = ["ColorSchemes", "Colors", "Dates", "PrecompileTools", "Printf", "Random"
 git-tree-sha1 = "7b1a9df27f072ac4c9c7cbe5efb198489258d1f5"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.4.1"
+
+[[deps.PlotlyBase]]
+deps = ["ColorSchemes", "Dates", "DelimitedFiles", "DocStringExtensions", "JSON", "LaTeXStrings", "Logging", "Parameters", "Pkg", "REPL", "Requires", "Statistics", "UUIDs"]
+git-tree-sha1 = "56baf69781fc5e61607c3e46227ab17f7040ffa2"
+uuid = "a03496cd-edff-5a9b-9e67-9cda94a718b5"
+version = "0.8.19"
 
 [[deps.Plots]]
 deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "JLFzf", "JSON", "LaTeXStrings", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "PrecompileTools", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "RelocatableFolders", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "TOML", "UUIDs", "UnicodeFun", "UnitfulLatexify", "Unzip"]
