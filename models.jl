@@ -202,3 +202,34 @@ end
 
 
 
+@model function usmodel(flows, allmoves, fromdist, todist, popUS, distance,
+    xcoord, xmin, xmax, ycoord, ymin, ymax, logreldens,densmin, densmax, distpop,
+    Ndist, meddist, netactual, ncoefs, ndenscoef)
+
+    c ~ Gamma(10.0,1.5/9.0)
+    d0 ~ Gamma(5.0,2.0/4.0)
+    dscale ~ Gamma(8.0,0.5/7.0)
+    neterr ~ Gamma(3.0,5/2.0)
+
+    kd ~ MvNormal(zeros(ndenscoef),10.0^2 * I(ndenscoef))
+
+    desirecoefs ~ MvNormal(zeros(ncoefs), fill(2.0,ncoefs))
+
+    desfun = Fun(Chebyshev(xmin .. xmax) * Chebyshev(ymin .. ymax), desirecoefsre ./ 10) 
+    desvals = [desfun(xcoord,ycoord) for (xcoord,ycoord) in zip(xcoord,ycoord)]
+
+    densfun = Fun(Chebyshev(densmin .. densmax)*Chebyshev(densmin .. densmax), kd)
+    distscale = dscale .* meddist
+    preds = [frompop[i] * logistic(densfun(xcoord[fromdist[i],ycoord[fromdist[i]],xcoord[todist[i]],ycoord[todist[i]]] +
+                    log(topop[i]/popUS) + log1p(1.0/(distance[i]/distscale + d0/100.0)^c + desvals[todist[i]]-desval[fromdist[i]]))) for i in eachindex(flows)]
+    
+    if any(isnan,preds)
+        println("NaN in predictions")
+    end
+    ## need to create a calcnetUS function for this model, leave it out for the moment
+    predmoves = sum(preds)
+    allmoves ~ Normal(predmoves,.01*predmoves) ## match the overall number of moves to within a close margin
+
+    flows ~ arraydist([Poisson(p) for p in preds])
+
+end
