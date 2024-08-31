@@ -5,6 +5,7 @@ migration1 uses a symmetric formulation and has only distance function
 
 =#
 
+using Turing,Printf
 
 @model function migration1(flows, fromdist, todist, frompop, topop, distance,
     agegroup, Nages, Ndist, meddist)
@@ -209,7 +210,7 @@ end
     a ~ Normal(-14.0,7)
     c ~ Gamma(10.0,1.5/9.0)
     d0 ~ Gamma(5.0,2.0/4.0)
-    dscale ~ Gamma(8.0,0.5/7.0)
+    dscale ~ Gamma(20.0,5.0/19.0)
     neterr ~ Gamma(3.0,5/2.0)
     ktopop ~ Normal(0.0,5.0)
     kd ~ MvNormal(zeros(ndenscoef),fill(40.0,ndenscoef))
@@ -227,12 +228,12 @@ end
     densfun = Fun(ApproxFun.Chebyshev(densmin .. densmax)*ApproxFun.Chebyshev(densmin .. densmax), kd ./ 10)
     distscale = dscale .* meddist
     preds = [distpop[fromdist[i]] * logistic(densfun(logreldens[fromdist[i]],logreldens[todist[i]]) + a + 
-                    ktopop/10 * log(distpop[todist[i]]/medcpop) + log1p(1.0/(distance[i]/distscale + d0/100.0)^c) + desvals[todist[i]]-desvals[fromdist[i]]) for i in eachindex(flows)]
-    logpreds = log.(preds)
+                    (ktopop/10.0) * log(distpop[todist[i]]/medcpop) + log1p(1.0/(distance[i]/distscale + d0/100.0)^c) + desvals[todist[i]]-desvals[fromdist[i]]) for i in eachindex(flows)]
+    #logpreds = log.(preds)
     
     ## the logarithm of predicted rates is in the range of about -9 to +10 this is more or less a prior on 
     ## the kd and desfun parameters
-    Turing.@addlogprob!(logpdf(MvNormal(fill(1.0,length(logpreds)),fill(5.0,length(logpreds))),logpreds)) 
+#    Turing.@addlogprob!(logpdf(MvNormal(fill(1.0,length(logpreds)),fill(2.0,length(logpreds))),logpreds)) 
 
     sumpreds = sum(preds)
     allmoves ~ Normal(sumpreds,0.01*sumpreds)
