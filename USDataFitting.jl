@@ -1,4 +1,8 @@
 using CSV,DataFrames,StatsPlots,Distributions,Turing,StatsBase,StatsFuns,FixedWidthTables,DataFramesMeta
+
+using Enzyme
+Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
+
 using Printf, CategoricalArrays
 import PlotlyJS
 using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
@@ -9,6 +13,7 @@ using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, Data
 using LogDensityProblems,LogDensityProblemsAD, Distances
 
 includet("models.jl")
+include("models.jl")
 
 #using DuckDB
 
@@ -29,7 +34,7 @@ includet("models.jl")
 
 =#
 
-const non48fips = (2,11,15,72) #fips for AK, HI, DC, PR
+#const non48fips = (2,11,15,72) #fips for AK, HI, DC, PR
 
 function getUSflows()
     wd = pwd()
@@ -47,6 +52,7 @@ end
 
 
 function loadUS48flows(geog = loadUS48geog())
+    non48fips = (2,11,15,72) #fips for AK, HI, DC, PR
     flows = FixedWidthTables.read("data/CtyxCty_US_2016-2020.txt", (
         STATEFP = (1:3, String),
         COUNTYFP = (4:6, String),
@@ -166,29 +172,34 @@ if false
     alldata = loadallUSdata()
 
     #algo = BBO_de_rand_1_bin_radiuslimited()
-    algo = LBFGS()
-    #algo = NLopt.LN_BOBYQA()
+    #algo = LBFGS()
+    algo = NLopt.LN_BOBYQA()
+
+    parnames = [["a","c","d0","dscale","neterr","ktopop"];
+        ["kd[$i]" for i in 1:36];
+        ["desirecoefs[$i]" for i in 1:36]]
 
 
-    lb = [[-30.0,0.0,0.0,0.05,0.01,-10.0];
-            fill(-20.0,36);
-            fill(-20.0,36)]
-    ub = [[30.0, 5.0,10.0,20.05,4.0,10.0];
-            fill(20.0,36);
-            fill(20.0,36)]
+    lb = [[-30.0,0.0,0.0,1.0,0.01,-10.0];
+            fill(-20.50,36);
+            fill(-20.50,36)]
+    ub = [[30.0, 5.0,10.0,15.0,4.0,10.0];
+            fill(20.50,36);
+            fill(20.50,36)]
     ini = rand(Normal(0.0,0.10),length(ub))
-    ini[1:7] .= [-18.0,2.0,1.0,6.0,1.0,3.0,.20] 
+    ini[1:7] .= [-9.6,1.81,1.5,5.0,1.0,3.5,0.0] 
     mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(),initial_params=ini,
         lb=lb,ub=ub, maxiters = 800, maxtime = 600, reltol=1e-3,progress=true)
     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
-    println("First 6 coefficients:")
-    println(mapest.values[1:6])
+
+    
+    bar(1:length(mapest.values.array),mapest.values.array; title="Parameter Values",xlab="index") |> display
     #mapest=deserialize("fitted_models/USmodel_map_2024-08-29T17:24:15.073.dat")
     (densmin,densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
     (xmin,xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
     (ymin,ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)
 
-    kdindx = 1:36 .+ 6
+    kdindx = (1:36) .+ 6
     desindx = (1:36) .+ (6+36)
     kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),mapest.values.array[kdindx] ./ 10)
     desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax ),mapest.values.array[desindx] ./ 10)
@@ -206,7 +217,7 @@ if false
 
     heatmap(desirfun, title="Desirability Fun (long,lat)",c=:rainbow) |> display
 
-    preds = generated_quantities(alldata.model,mapest.values.array,names(mapest.values))
+    preds = generated_quantities(alldata.model,mapest.values.array,parnames)
     alldata.flows.preds = preds
     samps = StatsBase.sample(eachindex(alldata.flows.dist),5000; replace=false)
 
@@ -220,12 +231,12 @@ if false
     StatsPlots.scatter(flowsamp.dist,[log.((r.COUNT .+ 1) ./alldata.geog.POPESTIMATE2016[levelcode(r.fromcounty)]) for r in eachrow(flowsamp)];
         title = "log((flow+1)/from_pop) vs distance", alpha=0.1) |> display
 
-    StatsPlots.scatter(alldata.flows.dist[samps],[log.((preds[s] .+ 1) ./alldata.geog.POPESTIMATE2016[levelcode(alldata.flows.fromcounty[s])]) for s in samps];
+    StatsPlots.scatter(flowsamp.dist,[log.((r.preds) ./alldata.geog.POPESTIMATE2016[levelcode(r.fromcounty)]) for r in eachrow(flowsamp)];
         title = "log((pred+1)/from_pop) vs distance", alpha=0.1) |> display
 
     kfrom = mapest.values.array[6] / 10.0
     density(kfrom .* log.(alldata.geog.POPESTIMATE2016[levelcode.(flowsamp.tocounty)] ./ median(alldata.geog.POPESTIMATE2016)); title="DIstribution of log population US * kfrom") |> display
 
 
-    vfit = vi(alldata.model,ADVI(15,200),AutoReverseDiff(true))
+#    vfit = vi(alldata.model,ADVI(15,200),AutoReverseDiff(true))
 end
