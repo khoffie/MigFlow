@@ -148,10 +148,10 @@ function loadallUSdata(nzeros = 100000)
     levels!(flows.fromcounty,levels(geog.countyid))
     levels!(flows.tocounty,levels(geog.countyid))
 
-#    flowset = Set((f.fromcounty,f.tocounty) for f in eachrow(flows))
-#    zerosamp = DataFrame((COUNT = 0,fromcounty = f,tocounty = t) for (f,t) in 
-#        zip(StatsBase.sample(geog.countyid,nzeros),StatsBase.sample(geog.countyid,nzeros)) if !((f,t)  in flowset))
-#    flows = [flows; zerosamp]
+    flowset = Set((f.fromcounty,f.tocounty) for f in eachrow(flows))
+    zerosamp = DataFrame((COUNT = 0,fromcounty = f,tocounty = t) for (f,t) in 
+        zip(StatsBase.sample(geog.countyid,nzeros),StatsBase.sample(geog.countyid,nzeros)) if !((f,t)  in flowset))
+    flows = [flows; zerosamp]
 
     flows.dist = [haversine((geog[levelcode(r.fromcounty),:INTPTLONG],geog[levelcode(r.fromcounty),:INTPTLAT]), 
                         (geog[levelcode(r.tocounty),:INTPTLONG],geog[levelcode(r.tocounty),:INTPTLAT])) / 1000.0 for r in eachrow(flows)] ## haversine is in m, calculate km
@@ -164,16 +164,27 @@ function loadallUSdata(nzeros = 100000)
     (geog=geog, flows = flows, model=mod) #zerosamp=zerosamp,model=mod)
 end
 
+function usnetmig(from,to,count)
+    nets = zeros(Float64,length(unique([from;to])))
+    for (f,t,c) in zip(from,to,count)
+        nets[f] -= c
+        nets[t] += c
+    end
+    nets
+end
+
+
+
 if false
     densdict = Dict(alldata.county.countyid .=> alldata.county.logreldens)
     histogram2d([densdict[f] for f in alldata.flows.fromcounty],[densdict[f] for f in alldata.flows.tocounty])
 
 
-    alldata = loadallUSdata()
+    alldata = loadallUSdata(0) # add no zeros
 
     #algo = BBO_de_rand_1_bin_radiuslimited()
-    #algo = LBFGS()
-    algo = NLopt.LN_BOBYQA()
+    algo = LBFGS()
+    #algo = NLopt.LN_BOBYQA()
 
     parnames = [["a","c","d0","dscale","neterr","ktopop"];
         ["kd[$i]" for i in 1:36];
@@ -188,7 +199,7 @@ if false
             fill(20.50,36)]
     ini = rand(Normal(0.0,0.10),length(ub))
     ini[1:7] .= [-9.6,1.81,1.5,5.0,1.0,3.5,0.0] 
-    mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(),initial_params=ini,
+    mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),initial_params=ini,
         lb=lb,ub=ub, maxiters = 800, maxtime = 600, reltol=1e-3,progress=true)
     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
 
@@ -219,13 +230,26 @@ if false
 
     preds = generated_quantities(alldata.model,mapest.values.array,parnames)
     alldata.flows.preds = preds
+
+    netactual = usnetmig(levelcode.(alldata.flows.fromcounty),levelcode.(alldata.flows.tocounty),alldata.flows.COUNT)
+    netpred = usnetmig(levelcode.(alldata.flows.fromcounty),levelcode.(alldata.flows.tocounty),alldata.flows.preds)
+
+    density(netactual-netpred; title="Residual Net error (actual - pred)",xlab="Count of people") |> display
+    density((netactual-netpred) ./ alldata.geog.POPESTIMATE2016; xlim=(-.3,.3),legend=false, title="Residual Net error (actual - pred)",xlab="Fraction of source county") |> display
+    density(netactual ./ alldata.geog.POPESTIMATE2016; xlim=(-.3,.3),legend=false,title="Net migration as fraction of population") |> display
+    density(netactual ./ 1000.0; title="Actual Net Migration (thousands)",xlim=(-20,20)) |> display
+    density(netactual ./ 1000.0; title="Actual Net Migration (thousands, full range") |> display
+
+    scatter(netactual ./ 1000,netpred ./ 1000; xlab="actual net migration (thousands)",ylab="predicted (thousands)",xlim=(-20,20),ylim=(-20,20))
+
+
     samps = StatsBase.sample(eachindex(alldata.flows.dist),5000; replace=false)
 
     flowsamp = alldata.flows[samps,:]
 
     density(log.(flowsamp.preds); label = "log(preds)", title="Density of log predictions")    
     density!(log.(flowsamp.COUNT .+ .01); label="actuals + .01") |> display
-    StatsPlots.scatter(flowsamp.dist,log.(flowsamp.COUNT ./ flowsamp.preds); alpha=0.1, title="log(flow/pred) vs dist (in km)") |> display
+    StatsPlots.scatter(flowsamp.dist,log.((flowsamp.COUNT .+ .01) ./ flowsamp.preds); alpha=0.1, title="log(flow/pred) vs dist (in km)") |> display
 
 
     StatsPlots.scatter(flowsamp.dist,[log.((r.COUNT .+ 1) ./alldata.geog.POPESTIMATE2016[levelcode(r.fromcounty)]) for r in eachrow(flowsamp)];
@@ -237,6 +261,6 @@ if false
     kfrom = mapest.values.array[6] / 10.0
     density(kfrom .* log.(alldata.geog.POPESTIMATE2016[levelcode.(flowsamp.tocounty)] ./ median(alldata.geog.POPESTIMATE2016)); title="DIstribution of log population US * kfrom") |> display
 
-
+    nutsamp = Turing.sample(alldata.model,NUTS(300,.75; adtype=AutoReverseDiff(false)),100)
 #    vfit = vi(alldata.model,ADVI(15,200),AutoReverseDiff(true))
 end
