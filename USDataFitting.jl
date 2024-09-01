@@ -155,17 +155,19 @@ function loadallUSdata(nzeros = 100000)
 
     flows.dist = [haversine((geog[levelcode(r.fromcounty),:INTPTLONG],geog[levelcode(r.fromcounty),:INTPTLAT]), 
                         (geog[levelcode(r.tocounty),:INTPTLONG],geog[levelcode(r.tocounty),:INTPTLAT])) / 1000.0 for r in eachrow(flows)] ## haversine is in m, calculate km
+    netactual::Vector{Float64} = usnetmig(levelcode.(flows.fromcounty),levelcode.(flows.tocounty),flows.COUNT)
+
     mod = usmodel(flows.COUNT,sum(flows.COUNT),levelcode.(flows.fromcounty),
                 levelcode.(flows.tocounty),median(geog.POPESTIMATE2016),flows.dist,
                 geog.INTPTLONG,minimum(geog.INTPTLONG),maximum(geog.INTPTLONG),
                 geog.INTPTLAT,minimum(geog.INTPTLAT),maximum(geog.INTPTLAT),
                 geog.logreldens,minimum(geog.logreldens),maximum(geog.logreldens),
-                geog.POPESTIMATE2016,nrow(geog),100.0,[],36,36)
+                geog.POPESTIMATE2016,nrow(geog),100.0,netactual,36,36)
     (geog=geog, flows = flows, model=mod) #zerosamp=zerosamp,model=mod)
 end
 
 function usnetmig(from,to,count)
-    nets = zeros(Float64,length(unique([from;to])))
+    nets = zeros(typeof(count[1]),length(unique([from;to])))
     for (f,t,c) in zip(from,to,count)
         nets[f] -= c
         nets[t] += c
@@ -198,7 +200,7 @@ if false
             fill(20.50,36);
             fill(20.50,36)]
     ini = rand(Normal(0.0,0.10),length(ub))
-    ini[1:7] .= [-9.6,1.81,1.5,5.0,1.0,3.5,0.0] 
+    ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0] 
     mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),initial_params=ini,
         lb=lb,ub=ub, maxiters = 800, maxtime = 600, reltol=1e-3,progress=true)
     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
@@ -240,7 +242,8 @@ if false
     density(netactual ./ 1000.0; title="Actual Net Migration (thousands)",xlim=(-20,20)) |> display
     density(netactual ./ 1000.0; title="Actual Net Migration (thousands, full range") |> display
 
-    scatter(netactual ./ 1000,netpred ./ 1000; xlab="actual net migration (thousands)",ylab="predicted (thousands)",xlim=(-20,20),ylim=(-20,20))
+    scatter(netactual ./ 1000,netpred ./ 1000; xlab="actual net migration (thousands)",ylab="predicted (thousands)",xlim=(-20,20),ylim=(-20,20))|> display
+    scatter(netactual ./ 1000,netpred ./ 1000; xlab="actual net migration (thousands)",ylab="predicted (thousands)") |> display
 
 
     samps = StatsBase.sample(eachindex(alldata.flows.dist),5000; replace=false)
