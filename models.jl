@@ -205,13 +205,13 @@ end
 
 @model function usmodel(flows, allmoves, fromdist, todist, medcpop, distance,
     xcoord, xmin, xmax, ycoord, ymin, ymax, logreldens,densmin, densmax, distpop,
-    Ndist, meddist, netactual, ncoefs, ndenscoef)
+    Ndist, meddist, netactual::Vector{Float64}, ncoefs, ndenscoef)
 
     a ~ Normal(-14.0,7)
     c ~ Gamma(10.0,1.5/9.0)
     d0 ~ Gamma(5.0,2.0/4.0)
     dscale ~ Gamma(20.0,5.0/19.0)
-    neterr ~ Gamma(3.0,5/2.0)
+    neterr ~ Gamma(3.0,5.0/2.0)
     ktopop ~ Normal(0.0,5.0)
     kd ~ MvNormal(zeros(ndenscoef),fill(40.0,ndenscoef))
 
@@ -238,6 +238,9 @@ end
     sumpreds = sum(preds)
     allmoves ~ Normal(sumpreds,0.01*sumpreds)
 
+    netpreds = usnetmig(fromdist,todist,preds)
+
+    netactual ~ MvNormal(netpreds,[neterr/10000.0 * d for d in distpop])
     if any(isnan,preds)
         println("NaN in predictions")
     end
