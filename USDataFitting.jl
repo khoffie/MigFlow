@@ -242,9 +242,8 @@ if false
     density(netactual ./ 1000.0; title="Actual Net Migration (thousands)",xlim=(-20,20)) |> display
     density(netactual ./ 1000.0; title="Actual Net Migration (thousands, full range") |> display
 
-    scatter(netactual ./ 1000,netpred ./ 1000; xlab="actual net migration (thousands)",ylab="predicted (thousands)",xlim=(-20,20),ylim=(-20,20))|> display
-    scatter(netactual ./ 1000,netpred ./ 1000; xlab="actual net migration (thousands)",ylab="predicted (thousands)") |> display
-
+    scatter(netpred ./ 1000, netactual ./ 1000; ylab="actual net migration (thousands)",xlab="predicted (thousands)",xlim=(-20,20),ylim=(-20,20))|> display
+    scatter(netpred ./ 1000, netactual ./ 1000; ylab="actual net migration (thousands)",xlab="predicted (thousands)") |> display
 
     samps = StatsBase.sample(eachindex(alldata.flows.dist),5000; replace=false)
 
@@ -253,6 +252,9 @@ if false
     density(log.(flowsamp.preds); label = "log(preds)", title="Density of log predictions")    
     density!(log.(flowsamp.COUNT .+ .01); label="actuals + .01") |> display
     StatsPlots.scatter(flowsamp.dist,log.((flowsamp.COUNT .+ .01) ./ flowsamp.preds); alpha=0.1, title="log(flow/pred) vs dist (in km)") |> display
+
+    scatter(log.(flowsamp.preds/median(flowsamp.preds)),log.(flowsamp.COUNT/median(flowsamp.preds)); title="Comparing prediction to actual",
+        xlab="log(pred/median(pred))", ylab="log(COUNT/median(pred))",xlim=(-5,5),ylim=(-5,5), alpha=0.1) |> display
 
 
     StatsPlots.scatter(flowsamp.dist,[log.((r.COUNT .+ 1) ./alldata.geog.POPESTIMATE2016[levelcode(r.fromcounty)]) for r in eachrow(flowsamp)];
@@ -264,6 +266,64 @@ if false
     kfrom = mapest.values.array[6] / 10.0
     density(kfrom .* log.(alldata.geog.POPESTIMATE2016[levelcode.(flowsamp.tocounty)] ./ median(alldata.geog.POPESTIMATE2016)); title="DIstribution of log population US * kfrom") |> display
 
-    nutsamp = Turing.sample(alldata.model,NUTS(300,.75; adtype=AutoReverseDiff(false)),100)
+
+
+#    nutsamp = Turing.sample(alldata.model,NUTS(300,.75; adtype=AutoReverseDiff(false)),100)
 #    vfit = vi(alldata.model,ADVI(15,200),AutoReverseDiff(true))
 end
+
+
+if false
+
+    Random.seed!(123580)
+    plots = []
+    plotspred = []
+    errplots = []
+    q75dists = Float64[]
+    for i in StatsBase.sample(levels(alldata.flows.tocounty),6)
+        toflows = @subset(alldata.flows,alldata.flows.tocounty .== i)
+        fromflows = @subset(alldata.flows,alldata.flows.fromcounty .== i)
+        push!(plots,density([toflows.COUNT; .- fromflows.COUNT]; title="county: $i"))
+        push!(plotspred,density([toflows.preds; .- fromflows.preds]; title="county: $i preds"))
+        push!(errplots, density([toflows.COUNT .- toflows.preds; .- (fromflows.COUNT .- fromflows.preds)]; title= "$i flow errors"))
+
+        counts = [fromflows.COUNT; toflows.COUNT]
+        dists = [fromflows.dist; toflows.dist]
+        q75 = quantile(counts,.90)
+        for d in dists 
+            if d  > q75
+                push!(q75dists,d)
+            end
+        end
+    end
+    plot(plots...;layout = (2,3),size=(800,600)) |> display
+    plot(plotspred...;layout=(2,3), size= (800,600)) |> display
+    plot(errplots...; layout=(2,3), size = (800,600)) |> display
+
+
+    histogram(q75dists; title="Distances at >90%tile flow count",bins=40,normalize=true) |> display
+    histogram(alldata.flows.dist)
+
+    histogram(sqrt.(alldata.geog[levelcode.(alldata.flows.fromcounty),:POPESTIMATE2016] .* alldata.geog[levelcode.(alldata.flows.tocounty),:POPESTIMATE2016] 
+        ./ alldata.geog.ALAND[levelcode.(alldata.flows.fromcounty)]);
+        title = "sqrt(frompop*topop/fromarea)")
+
+    dd = (sqrt.(alldata.geog[levelcode.(alldata.flows.fromcounty),:ALAND]) .+ 
+    sqrt.(alldata.geog[levelcode.(alldata.flows.tocounty),:ALAND])) ./ (1000.0 .* 100.0)
+
+    alldata.flows.dd  = dd
+
+
+    histogram(dd
+        ;
+        title = "[sqrt(area)+sqrt(area)] / 100km",normalize=true) |> display
+    quantile(dd,1.0 - 100/250000)
+    histogram(alldata.flows.COUNT[dd .> .003]; title = "delta-d > .003 flows",bins=20,xlab="Count",normalize=true)|> display
+    rowsamp = StatsBase.sample(1:nrow(alldata.flows),3000)
+    sampledat = alldata.flows[rowsamp,:]
+    sampledat.pop = alldata.geog[levelcode.(sampledat.fromcounty),:POPESTIMATE2016]
+    @df sampledat scatter(:dist, log.(:COUNT ./ :pop); group = :dd .> .8 .&& :dist .< 1500.0, xlab = "Distance (km)", ylab="log(Count/Pop)", title="Flows with delta d > .0015",alpha=0.6) |> display
+
+
+end
+
