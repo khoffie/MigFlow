@@ -176,6 +176,19 @@ function usnetmig(from,to,count)
 end
 
 
+function totalflow(fromc, toc, flow, counties)
+    fromcindx = levelcode.(fromc)
+    tocindx = levelcode.(toc)
+    totflow = zeros(length(counties))
+    for (fr,to,fl) in zip(fromcindx,tocindx,flow)
+        totflow[fr] += fl
+        totflow[to] += fl
+    end
+    totflow
+end
+
+
+
 
 if false
     densdict = Dict(alldata.county.countyid .=> alldata.county.logreldens)
@@ -202,7 +215,7 @@ if false
     ini = rand(Normal(0.0,0.10),length(ub))
     ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0] 
     mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),initial_params=ini,
-        lb=lb,ub=ub, maxiters = 800, maxtime = 600, reltol=1e-3,progress=true)
+        lb=lb,ub=ub, maxiters = 1000, maxtime = 800, reltol=1e-4,progress=true)
     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
 
     
@@ -242,8 +255,13 @@ if false
     density(netactual ./ 1000.0; title="Actual Net Migration (thousands)",xlim=(-20,20)) |> display
     density(netactual ./ 1000.0; title="Actual Net Migration (thousands, full range") |> display
 
-    scatter(netpred ./ 1000, netactual ./ 1000; ylab="actual net migration (thousands)",xlab="predicted (thousands)",xlim=(-20,20),ylim=(-20,20))|> display
-    scatter(netpred ./ 1000, netactual ./ 1000; ylab="actual net migration (thousands)",xlab="predicted (thousands)") |> display
+    scatter(netpred ./ 1000, netactual ./ 1000; ylab="actual net migration (thousands)",xlab="predicted (thousands)",xlim=(-20,20),ylim=(-20,20),
+        title= "Net Migration prediction")
+    Plots.abline!(1,0; legend=false) |> display
+
+    scatter(netpred ./ 1000, netactual ./ 1000; ylab="actual net migration (thousands)",xlab="predicted (thousands)",
+        title = "Net Migration prediction")
+    Plots.abline!(1,0) |> display
 
     samps = StatsBase.sample(eachindex(alldata.flows.dist),5000; replace=false)
 
@@ -266,7 +284,12 @@ if false
     kfrom = mapest.values.array[6] / 10.0
     density(kfrom .* log.(alldata.geog.POPESTIMATE2016[levelcode.(flowsamp.tocounty)] ./ median(alldata.geog.POPESTIMATE2016)); title="DIstribution of log population US * kfrom") |> display
 
+    tots = totalflow(alldata.flows.fromcounty,alldata.flows.tocounty,alldata.flows.COUNT,alldata.geog.countyid)
+    totpreds = totalflow(alldata.flows.fromcounty,alldata.flows.tocounty,alldata.flows.preds,alldata.geog.countyid)
 
+    scatter(log.(totpreds ./ alldata.geog.POPESTIMATE2016),log.(tots ./ alldata.geog.POPESTIMATE2016),
+        xlab="log(Pred total flux / Pop)", ylab = "log(Actual Total Flux / Pop)", title = "Total Flux comparison")
+    Plots.abline!(1,0; label = "y = x", legend = false) |> display
 
 #    nutsamp = Turing.sample(alldata.model,NUTS(300,.75; adtype=AutoReverseDiff(false)),100)
 #    vfit = vi(alldata.model,ADVI(15,200),AutoReverseDiff(true))
