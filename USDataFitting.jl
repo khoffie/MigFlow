@@ -291,9 +291,9 @@ if false
         xlab="log(Pred total flux / Pop)", ylab = "log(Actual Total Flux / Pop)", title = "Total Flux comparison")
     Plots.abline!(1,0; label = "y = x", legend = false) |> display
 
-    nutsamp = Turing.sample(alldata.model,MH(.01*I(length(mapest.values))),100; thinning=10, initial_params = mapest.values.array)
+    mhsamp = Turing.sample(alldata.model,MH(.01*I(length(mapest.values))),100; thinning=10, initial_params = mapest.values.array)
 
-    serialize("./fitted_models/samps_20240805.dat",nutsamp)
+    serialize("./fitted_models/samps_$(now()).dat",nutsamp)
 
     #    nutsamp = Turing.sample(alldata.model,HMC(1e-4,5),100; init_params = mapest.values.array)
 #    nutsamp = Turing.sample(alldata.model,NUTS(300,.75; adtype=AutoReverseDiff(false)),100)
