@@ -191,8 +191,8 @@ end
 
 
 if false
-    densdict = Dict(alldata.county.countyid .=> alldata.county.logreldens)
-    histogram2d([densdict[f] for f in alldata.flows.fromcounty],[densdict[f] for f in alldata.flows.tocounty])
+#    densdict = Dict(alldata.county.countyid .=> alldata.county.logreldens)
+#    histogram2d([densdict[f] for f in alldata.flows.fromcounty],[densdict[f] for f in alldata.flows.tocounty])
 
 
     alldata = loadallUSdata(0) # add no zeros
@@ -206,12 +206,12 @@ if false
         ["desirecoefs[$i]" for i in 1:36]]
 
 
-    lb = [[-30.0,0.0,0.0,1.0,0.01,-10.0];
-            fill(-20.50,36);
-            fill(-20.50,36)]
-    ub = [[30.0, 5.0,10.0,15.0,4.0,10.0];
-            fill(20.50,36);
-            fill(20.50,36)]
+    lb = [[-60.0,0.0,0.0,1.0,0.01,-10.0];
+            fill(-50.50,36);
+            fill(-50.50,36)]
+    ub = [[60.0, 20.0,10.0,15.0,100.0,10.0];
+            fill(50.50,36);
+            fill(50.50,36)]
     ini = rand(Normal(0.0,0.10),length(ub))
     ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0] 
     mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),initial_params=ini,
@@ -291,6 +291,11 @@ if false
         xlab="log(Pred total flux / Pop)", ylab = "log(Actual Total Flux / Pop)", title = "Total Flux comparison")
     Plots.abline!(1,0; label = "y = x", legend = false) |> display
 
+    nutsamp = Turing.sample(alldata.model,MH(.01*I(length(mapest.values))),100; thinning=10, initial_params = mapest.values.array)
+
+    serialize("./fitted_models/samps_20240805.dat",nutsamp)
+
+    #    nutsamp = Turing.sample(alldata.model,HMC(1e-4,5),100; init_params = mapest.values.array)
 #    nutsamp = Turing.sample(alldata.model,NUTS(300,.75; adtype=AutoReverseDiff(false)),100)
 #    vfit = vi(alldata.model,ADVI(15,200),AutoReverseDiff(true))
 end
