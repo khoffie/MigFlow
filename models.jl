@@ -238,12 +238,11 @@ end
     sumpreds = sum(preds)
     allmoves ~ Normal(sumpreds,0.01*sumpreds)
 
-#    netpreds = usnetmig(fromdist,todist,preds)
-#    netactual ~ MvNormal(netpreds,[neterr/10000.0 * d for d in distpop])
+
     if any(isnan,preds)
         println("NaN in predictions")
     end
-    ## need to create a calcnetUS function for this model, leave it out for the moment
+
 
     flows ~ arraydist([Poisson(p) for p in preds])
     return (preds=preds)
