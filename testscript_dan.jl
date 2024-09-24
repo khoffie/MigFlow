@@ -161,13 +161,8 @@ function runtest()
     #algo = NLopt.LN_NELDERMEAD()
     #algo = NLopt.LN_COBYLA() ## this also worked, at least once
     algo = NLopt.LN_BOBYQA()
-<<<<<<< HEAD
-    init,model = test(5000; alg = algo, niter = 500,nsecs = 600,
-                      pctzero = 1.0); 
-=======
     init,model,vimod,visamp = test(25000; alg = algo, niter = 500,nsecs = 600,
             pctzero = 1.0); 
->>>>>>> 84e7b76a89843420f397dab61176d1b955bd352b
     println("plotting fit...."); 
     display(plotfit(init,model))
     displayvals(init.values);
