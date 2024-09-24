@@ -34,8 +34,8 @@ library(MigStat)
 library(plotR)
 library(kableExtra)
 library(patchwork)
-source("../functions.R")
-source("../functions_plots.R")
+source("functions.R")
+source("functions_plots.R")
 
 ```
 
@@ -66,6 +66,12 @@ dt[real != 0][, mean(actual == real)]
 
 kable(flows[, .(frac_0 = mean(flows == 0)), keyby = .(agegroup)], digits = 2)
 
+all_flows <- flows[, .(all_flows = sum(flows)), keyby = agegroup]
+sensitive <- flows[, .(sum_flows = sum(flows)), keyby = .(agegroup, distance > 300)]
+sensitive[all_flows, all := i.all_flows, on = .(agegroup)]
+sensitive[, sum_flows := round(sum_flows / all, 2)]
+dcast(sensitive, distance ~ agegroup, value.var = "sum_flows")
+
 ```
 
 ```{r opti-ini-plot, results = "show"}
@@ -95,17 +101,17 @@ dtm[, actual_imp := as.double(actual)]
 rnds <- rlnorm(dtm[actual == 0, .N], -5, log(2.0))
 dtm[actual == 0, actual_imp := rnds]
 plot_fit(dtm[model == mod_name],
-         distance, log(actual_imp / preds, base = 10), th_min = 0, p_sample = p, smooth = sm)
+         distance, log(actual_imp / preds, base = 2), th_min = 0, p_sample = p, smooth = sm)
 ggsavew(w = 8, file = sprintf("../plots/%s.pdf", mod_name))
 plot_fit(dtm[model == "gravity"],
-         distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = sm)
+         distance, log(actual_imp / preds, base = 2), th_min = 0, p_sample = p, smooth = sm)
 ggsavew(w = 8, file = "../plots/gravity.pdf")
 
 dtm[, actual_imp := as.double(actual)]
 rnds <- rlnorm(dtm[actual == 0, .N], 0, log(2.0))
 dtm[actual == 0, actual_imp := rnds]
 plot_fit(dtm[model %in% c(mod_name, "gravity")],
-         distance, log(actual_imp / preds), th_min = 0, p_sample = p, smooth = TRUE)
+         distance, log(actual_imp / preds, base = 2), th_min = 0, p_sample = p, smooth = TRUE)
 ggsavew(w = 8, file = sprintf("../plots/%s_gravity.pdf", mod_name))
 
 ```
@@ -143,12 +149,12 @@ dtm[model == "esa", model := "gravity2.0"]
 plot_speech <- function(dt, age, main, color = TRUE) {    
     if(color == TRUE) {
         fit <-  ggplot(dt[agegroup == age],
-                       aes(distance, log(actual/preds, base = 10),
+                       aes(distance, log(actual/preds, base = 2),
                            color = model))
     }
     if(color == FALSE) {
         fit <-  ggplot(dt[agegroup == age],
-                       aes(distance, log(actual/preds, base = 10)))
+                       aes(distance, log(actual/preds, base = 2)))
     }
     fit <- fit +
         geom_hline(yintercept = 0) +
@@ -163,14 +169,14 @@ plot_speech <- function(dt, age, main, color = TRUE) {
 
 
 plot_speech(dtm, "30-50", main = "Comparison: Models for positive flows")
-ggsavew(filename = "../plots/esa_both.pdf")
+ggsavew(filename = "~/Documents/GermanMigration/plots/esa_both.pdf", w = 6)
 
 plot_speech(dtm[model == "gravity2.0"], "30-50", main = "Gravity 2.0", color = FALSE)
-ggsavew(filename = "../plots/esa_gravity2.0.pdf")
+ggsavew(filename = "~/Documents/GermanMigration/plots/esa_gravity2.0.pdf", w = 6)
 
 plot_speech(dtm[model == "gravity1.0"], "30-50", main = "Gravity 1.0", color = FALSE)
-ggsavew(filename = "../plots/esa_gravity1.0.pdf")
-
+ggsavew(filename = "~/Documents/GermanMigration/plots/esa_gravity1.0.pdf", w = 6)
+<
 
 ```
 
