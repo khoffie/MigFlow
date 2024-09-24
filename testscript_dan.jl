@@ -17,8 +17,7 @@ includet("fitmodel3.jl")
 Random.seed!(20240719)
 
 ## Create a districts file which has distcode, pop, density, xcoord, ycoord and save it in the data directory
-dists = CSV.read("./data/districts.csv",DataFrame)
-dists.distcode = categorical(dists.distcode)
+dists = load_dists() 
 
 function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300, 
                 #avals = [-1.1,1.1,1.5,-0.6,-1.4,-1.3],
@@ -41,9 +40,6 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
 
     alldf = load_flows()
     popgerm = sum(dists.pop)
-    distdens = dists.density
-    distdens = distdens ./ maximum(distdens)
-    distdens = distdens .- mean(distdens)
     meddist = median_distance()
 
     thedf = alldf[StatsBase.sample(1:nrow(alldf),nflow; replace=false),:]
@@ -78,7 +74,7 @@ function test(nflow,dists = dists; alg = ParticleSwarm(), niter = 100, nsecs=300
                         thedf.frompop, thedf.topop, popgerm, thedf.distance,
                         levelcode.(thedf.agegroup),
                         Nages,
-                        dists.xcoord, dists.ycoord, distdens,dists.pop,
+                        dists.xcoord, dists.ycoord, dists.logreldens, dists.pop,
                         Ndist, meddist, netactual, Ncoefs)
     lb[neterridx] = .05
     ub[neterridx] = 10
@@ -135,7 +131,7 @@ function plotfit(vals,model)
             flow[i] = preds[i] * rand(LogNormal(-15.0,log(2.0)))
         end
     end
-    scatter(dist,log.(flow ./ preds); color = model.args.agegroup,alpha=0.1)
+    scatter(dist,log.(flow ./ preds); color = model.args.agegroup,alpha=0.02)
 end
 
 
@@ -154,14 +150,24 @@ end
 
 
 function runtest()
+
+    #it appears the optimizer prefers some data subsets to others. 
+    Random.seed!(20240719)
+    #Random.seed!(20240822)
+    #Random.seed!(round(Int64,time()))
     #algo = BBO_de_rand_1_bin_radiuslimited()
     #algo = LBFGS()
     #algo = IPNewton();
     #algo = NLopt.LN_NELDERMEAD()
-    #algo = NLopt.LN_COBYLA()
+    #algo = NLopt.LN_COBYLA() ## this also worked, at least once
     algo = NLopt.LN_BOBYQA()
+<<<<<<< HEAD
     init,model = test(5000; alg = algo, niter = 500,nsecs = 600,
                       pctzero = 1.0); 
+=======
+    init,model,vimod,visamp = test(25000; alg = algo, niter = 500,nsecs = 600,
+            pctzero = 1.0); 
+>>>>>>> 84e7b76a89843420f397dab61176d1b955bd352b
     println("plotting fit...."); 
     display(plotfit(init,model))
     displayvals(init.values);
