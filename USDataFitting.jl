@@ -132,9 +132,32 @@ function loadUScountypop()
     rename!(countypop,Dict(:STATE => :STATEFP,:COUNTY => :COUNTYFP)) # rename the FIPS code columns to indicate they are FIPS and match the geog etc columns
 end
 
+function loadGermGeog()
+    geog = CSV.read("data/districts.csv",DataFrame)
+    geog.distcode = categorical(geog.distcode)
+    sort!(geog,[:distcode])
+    meddens = median(geog.density)
+    geog.logreldens = log.(geog.density ./ meddens)
+
+    geog
+end
+
+function loadGermFlows(distcodes)
+    fl = CSV.read("data/FlowDataGermans.csv",DataFrame)
+    fl.fromdist = categorical(fl.fromdist,levels=distcodes)
+    fl.todist = categorical(fl.todist,levels=distcodes)
+    fl
+end
 
 
-function loadallUSdata(nzeros = 100000)
+function loadallGermData(nzeros = 0)
+    geog = loadGermGeog()
+    flows = loadGermFlows(levels(geog.distcode))
+
+    (geog=geog, flows=flows)
+end
+
+function loadallUSdata(nzeros = 0)
 
     flows = loadUS48flows()
     geog = loadUS48geog()
@@ -190,7 +213,7 @@ end
 
 
 
-function main()
+function main_interact()
 #    densdict = Dict(alldata.county.countyid .=> alldata.county.logreldens)
 #    histogram2d([densdict[f] for f in alldata.flows.fromcounty],[densdict[f] for f in alldata.flows.tocounty])
 
@@ -219,7 +242,7 @@ function main()
     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
     paramvec = mapest.values.array
     usdiagplots(alldata,paramvec)
-    mhsamp = Turing.sample(alldata.model,MH(.05^2*I(length(mapest.values))),100; thinning=20, initial_params = paramvec)
+    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=50, initial_params = paramvec)
 #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
 
     serialize("./fitted_models/samps_$(now()).dat",mhsamp)
@@ -237,7 +260,7 @@ end
 
 
 
-function usdiagplots(alldata,paramvec)
+function usdiagplots(alldata,paramvec,parnames)
 
     bar(1:length(paramvec),paramvec; title="Parameter Values",xlab="index") |> display
     #mapest=deserialize("fitted_models/USmodel_map_2024-08-29T17:24:15.073.dat")
@@ -313,62 +336,76 @@ function usdiagplots(alldata,paramvec)
 
 end
 
+grabparams(chain,n) = chain.value.data[n,1:end-1,1]
 
 
+function fitandwritefile(alldata,flowout,geogout,densout,paramout)
+
+    algo = LBFGS()
+
+    parnames = [["a","c","d0","dscale","neterr","ktopop"];
+        ["kd[$i]" for i in 1:36];
+        ["desirecoefs[$i]" for i in 1:36]]
 
 
+    lb = [[-60.0,0.0,0.0,1.0,0.01,-10.0];
+            fill(-50.50,36);
+            fill(-50.50,36)]
+    ub = [[60.0, 20.0,10.0,15.0,100.0,10.0];
+            fill(50.50,36);
+            fill(50.50,36)]
+    ini = rand(Normal(0.0,0.10),length(ub))
+    ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0] 
+    mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),initial_params=ini,
+        lb=lb,ub=ub, maxiters = 500, maxtime = 400, reltol=1e-3,progress=true)
+    
+    paramvec = mapest.values.array
 
-if false
+    usdiagplots(alldata,paramvec,parnames)
+    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=50, initial_params = paramvec)
+#    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
+    paramvec = grabparams(mhsamp,100)
 
-    Random.seed!(123580)
-    plots = []
-    plotspred = []
-    errplots = []
-    q75dists = Float64[]
-    for i in StatsBase.sample(levels(alldata.flows.tocounty),6)
-        toflows = @subset(alldata.flows,alldata.flows.tocounty .== i)
-        fromflows = @subset(alldata.flows,alldata.flows.fromcounty .== i)
-        push!(plots,density([toflows.COUNT; .- fromflows.COUNT]; title="county: $i"))
-        push!(plotspred,density([toflows.preds; .- fromflows.preds]; title="county: $i preds"))
-        push!(errplots, density([toflows.COUNT .- toflows.preds; .- (fromflows.COUNT .- fromflows.preds)]; title= "$i flow errors"))
+    preds = generated_quantities(alldata.model,paramvec,parnames)
+    alldata.flows.preds = preds
 
-        counts = [fromflows.COUNT; toflows.COUNT]
-        dists = [fromflows.dist; toflows.dist]
-        q75 = quantile(counts,.90)
-        for d in dists 
-            if d  > q75
-                push!(q75dists,d)
-            end
-        end
+    CSV.write(flowout,alldata.flows)
+
+    kdindx = (1:36) .+ 6
+    desindx = (1:36) .+ (6+36)
+    kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),paramvec[kdindx] ./ 10)
+    desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax ),paramvec[desindx] ./ 10)
+
+    alldata.geog.desirability = [desirfun(x,y) for (x,y) in zip(alldata.geog.INTPTLONG,alldata.geog.INTPTLAT)]
+
+    CSV.write(geogout,alldata.geog)
+    densvals = range(minimum(alldata.geog.logreldens),maximum(alldata.geog.logreldens),100)
+    densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd,td)) for fd in densvals, td in densvals)
+    CSV.write(densout,densfundf)
+    CSV.write(paramout,DataFrame(paramval=paramvec,parname=parnames))
+end
+
+
+function main()
+    usd = loadallUSdata(0) # add no zeros, 
+
+    Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
+
+    fitandwritefile(usd,"manuscript_input/usflows.csv","manuscript_input/usgeog.csv","manuscript_input/usdensfun.csv","manuscript_input/usparams.csv")
+
+    germ = loadallGermData(0)
+
+    Threads.@threads for age in levels(germ.agegroup)
+        agedat = @subset(germ.flows,germ.flows.agegroup .== age)
+        modl = usmodel(agedat.flows,sum(agedat.flows),levelcode.(agedat.fromdist), levelcode.(agedat.todist),
+                        median(germ.geog.pop),agedat.dist,
+                        germ.geog.xcoord,minimum(germ.geog.xcoord),maximum(germ.geog.xcoord),
+                        germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
+                        germ.geog.logreldens,minimum(geog.logreldens),maximum(geog.logreldens),
+                        germ.geog.pop,nrow(germ.geog),100.0,nothing,36,36) ## nothing == netactual, we're not using it anymore
+        fitandwritefile((flows=agedat,geog=germ.geog,model=modl),"manuscript_input/germflows_$(age).csv","manuscript_input/germgeog_$(age).csv",
+            "manuscript_input/germdensfun_$(age).csv","manuscript_input/germparams_$(age).csv")
     end
-    plot(plots...;layout = (2,3),size=(800,600)) |> display
-    plot(plotspred...;layout=(2,3), size= (800,600)) |> display
-    plot(errplots...; layout=(2,3), size = (800,600)) |> display
-
-
-    histogram(q75dists; title="Distances at >90%tile flow count",bins=40,normalize=true) |> display
-    histogram(alldata.flows.dist)
-
-    histogram(sqrt.(alldata.geog[levelcode.(alldata.flows.fromcounty),:POPESTIMATE2016] .* alldata.geog[levelcode.(alldata.flows.tocounty),:POPESTIMATE2016] 
-        ./ alldata.geog.ALAND[levelcode.(alldata.flows.fromcounty)]);
-        title = "sqrt(frompop*topop/fromarea)")
-
-    dd = (sqrt.(alldata.geog[levelcode.(alldata.flows.fromcounty),:ALAND]) .+ 
-    sqrt.(alldata.geog[levelcode.(alldata.flows.tocounty),:ALAND])) ./ (1000.0 .* 100.0)
-
-    alldata.flows.dd  = dd
-
-
-    histogram(dd
-        ;
-        title = "[sqrt(area)+sqrt(area)] / 100km",normalize=true) |> display
-    quantile(dd,1.0 - 100/250000)
-    histogram(alldata.flows.COUNT[dd .> .003]; title = "delta-d > .003 flows",bins=20,xlab="Count",normalize=true)|> display
-    rowsamp = StatsBase.sample(1:nrow(alldata.flows),3000)
-    sampledat = alldata.flows[rowsamp,:]
-    sampledat.pop = alldata.geog[levelcode.(sampledat.fromcounty),:POPESTIMATE2016]
-    @df sampledat scatter(:dist, log.(:COUNT ./ :pop); group = :dd .> .8 .&& :dist .< 1500.0, xlab = "Distance (km)", ylab="log(Count/Pop)", title="Flows with delta d > .0015",alpha=0.6) |> display
-
 
 end
 
