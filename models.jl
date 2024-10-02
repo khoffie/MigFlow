@@ -204,7 +204,7 @@ end
 
 @model function usmodel(flows, allmoves, fromdist, todist, medcpop, distance,
     xcoord, xmin, xmax, ycoord, ymin, ymax, logreldens,densmin, densmax, distpop,
-    Ndist, meddist, netactual::Vector{Float64}, ncoefs, ndenscoef)
+    Ndist, meddist, ncoefs, ndenscoef)
 
     a ~ Normal(-14.0,7)
     c ~ Gamma(10.0,1.5/9.0)

@@ -178,14 +178,14 @@ function loadallUSdata(nzeros = 0)
 
     flows.dist = [haversine((geog[levelcode(r.fromcounty),:INTPTLONG],geog[levelcode(r.fromcounty),:INTPTLAT]), 
                         (geog[levelcode(r.tocounty),:INTPTLONG],geog[levelcode(r.tocounty),:INTPTLAT])) / 1000.0 for r in eachrow(flows)] ## haversine is in m, calculate km
-    netactual::Vector{Float64} = usnetmig(levelcode.(flows.fromcounty),levelcode.(flows.tocounty),flows.COUNT)
+    #netactual::Vector{Float64} = usnetmig(levelcode.(flows.fromcounty),levelcode.(flows.tocounty),flows.COUNT)
 
     mod = usmodel(flows.COUNT,sum(flows.COUNT),levelcode.(flows.fromcounty),
                 levelcode.(flows.tocounty),median(geog.POPESTIMATE2016),flows.dist,
                 geog.INTPTLONG,minimum(geog.INTPTLONG),maximum(geog.INTPTLONG),
                 geog.INTPTLAT,minimum(geog.INTPTLAT),maximum(geog.INTPTLAT),
                 geog.logreldens,minimum(geog.logreldens),maximum(geog.logreldens),
-                geog.POPESTIMATE2016,nrow(geog),100.0,netactual,36,36)
+                geog.POPESTIMATE2016,nrow(geog),100.0,36,36)
     (geog=geog, flows = flows, model=mod) #zerosamp=zerosamp,model=mod)
 end
 
@@ -361,22 +361,25 @@ function fitandwritefile(alldata,flowout,geogout,densout,paramout)
     
     paramvec = mapest.values.array
 
-    usdiagplots(alldata,paramvec,parnames)
-    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=50, initial_params = paramvec)
+    #usdiagplots(alldata,paramvec,parnames)
+    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),10; thinning=50, initial_params = paramvec)
 #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
-    paramvec = grabparams(mhsamp,100)
+    paramvec = grabparams(mhsamp,10)
 
     preds = generated_quantities(alldata.model,paramvec,parnames)
     alldata.flows.preds = preds
 
     CSV.write(flowout,alldata.flows)
 
+    (densmin,densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
+    (xmin,xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
+    (ymin,ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)    
     kdindx = (1:36) .+ 6
     desindx = (1:36) .+ (6+36)
     kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),paramvec[kdindx] ./ 10)
     desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax ),paramvec[desindx] ./ 10)
 
-    alldata.geog.desirability = [desirfun(x,y) for (x,y) in zip(alldata.geog.INTPTLONG,alldata.geog.INTPTLAT)]
+    alldata.geog.desirability = [desirfun(x,y) for (x,y) in zip(alldata.geog.x,alldata.geog.y)]
 
     CSV.write(geogout,alldata.geog)
     densvals = range(minimum(alldata.geog.logreldens),maximum(alldata.geog.logreldens),100)
@@ -387,25 +390,31 @@ end
 
 
 function main()
-    usd = loadallUSdata(0) # add no zeros, 
+    @sync begin
+        Threads.@spawn begin
+            usd = loadallUSdata(0) # add no zeros, 
 
-    Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
+            Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
+            usd.geog.x = usd.geog.INTPTLONG
+            usd.geog.y = usd.geog.INTPTLAT
+            fitandwritefile(usd,"manuscript_input/usflows.csv","manuscript_input/usgeog.csv","manuscript_input/usdensfun.csv","manuscript_input/usparams.csv")
+        end
+        germ = loadallGermData(0)
+        germ.geog.x = germ.geog.xcoord
+        germ.geog.y = germ.geog.ycoord
 
-    fitandwritefile(usd,"manuscript_input/usflows.csv","manuscript_input/usgeog.csv","manuscript_input/usdensfun.csv","manuscript_input/usparams.csv")
-
-    germ = loadallGermData(0)
-
-    Threads.@threads for age in levels(germ.agegroup)
-        agedat = @subset(germ.flows,germ.flows.agegroup .== age)
-        modl = usmodel(agedat.flows,sum(agedat.flows),levelcode.(agedat.fromdist), levelcode.(agedat.todist),
-                        median(germ.geog.pop),agedat.dist,
-                        germ.geog.xcoord,minimum(germ.geog.xcoord),maximum(germ.geog.xcoord),
-                        germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
-                        germ.geog.logreldens,minimum(geog.logreldens),maximum(geog.logreldens),
-                        germ.geog.pop,nrow(germ.geog),100.0,nothing,36,36) ## nothing == netactual, we're not using it anymore
-        fitandwritefile((flows=agedat,geog=germ.geog,model=modl),"manuscript_input/germflows_$(age).csv","manuscript_input/germgeog_$(age).csv",
-            "manuscript_input/germdensfun_$(age).csv","manuscript_input/germparams_$(age).csv")
+        Threads.@threads for age in levels(germ.flows.agegroup)
+            agedat = @subset(germ.flows,germ.flows.agegroup .== age)
+            modl = usmodel(agedat.flows,sum(agedat.flows),levelcode.(agedat.fromdist), levelcode.(agedat.todist),
+                            median(germ.geog.pop),agedat.dist,
+                            germ.geog.xcoord,minimum(germ.geog.xcoord),maximum(germ.geog.xcoord),
+                            germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
+                            germ.geog.logreldens,minimum(germ.geog.logreldens),maximum(germ.geog.logreldens),
+                            germ.geog.pop,nrow(germ.geog),100.0,36,36) ## nothing == netactual, we're not using it anymore
+            fitandwritefile((flows=agedat,geog=germ.geog,model=modl),"manuscript_input/germflows_$(age).csv","manuscript_input/germgeog_$(age).csv",
+                "manuscript_input/germdensfun_$(age).csv","manuscript_input/germparams_$(age).csv")
+        end
     end
-
+    println("Computation finished!")
 end
 
