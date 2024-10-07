@@ -13,3 +13,16 @@ We should try to make the probability of a flow drop a bunch when density in the
 
 6) A Radial Basis Function expansion instead of Chebyshev?
 
+
+
+## Bugs and what to improve
+1) main() runs even if US data not downloaded
+2) needed to create manuscript_input manually
+3) write downloadUSdata() that checks if individual data exists and if not downloads
+5) various loadUS functions should check if data exists
+
+## Wokflow US and German data
+download US data:
+	- getUSflows
+	- getUSgeog
+	- getUScountypop
