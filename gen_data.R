@@ -11,7 +11,6 @@ age_for <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
 setnames(age_for, "age_group", "agegroup")
 rec_ages(age_for)
 shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
-
 density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))[
                          , .(region, year, density, bl_ags)]
 
@@ -22,8 +21,8 @@ clean_flows <- function(flows, age_dt) {
     rec_ages(flows)
     flows <- add_mising_flows(flows, flows[, unique(fromdist)],
                               flows[, unique(agegroup)], flows[, unique(year)])
-### omitting since all intra-district flows are 0 and this would be
-### hard to explain for the model
+    ### omitting since all intra-district flows are 0 and this would be
+    ### hard to explain for the model
     flows <- flows[fromdist != todist]
     flows <- flows[order(fromdist, todist, year, agegroup)]
     
@@ -63,12 +62,13 @@ calculate_distances <- function(flows, coords_dt) {
     distances[dt_coords, c("x_to", "y_to") := .(xcoord, ycoord), on = .(todist = distcode)]
     distances[, distance := sqrt((x_from - x_to)^2 + (y_from - y_to)^2)]
     flows[distances, dist := as.integer(round(i.distance)), on = .(fromdist, todist)]
+    return(NULL)
 }
 
 flows <- clean_flows(flows, age_for)
-dt_coords <- gen_coords_dt(shp, age_for, density)
-check_tables(flows, dt_coords)
-calculate_distances(flows, coords_dt)
+coords_dt <- gen_coords_dt(shp, age_for, density)
+check_tables(flows, coords_dt)
+calculate_distances(flows, coords_dt) #joins distances to flows
 
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
-fwrite(dt_coords, "~/Documents/GermanMigration/data/districts.csv")
+fwrite(coords_dt, "~/Documents/GermanMigration/data/districts.csv")
