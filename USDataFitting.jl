@@ -242,7 +242,7 @@ function main_interact()
     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
     paramvec = mapest.values.array
     usdiagplots(alldata,paramvec)
-    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=50, initial_params = paramvec)
+    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=400, initial_params = paramvec)
 #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
 
     serialize("./fitted_models/samps_$(now()).dat",mhsamp)
@@ -418,3 +418,8 @@ function main()
     println("Computation finished!")
 end
 
+
+## getUSflows()
+## getUSgeog()
+## getUScountypop()
+main()
