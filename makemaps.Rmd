@@ -1,4 +1,4 @@
-```{r packages-functions}
+```{r packages}
 
 library(data.table)
 library(sf)
@@ -8,8 +8,13 @@ library(patchwork)
 library(dotwhisker)
 library(kableExtra)
 source("functions.R")
+source("functions_plots.R")
 
-read_output <- function(path, type, model = "us") {
+```
+
+```{r read-data}
+
+read_output <- function(path, type, model = "US-model") {
     age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
     read_agegroup <- function(path, file) {
         dt <- data.table::fread(file.path(path, file))
@@ -27,6 +32,31 @@ read_output <- function(path, type, model = "us") {
     dt[, model := model]
     return(dt)
 }
+
+path <- "./manuscript_input/bu"
+dt_geog <- read_output(path, "geog")
+dt_dens <- read_output(path, "densfun")
+dt_flows <- read_output(path, "flows")
+dt_flows[, resid1 := (flows - preds) / preds]
+dt_flows[, resid2 := sign(resid1) * log(1 + abs(resid1))]
+dt_flows[districts, fromdens := i.density, on = .(fromdist = distcode, year)]
+dt_flows[districts, todens := i.density, on = .(todist = distcode, year)]
+
+dt_params <- read_output(path, "params")
+shp <- setDT(sf::read_sf("~/Diss/inst/extdata/clean/shapes/districts.shp"))
+shp[, AGS := as.integer(AGS)]
+districts <- fread("./data/districts.csv")
+
+net <- calculate_net(dt_flows, "flows", by = c("year", "agegroup"))
+dt_geog[net, net := i.net, on = .(distcode = region, year, agegroup)]
+dt_geog[shp, geometry := i.geometry, on = .(distcode = AGS)]
+dt_geog[districts, pop_all := i.pop, on = .(distcode, year)]
+
+ages <- dt_flows[, unique(agegroup)]
+
+```
+
+```{r desirability-maps, eval = FALSE}
 
 make_map <- function(dt, type = c("desir", "net")) {
     type <- match.arg(type)
@@ -50,33 +80,6 @@ make_agemaps <- function(dt) {
     return(desir_map + net_map)
 }
 
-```
-
-```{r read-data}
-
-path <- "./manuscript_input/bu"
-dt_geog <- read_output(path, "geog")
-dt_dens <- read_output(path, "densfun")
-dt_flows <- read_output(path, "flows")
-dt_flows[, resid1 := (flows - preds) / preds]
-dt_flows[, resid2 := sign(resid1) * log(1 + abs(resid1))]
-
-dt_params <- read_output(path, "params")
-shp <- setDT(sf::read_sf("~/Diss/inst/extdata/clean/shapes/districts.shp"))
-shp[, AGS := as.integer(AGS)]
-districts <- fread("./data/districts.csv")
-
-net <- calculate_net(dt_flows, "flows", by = c("year", "agegroup"))
-dt_geog[net, net := i.net, on = .(distcode = region, year, agegroup)]
-dt_geog[shp, geometry := i.geometry, on = .(distcode = AGS)]
-dt_geog[districts, pop_all := i.pop, on = .(distcode, year)]
-
-ages <- dt_flows[, unique(agegroup)]
-
-```
-
-```{r desirability-maps, eval = FALSE}
-
 ## lapply(ages, function(x) make_agemaps(dt_geog[agegroup == x]))
 ## bug?
 
@@ -84,29 +87,72 @@ ages <- dt_flows[, unique(agegroup)]
 
 ```{r params-plt}
 
-gravity_pars <- c("a", "c", "d0", "dscale", "neterr", "ktopop")
-dt_gravity_pars <- dt_params[parname %in% gravity_pars, .(paramval, parname, agegroup)]
-setnames(dt_gravity_pars, c("parname", "paramval", "agegroup"),
-         c("term", "estimate", "model"))
+plot_coefs <- function(dt, params = c("a", "c", "d0", "dscale", "neterr", "ktopop")) {
+    params <- params
+    dt2 <- dt[parname %in% params, .(paramval, parname, agegroup)]
+    setnames(dt2, c("parname", "paramval", "agegroup"),
+             c("term", "estimate", "model"))
+    plt <- ggplot(dt2) +
+        geom_point(aes(model, estimate)) +
+        scale_x_discrete(limits = rev) +
+        coord_flip() +
+        facet_wrap(~term, scale = "free") +
+        theme_minimal() +
+        ggtitle("Optimal Gravity Parameters")
+    return(plt)
+}
 
-ggplot(dt_gravity_pars) +
-    geom_point(aes(model, estimate)) +
-    coord_flip() +
-    facet_wrap(~term, scale = "free") +
-    theme_minimal()
+plot_coefs(dt_params)
 
 ```
 
 ```{r, invent-flows, results = "show"}
 
-invent <- dt_flows[, .(all_actual = sum(flows),
+calc_flowinvention <- function(dt) {
+    invent <- dt[, .(all_actual = sum(flows),
                  all_predicted = sum(preds)), keyby = .(agegroup, year, model)][
-  , rel_diff := (all_actual - all_predicted) / all_actual][]
-kable(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
-    caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
+      , rel_diff := round((all_predicted - all_actual) / all_actual * 100, 2)][]
+    return(invent)
+}
+
+invent <- calc_flowinvention(dt_flows)
+## dcast(invent, agegroup + all_actual + all_predicted + rel_diff ~ model, value.var = "all_predicted")
+kable(invent, caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
 
 ```
 
+```{r, flows-distance1, eval = TRUE, fig.cap = caption}
+caption <- "actualimp: True 0 flows were imputed using lognormal with mean = -15"
 
+impute_actual_zeros <- function(dt, mean = -15) {
+    dt[, actual_imp := as.double(flows)]
+    rnds <- rlnorm(dt[flows == 0, .N], mean, log(2.0))
+    dt[flows == 0, actual_imp := rnds]
+    return(NULL)
+}
 
+impute_actual_zeros(dt_flows, -10)
+plot_fit(dt_flows, dist, log(actual_imp / preds), th_min = 0, smooth = FALSE, p_sample = .1)
+## w <- 8
+## ggsave("~/Desktop/plot_imp.pdf", width = w, height = w / 1.6)
 
+```
+
+```{r, flows-pop}
+
+plot_fit(dt_flows, log(frompop * topop), log(actual_imp/preds),
+         th_min = 0, p_sample = .1, smooth = FALSE)
+
+```
+
+### density
+```{r, flows-density, eval = TRUE}
+
+plt1 <- plot_fit(dt_flows, log(fromdens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
+plt2 <- plot_fit(dt_flows, log(todens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
+plt3 <- plot_fit(dt_flows, log(fromdens * todens), log(actual_imp/preds), 0, p_sample = .1, smooth = FALSE)
+
+## plt1 + plt2
+plt3
+
+```
