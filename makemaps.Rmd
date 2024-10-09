@@ -6,9 +6,11 @@ library(MigStat)
 library(ggplot2)
 library(patchwork)
 library(dotwhisker)
+library(kableExtra)
 source("functions.R")
 
-read_output <- function(path, type) {
+read_output <- function(path, type, model = "us") {
+    age_lvls <- c("below18", "18-25", "25-30", "30-50", "50-65", "above65")
     read_agegroup <- function(path, file) {
         dt <- data.table::fread(file.path(path, file))
         dt[, agegroup := get_age(file)]
@@ -20,7 +22,9 @@ read_output <- function(path, type) {
         return(age)
     }
     dt <- data.table::rbindlist(lapply(list.files(path, pattern = type),
-                            function(x) fread_agegroup(path, x)))
+                                       function(x) fread_agegroup(path, x)))
+    dt[, agegroup := factor(agegroup, levels = age_lvls)]
+    dt[, model := model]
     return(dt)
 }
 
@@ -54,6 +58,9 @@ path <- "./manuscript_input/bu"
 dt_geog <- read_output(path, "geog")
 dt_dens <- read_output(path, "densfun")
 dt_flows <- read_output(path, "flows")
+dt_flows[, resid1 := (flows - preds) / preds]
+dt_flows[, resid2 := sign(resid1) * log(1 + abs(resid1))]
+
 dt_params <- read_output(path, "params")
 shp <- setDT(sf::read_sf("~/Diss/inst/extdata/clean/shapes/districts.shp"))
 shp[, AGS := as.integer(AGS)]
@@ -78,12 +85,28 @@ ages <- dt_flows[, unique(agegroup)]
 ```{r params-plt}
 
 gravity_pars <- c("a", "c", "d0", "dscale", "neterr", "ktopop")
-dt_gravity_pars <- dt_params[parname %in% gravity_pars]
+dt_gravity_pars <- dt_params[parname %in% gravity_pars, .(paramval, parname, agegroup)]
 setnames(dt_gravity_pars, c("parname", "paramval", "agegroup"),
          c("term", "estimate", "model"))
-dwplot(dt_gravity_pars) + facet_wrap(~term, scale = "free")
+
+ggplot(dt_gravity_pars) +
+    geom_point(aes(model, estimate)) +
+    coord_flip() +
+    facet_wrap(~term, scale = "free") +
+    theme_minimal()
 
 ```
+
+```{r, invent-flows, results = "show"}
+
+invent <- dt_flows[, .(all_actual = sum(flows),
+                 all_predicted = sum(preds)), keyby = .(agegroup, year, model)][
+  , rel_diff := (all_actual - all_predicted) / all_actual][]
+kable(dcast(invent, agegroup + all_actual ~ model, value.var = "all_predicted"),
+    caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
+
+```
+
 
 
 
