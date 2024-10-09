@@ -154,15 +154,13 @@ make_agemaps <- function(dt) {
     return(desir_map + net_map)
 }
 
-## lapply won't work
-lapply(ages, function(age) dt_geog[agegroup == age])
+lapply(levels(ages), function(age) make_agemaps(dt_geog[agegroup == age]))
 
-make_agemaps(dt_geog[agegroup == "below18"])
-make_agemaps(dt_geog[agegroup == "18-25"])
-make_agemaps(dt_geog[agegroup == "25-30"])
-make_agemaps(dt_geog[agegroup == "30-50"])
-make_agemaps(dt_geog[agegroup == "50-65"])
-make_agemaps(dt_geog[agegroup == "above65"])
+```
+
+```{r density}
+
+
 
 ```
 
