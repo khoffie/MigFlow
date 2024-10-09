@@ -5,6 +5,19 @@ documentclass: book
 always_allow_html: true
 ---
 
+
+```{r global_knitr, echo = FALSE, eval = TRUE}
+
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE,
+                      results = "hide",
+                      fig.width = 6,
+                      fig.asp = 0.7,
+                      out.width = "100%")
+
+```
+
 ```{r packages}
 
 library(data.table)
@@ -63,71 +76,7 @@ ages <- dt_flows[, unique(agegroup)]
 
 ```
 
-```{r desirability-maps, eval = FALSE}
-
-make_map <- function(dt, type = c("desir", "net")) {
-    type <- match.arg(type)
-    age <- dt[, unique(agegroup)]
-    if(type == "desir") {
-        map <- ggplot(set_geom(dt, F)) +
-            geom_sf(aes(fill = desirability)) +
-            ggtitle(sprintf("%s, estimated desirability", age))
-    }
-    if(type == "net") {
-        map <- ggplot(set_geom(dt, F)) +
-            geom_sf(aes(fill = net / pop_all * 100)) +
-            ggtitle(sprintf("%s, Net migration", age))
-    }
-    return(map)
-}
-
-make_agemaps <- function(dt) {
-    desir_map <- make_map(dt, "desir")
-    net_map <- make_map(dt, "net")
-    return(desir_map + net_map)
-}
-
-## lapply(ages, function(x) make_agemaps(dt_geog[agegroup == x]))
-## bug?
-
-```
-
-```{r params-plt}
-
-plot_coefs <- function(dt, params = c("a", "c", "d0", "dscale", "neterr", "ktopop")) {
-    params <- params
-    dt2 <- dt[parname %in% params, .(paramval, parname, agegroup)]
-    setnames(dt2, c("parname", "paramval", "agegroup"),
-             c("term", "estimate", "model"))
-    plt <- ggplot(dt2) +
-        geom_point(aes(model, estimate)) +
-        scale_x_discrete(limits = rev) +
-        coord_flip() +
-        facet_wrap(~term, scale = "free") +
-        theme_minimal() +
-        ggtitle("Optimal Gravity Parameters")
-    return(plt)
-}
-
-plot_coefs(dt_params)
-
-```
-
-```{r, invent-flows, results = "show"}
-
-calc_flowinvention <- function(dt) {
-    invent <- dt[, .(all_actual = sum(flows),
-                 all_predicted = sum(preds)), keyby = .(agegroup, year, model)][
-      , rel_diff := round((all_predicted - all_actual) / all_actual * 100, 2)][]
-    return(invent)
-}
-
-invent <- calc_flowinvention(dt_flows)
-## dcast(invent, agegroup + all_actual + all_predicted + rel_diff ~ model, value.var = "all_predicted")
-kable(invent, caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
-
-```
-
+## Model fit and diagnostic plots of individual flows
 ```{r impute-actual-flows}
 
 impute_actual_zeros <- function(dt, mean = -15) {
@@ -166,7 +115,6 @@ plot_fit(dt_flows, log(frompop * topop), log(actual_imp/preds),
 
 ```
 
-### density
 ```{r, flows-density, eval = TRUE}
 
 plt1 <- plot_fit(dt_flows, log(fromdens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
@@ -178,10 +126,82 @@ plt3
 
 ```
 
-```{r}
+## Desirability Maps
+```{r desirability-maps, out.width = "120%", fig.width = 10}
 
-cors <- dcast(dt_flows[dist > 0, .(correlations = cor(log(actual_imp), log(preds))),
-                  keyby = .(agegroup, model)], agegroup ~ model)
-kable(cors, digits = 2, caption = "Correlation with actual flows")
+make_map <- function(dt, type = c("desir", "net")) {
+    type <- match.arg(type)
+    age <- dt[, unique(agegroup)]
+    if(type == "desir") {
+        map <- ggplot(set_geom(dt, F)) +
+            geom_sf(aes(fill = desirability)) +
+            ggtitle(sprintf("%s, estimated desirability", age))
+    }
+    if(type == "net") {
+        map <- ggplot(set_geom(dt, F)) +
+            geom_sf(aes(fill = net / pop_all * 100)) +
+            ggtitle(sprintf("%s, Net migration", age))
+    }
+    map <- map +
+        theme(legend.position = "top") +
+        theme_bw()
+    return(map)
+}
+
+make_agemaps <- function(dt) {
+    desir_map <- make_map(dt, "desir")
+    net_map <- make_map(dt, "net")
+    return(desir_map + net_map)
+}
+
+## lapply won't work
+lapply(ages, function(age) dt_geog[agegroup == age])
+
+make_agemaps(dt_geog[agegroup == "below18"])
+make_agemaps(dt_geog[agegroup == "18-25"])
+make_agemaps(dt_geog[agegroup == "25-30"])
+make_agemaps(dt_geog[agegroup == "30-50"])
+make_agemaps(dt_geog[agegroup == "50-65"])
+make_agemaps(dt_geog[agegroup == "above65"])
 
 ```
+
+## Optimal Parameters
+```{r params-plt}
+
+plot_coefs <- function(dt, params = c("a", "c", "d0", "dscale", "neterr", "ktopop")) {
+    params <- params
+    dt2 <- dt[parname %in% params, .(paramval, parname, agegroup)]
+    setnames(dt2, c("parname", "paramval", "agegroup"),
+             c("term", "estimate", "model"))
+    plt <- ggplot(dt2) +
+        geom_point(aes(model, estimate)) +
+        scale_x_discrete(limits = rev) +
+        coord_flip() +
+        facet_wrap(~term, scale = "free") +
+        theme_minimal() +
+        ggtitle("Optimal Gravity Parameters")
+    return(plt)
+}
+
+plot_coefs(dt_params)
+
+```
+
+## Further Diagnostics
+```{r, invent-flows, results = "show"}
+
+calc_flowinvention <- function(dt) {
+    invent <- dt[, .(all_actual = sum(flows),
+                 all_predicted = sum(preds)), keyby = .(agegroup, year, model)][
+      , rel_diff := round((all_predicted - all_actual) / all_actual * 100, 2)][]
+    return(invent)
+}
+
+invent <- calc_flowinvention(dt_flows)
+## dcast(invent, agegroup + all_actual + all_predicted + rel_diff ~ model, value.var = "all_predicted")
+kable(invent, caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
+
+```
+
+
