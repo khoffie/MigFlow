@@ -121,6 +121,15 @@ kable(invent, caption = "Do our models invent flows? Every column shows total fl
 
 ```
 
+```{r model-fit}
+
+plot_fit(dt_flows[flows > 0], log(preds), log(actual_imp), th_min = 0, p_sample = .1) +
+    ggtitle(10 percent sample of individual flows, only for positive actual flows)
+
+plot_fit(dt_flows, log(preds), log(actual_imp), th_min = 0, p_sample = .1) 
+
+```
+
 ```{r, flows-distance1, eval = TRUE, fig.cap = caption}
 caption <- "actualimp: True 0 flows were imputed using lognormal with mean = -15"
 
@@ -154,5 +163,13 @@ plt3 <- plot_fit(dt_flows, log(fromdens * todens), log(actual_imp/preds), 0, p_s
 
 ## plt1 + plt2
 plt3
+
+```
+
+```{r}
+
+cors <- dcast(dt_flows[dist > 0, .(correlations = cor(log(actual_imp), log(preds))),
+                  keyby = .(agegroup, model)], agegroup ~ model)
+kable(cors, digits = 2, caption = "Correlation with actual flows")
 
 ```
