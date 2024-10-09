@@ -90,33 +90,41 @@ impute_actual_zeros(dt_flows, -10)
 
 ```
 
-```{r model-fit}
+```{r model-fit, fig.cap = caption}
 
+caption <- "Fitted v Observed from model fitted on all rows, but only positive flows shown"
 plot_fit(dt_flows[flows > 0], log(preds), log(actual_imp), th_min = 0, p_sample = .1) +
     ggtitle("10 percent sample of individual flows, only for positive actual flows")
 
+```
+
+```{r model-fit2, fig.cap = caption}
+
+caption <- "Fitted v Observed"
 plot_fit(dt_flows, log(preds), log(actual_imp), th_min = 0, p_sample = .1) 
 
 ```
 
 ```{r, flows-distance1, eval = TRUE, fig.cap = caption}
 
-caption <- "actualimp: True 0 flows were imputed using lognormal with mean = -15"
+caption <- "Distance dependence, actualimp: True 0 flows were imputed using lognormal with mean = -15"
 plot_fit(dt_flows, dist, log(actual_imp / preds), th_min = 0, smooth = FALSE, p_sample = .1)
 ## w <- 8
 ## ggsave("~/Desktop/plot_imp.pdf", width = w, height = w / 1.6)
 
 ```
 
-```{r, flows-pop}
+```{r, flows-pop, fig.cap = caption}
 
+caption <- "Dependence on Population"
 plot_fit(dt_flows, log(frompop * topop), log(actual_imp/preds),
          th_min = 0, p_sample = .1, smooth = FALSE)
 
 ```
 
-```{r, flows-density, eval = TRUE}
+```{r, flows-density, fig.cap = caption}
 
+caption <- "Dependence on density"
 plt1 <- plot_fit(dt_flows, log(fromdens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
 plt2 <- plot_fit(dt_flows, log(todens), log(actual_imp/preds), 0, p_sample = 1, smooth = FALSE)
 plt3 <- plot_fit(dt_flows, log(fromdens * todens), log(actual_imp/preds), 0, p_sample = .1, smooth = FALSE)
@@ -127,8 +135,9 @@ plt3
 ```
 
 ## Desirability Maps
-```{r desirability-maps, out.width = "120%", fig.width = 10}
+```{r desirability-maps, out.width = "120%", fig.width = 10, fig.caption = caption}
 
+caption <- "Desirability Map"
 make_map <- function(dt, type = c("desir", "net")) {
     type <- match.arg(type)
     age <- dt[, unique(agegroup)]
@@ -158,15 +167,29 @@ lapply(levels(ages), function(age) make_agemaps(dt_geog[agegroup == age]))
 
 ```
 
-```{r density}
+## Density Hexbin charts
+```{r density, fig.cap = caption}
 
+caption <- "Evaluation of density cheby polynomial. For better visibility evaluated values are constrained to the 0.99 percentile. Some observations where really large, especially in the upper right corner."
+make_dens_hex <- function(dt, q_max = .99) {
+    max_val <- dt[, round(quantile(funval, q_max), 2)]
+    main <- sprintf("%s, Density function, funval < %s (%s quantile)",
+                    dt[, unique(agegroup)], max_val, q_max)
+    plt <- ggplot(dt[funval < max_val]) +
+        stat_summary_hex(aes(fromdens, todens, z = funval), fun = sum) +
+        ggtitle(main) +
+        theme_bw()
+    return(plt)
+}
 
+lapply(levels(ages), function(age) make_dens_hex(dt_dens[agegroup == age]))
 
 ```
 
 ## Optimal Parameters
-```{r params-plt}
+```{r params-plt, fig.cap = caption}
 
+caption <- "Estimated coefficients"
 plot_coefs <- function(dt, params = c("a", "c", "d0", "dscale", "neterr", "ktopop")) {
     params <- params
     dt2 <- dt[parname %in% params, .(paramval, parname, agegroup)]
