@@ -1,3 +1,10 @@
+--- 
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+always_allow_html: true
+---
+
 ```{r packages}
 
 library(data.table)
@@ -26,13 +33,14 @@ read_output <- function(path, type, model = "US-model") {
         return(age)
     }
     dt <- data.table::rbindlist(lapply(list.files(path, pattern = type),
-                                       function(x) fread_agegroup(path, x)))
+                                       function(x) read_agegroup(path, x)))
     dt[, agegroup := factor(agegroup, levels = age_lvls)]
     dt[, model := model]
     return(dt)
 }
 
 path <- "./manuscript_input/bu"
+districts <- fread("./data/districts.csv")
 dt_geog <- read_output(path, "geog")
 dt_dens <- read_output(path, "densfun")
 dt_flows <- read_output(path, "flows")
@@ -44,7 +52,7 @@ dt_flows[districts, todens := i.density, on = .(todist = distcode, year)]
 dt_params <- read_output(path, "params")
 shp <- setDT(sf::read_sf("~/Diss/inst/extdata/clean/shapes/districts.shp"))
 shp[, AGS := as.integer(AGS)]
-districts <- fread("./data/districts.csv")
+
 
 net <- calculate_net(dt_flows, "flows", by = c("year", "agegroup"))
 dt_geog[net, net := i.net, on = .(distcode = region, year, agegroup)]
@@ -120,17 +128,7 @@ kable(invent, caption = "Do our models invent flows? Every column shows total fl
 
 ```
 
-```{r model-fit}
-
-plot_fit(dt_flows[flows > 0], log(preds), log(actual_imp), th_min = 0, p_sample = .1) +
-    ggtitle(10 percent sample of individual flows, only for positive actual flows)
-
-plot_fit(dt_flows, log(preds), log(actual_imp), th_min = 0, p_sample = .1) 
-
-```
-
-```{r, flows-distance1, eval = TRUE, fig.cap = caption}
-caption <- "actualimp: True 0 flows were imputed using lognormal with mean = -15"
+```{r impute-actual-flows}
 
 impute_actual_zeros <- function(dt, mean = -15) {
     dt[, actual_imp := as.double(flows)]
@@ -140,6 +138,21 @@ impute_actual_zeros <- function(dt, mean = -15) {
 }
 
 impute_actual_zeros(dt_flows, -10)
+
+```
+
+```{r model-fit}
+
+plot_fit(dt_flows[flows > 0], log(preds), log(actual_imp), th_min = 0, p_sample = .1) +
+    ggtitle("10 percent sample of individual flows, only for positive actual flows")
+
+plot_fit(dt_flows, log(preds), log(actual_imp), th_min = 0, p_sample = .1) 
+
+```
+
+```{r, flows-distance1, eval = TRUE, fig.cap = caption}
+
+caption <- "actualimp: True 0 flows were imputed using lognormal with mean = -15"
 plot_fit(dt_flows, dist, log(actual_imp / preds), th_min = 0, smooth = FALSE, p_sample = .1)
 ## w <- 8
 ## ggsave("~/Desktop/plot_imp.pdf", width = w, height = w / 1.6)
