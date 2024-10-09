@@ -68,9 +68,13 @@ shp[, AGS := as.integer(AGS)]
 
 
 net <- calculate_net(dt_flows, "flows", by = c("year", "agegroup"))
+net_pred <- calculate_net(dt_flows, "preds", by = c("year", "agegroup"))
+
+
 dt_geog[net, net := i.net, on = .(distcode = region, year, agegroup)]
 dt_geog[shp, geometry := i.geometry, on = .(distcode = AGS)]
 dt_geog[districts, pop_all := i.pop, on = .(distcode, year)]
+dt_geog[net_pred, net_pred := i.net, on = .(distcode = region, year, agegroup)]
 
 ages <- dt_flows[, unique(agegroup)]
 
@@ -138,7 +142,7 @@ plt3
 ```{r desirability-maps, out.width = "120%", fig.width = 10, fig.caption = caption}
 
 caption <- "Desirability Map"
-make_map <- function(dt, type = c("desir", "net")) {
+make_map <- function(dt, type = c("desir", "net", "pred")) {
     type <- match.arg(type)
     age <- dt[, unique(agegroup)]
     if(type == "desir") {
@@ -151,19 +155,41 @@ make_map <- function(dt, type = c("desir", "net")) {
             geom_sf(aes(fill = net / pop_all * 100)) +
             ggtitle(sprintf("%s, Net migration", age))
     }
+    if(type == "pred") {
+        map <- ggplot(set_geom(dt, F)) +
+            geom_sf(aes(fill = net_pred / pop_all * 100)) +
+            ggtitle(sprintf("%s, Predicted net migration", age))
+    }
     map <- map +
-        theme(legend.position = "top") +
-        theme_bw()
+        theme_bw() +
+        theme(legend.position = "top") 
     return(map)
 }
 
-make_agemaps <- function(dt) {
-    desir_map <- make_map(dt, "desir")
-    net_map <- make_map(dt, "net")
+make_agemaps <- function(dt, type = c("desir", "net")) {
+    desir_map <- make_map(dt, type[1])
+    net_map <- make_map(dt, type[2])
     return(desir_map + net_map)
 }
 
 lapply(levels(ages), function(age) make_agemaps(dt_geog[agegroup == age]))
+
+```
+
+## Net Migration Maps
+```{r net-migration-maps,  out.width = "140%", fig.width = 10, fig.cap = caption}
+
+caption <- "Net migration and predicted net migration"
+lapply(levels(ages), function(age) make_agemaps(dt_geog[agegroup == age], type = c("net", "pred")))
+
+```
+
+```{r net-migration-maps-constrained,  out.width = "140%", fig.width = 10, fig.cap = caption}
+
+
+
+caption <- "Net migration and predicted net migration"
+lapply(levels(ages), function(age) make_agemaps(dt_geog[agegroup == age], type = c("net", "pred")))
 
 ```
 
