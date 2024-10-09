@@ -221,7 +221,7 @@ calc_flowinvention <- function(dt) {
 
 invent <- calc_flowinvention(dt_flows)
 ## dcast(invent, agegroup + all_actual + all_predicted + rel_diff ~ model, value.var = "all_predicted")
-kable(invent, caption = "Do our models invent flows? Every column shows total flows: Observed and from two models")
+kable(invent, caption = "Does our models invent flows?")
 
 ```
 
