@@ -7,8 +7,7 @@ library(ggplot2)
 library(patchwork)
 library(dotwhisker)
 library(kableExtra)
-source("functions.R")
-source("functions_plots.R")
+library(helpeR)
 
 ```
 
