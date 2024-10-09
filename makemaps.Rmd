@@ -1,10 +1,12 @@
+```{r packages-functions}
+
 library(data.table)
 library(sf)
 library(MigStat)
 library(ggplot2)
 library(patchwork)
+library(dotwhisker)
 source("functions.R")
-path <- "./manuscript_input/bu"
 
 read_output <- function(path, type) {
     read_agegroup <- function(path, file) {
@@ -44,11 +46,15 @@ make_agemaps <- function(dt) {
     return(desir_map + net_map)
 }
 
+```
+
+```{r read-data}
+
+path <- "./manuscript_input/bu"
 dt_geog <- read_output(path, "geog")
 dt_dens <- read_output(path, "densfun")
 dt_flows <- read_output(path, "flows")
 dt_params <- read_output(path, "params")
-
 shp <- setDT(sf::read_sf("~/Diss/inst/extdata/clean/shapes/districts.shp"))
 shp[, AGS := as.integer(AGS)]
 districts <- fread("./data/districts.csv")
@@ -58,4 +64,26 @@ dt_geog[net, net := i.net, on = .(distcode = region, year, agegroup)]
 dt_geog[shp, geometry := i.geometry, on = .(distcode = AGS)]
 dt_geog[districts, pop_all := i.pop, on = .(distcode, year)]
 
-make_agemaps(dt_geog[agegroup == "below18"]) / make_agemaps(dt_geog[agegroup == "18-25"])
+ages <- dt_flows[, unique(agegroup)]
+
+```
+
+```{r desirability-maps, eval = FALSE}
+
+## lapply(ages, function(x) make_agemaps(dt_geog[agegroup == x]))
+## bug?
+
+```
+
+```{r params-plt}
+
+gravity_pars <- c("a", "c", "d0", "dscale", "neterr", "ktopop")
+dt_gravity_pars <- dt_params[parname %in% gravity_pars]
+setnames(dt_gravity_pars, c("parname", "paramval", "agegroup"),
+         c("term", "estimate", "model"))
+dwplot(dt_gravity_pars) + facet_wrap(~term, scale = "free")
+
+```
+
+
+
