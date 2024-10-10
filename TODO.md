@@ -49,7 +49,12 @@ While this seems straightforward, not everything is clear.
 
 1. I presented the gravity model as standard approach and I think it
    still is, but clear trends are visibly going in a different (and
-   entirely wrong, if you ask me) direction.
+   entirely wrong, if you ask me) direction. Econometricians like this
+   bivariate flow data because "it allows a rich structure for fixed
+   effects". Meaning, they often add origin and destination fixed
+   effects and sometimes even for origin-destination-pairs. Then, they
+   claim identification of causal effects is better. Does not seem to
+   further understanding of the processes involved.
 2. How much attention do we pay to comparing US and Germany? In
    general I like the idea. It is interesting to see how inferences
    differ, but doing it well would be a new paper I feel. There are
