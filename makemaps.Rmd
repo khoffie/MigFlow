@@ -61,20 +61,21 @@ dt_flows[, resid1 := (flows - preds) / preds]
 dt_flows[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 dt_flows[districts, fromdens := i.density, on = .(fromdist = distcode, year)]
 dt_flows[districts, todens := i.density, on = .(todist = distcode, year)]
+dt_params <- read_output(path, "germparams")
 
-dt_params <- read_output(path, "params")
 shp <- setDT(sf::read_sf("~/Diss/inst/extdata/clean/shapes/districts.shp"))
 shp[, AGS := as.integer(AGS)]
-
 
 net <- calculate_net(dt_flows, "flows", by = c("year", "agegroup"))
 net_pred <- calculate_net(dt_flows, "preds", by = c("year", "agegroup"))
 
-
 dt_geog[net, net := i.net, on = .(distcode = region, year, agegroup)]
+dt_geog[net, total := i.total, on = .(distcode = region, year, agegroup)]
+
 dt_geog[shp, geometry := i.geometry, on = .(distcode = AGS)]
 dt_geog[districts, pop_all := i.pop, on = .(distcode, year)]
 dt_geog[net_pred, net_pred := i.net, on = .(distcode = region, year, agegroup)]
+dt_geog[net_pred, total_pred := i.total, on = .(distcode = region, year, agegroup)]
 
 ages <- dt_flows[, levels(unique(agegroup))]
 
@@ -316,11 +317,25 @@ kable(invent, caption = "Does our models invent flows?")
 
 ```{r, flow-errors}
 
-get_districts_with_large_net_error <- function(dt, n_largest = 10) {
-    dt[, net_rel_error := (net - net_pred) / pop * 100]
-    dt2 <- dt[order( - abs(net_rel_error)),
-                   .(distcode, agegroup, net, net_pred, net_rel_error)]
-    dt2 <- dt2[, head(.SD, n_largest), keyby = agegroup]
+get_districts_with_large_net_error <- function(dt, n = 10, type = c("net", "total"), largest = TRUE) {
+    type <- match.arg(type)
+    if(type == "net") {
+        dt[, error := (net - net_pred) / pop * 100]
+        dt2 <- dt[order( - abs(error)),
+                  .(distcode, agegroup, net, net_pred, error)]
+    }
+    if(type == "total") {
+        dt[, error := (total - total_pred) / pop * 100]
+        dt2 <- dt[order( - abs(error)),
+                  .(distcode, agegroup, total, total_pred, error)]
+
+    }
+    if(largest == TRUE) {
+        dt2 <- dt2[, head(.SD, n), keyby = agegroup]
+    }
+    if(largest == FALSE) {
+        dt2 <- dt2[, tail(.SD, n), keyby = agegroup]
+    }
     return(dt2)
 }
 
@@ -329,17 +344,20 @@ filter_rows <- function(dt, dt_filter) {
     ags <- dt_filter[, distcode]
     err <- dt_filter[, round(net - net_pred, 0)]
     dt2 <- dt[agegroup == age][fromdist == ags | todist == ags]
-    dt2[, group := sprintf("net error: %s", err)]
+    dt2[, group := sprintf("error: %s", err)]
+    dt2[, district := ags]
     return(dt2)
 }
 
 plot_flows <- function(dt) {
-    plt <- ggplot(dt, aes(log(flows), flows - preds)) +
+    plt <- ggplot(dt, aes(log(flows), flows - preds, color = type)) +
+        geom_hline(yintercept = 0, linetype = "dashed", color = "blue") +
         geom_point(alpha = .2) +
         geom_smooth(se = FALSE) +
         facet_wrap(~group, scales = "free") +
         ggtitle(dt[, unique(agegroup)]) +
-        theme_bw()
+        theme_bw() +
+        theme(legend.position = "top")
     return(plt)
 }
 
@@ -347,12 +365,13 @@ plot_flows <- function(dt) {
 plot_and_save <- function(dt, age, path) {
     plot_flows(dt[agegroup == age])
     fn <- paste0(age, ".pdf")
-    ggsavew(, filename = file.path(path, fn))
+    helpeR::ggsavew(, filename = file.path(path, fn))
     return(NULL)
 }
 
-net_errs <- get_districts_with_large_net_error(dt_geog, 10)
-flows_filtered <- rbindlist(lapply(1:nrow(net_errs), function(i) filter_rows(dt_flows, net_errs[i, ])))
+errs <- get_districts_with_large_net_error(dt_geog, n = 10, type = "total", largest = TRUE)
+flows_filtered <- rbindlist(lapply(1:nrow(errs), function(i) filter_rows(dt_flows, net_errs[i, ])))
+flows_filtered[, type := fifelse(district == fromdist, "inflow", "outflow")]
 lapply(ages, function(x) plot_and_save(flows_filtered[agegroup == x], x, "~/Desktop/plots"))
 
 ```
