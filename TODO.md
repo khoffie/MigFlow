@@ -13,8 +13,52 @@ We should try to make the probability of a flow drop a bunch when density in the
 
 6) A Radial Basis Function expansion instead of Chebyshev?
 
+# Paper
+So, we developed a model that does a lot differently than current
+approaches. What are the two most important goals of our writing?
+
+1. Describing clearly what we did and why we did it.
+2. Describing clearly how this relates to standard approaches.
+
+To many papers only do 1. and neglect 2. This is a mistake, if you do
+new and complicated stuff, you have to explain to readers why they
+should care. This responsibility lies with the authors, not the
+readers. They have to understand and understanding is easier if
+someone talks about things you already know.
+
+Other than that, our paper should be as simple as possible. I suggest
+the following:
+
+- We write a methods paper. We focus on the model, show how it works
+and that interesting things follow, like two populations: distance
+sensitive and insensitive and decoupling of density and geographic
+attractiveness.
+- We focus on three or so key plot types: distance dependence,
+density hex plot, attractiveness maps. 
+- We do not relate our findings closely to internal migration studies,
+it would be too much. Same with careful interpretations of the model's
+implications (like this change in attractiveness is related to rising
+rents, whereas here a factory closed). I guess this is clear if we
+write a methods paper.
+
+## Outline of Paper
 
 
+## Further Thoughts
+While this seems straightforward, not everything is clear. 
+
+1. I presented the gravity model as standard approach and I think it
+   still is, but clear trends are visibly going in a different (and
+   entirely wrong, if you ask me) direction.
+2. How much attention do we pay to comparing US and Germany? In
+   general I like the idea. It is interesting to see how inferences
+   differ, but doing it well would be a new paper I feel. There are
+   some issues: In Germany we have agegroups, in the US we only fit
+   positive flows. 
+
+## Who writes what?
+
+# Workflow
 ## Bugs and what to improve
 1) main() runs even if US data not downloaded
 2) needed to create manuscript_input manually
