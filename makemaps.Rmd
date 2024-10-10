@@ -52,11 +52,11 @@ read_output <- function(path, type, model = "US-model") {
     return(dt)
 }
 
-path <- "./manuscript_input/bu"
+path <- "./manuscript_input"
 districts <- fread("./data/districts.csv")
-dt_geog <- read_output(path, "geog")
-dt_dens <- read_output(path, "densfun")
-dt_flows <- read_output(path, "flows")
+dt_geog <- read_output(path, "germgeog")
+dt_dens <- read_output(path, "germdensfun")
+dt_flows <- read_output(path, "germflows")
 dt_flows[, resid1 := (flows - preds) / preds]
 dt_flows[, resid2 := sign(resid1) * log(1 + abs(resid1))]
 dt_flows[districts, fromdens := i.density, on = .(fromdist = distcode, year)]
@@ -76,7 +76,7 @@ dt_geog[shp, geometry := i.geometry, on = .(distcode = AGS)]
 dt_geog[districts, pop_all := i.pop, on = .(distcode, year)]
 dt_geog[net_pred, net_pred := i.net, on = .(distcode = region, year, agegroup)]
 
-ages <- dt_flows[, unique(agegroup)]
+ages <- dt_flows[, levels(unique(agegroup))]
 
 ```
 
@@ -172,7 +172,7 @@ make_agemaps <- function(dt, type = c("desir", "net")) {
     return(desir_map + net_map)
 }
 
-lapply(levels(ages), function(age) make_agemaps(dt_geog[agegroup == age]))
+lapply(ages, function(age) make_agemaps(dt_geog[agegroup == age]))
 
 ```
 
@@ -182,6 +182,7 @@ lapply(levels(ages), function(age) make_agemaps(dt_geog[agegroup == age]))
 caption <- "Net migration and predicted net migration"
 
 netm <- melt(dt_geog, id.vars = c("distcode", "year", "agegroup", "geometry", "pop"),
+             measure.vars = c("net", "net_pred"))
 
 
 make_net_map <- function(dt) {
@@ -192,20 +193,28 @@ make_net_map <- function(dt) {
     return(plt)
 }
 
-lapply(levels(ages), function(age) make_net_map(netm[agegroup == age]))
+lapply(ages, function(age) make_net_map(netm[agegroup == age]))
 
 ```
 
 ```{r net-migration-maps-constrained,  out.width = "140%", fig.width = 10, fig.cap = caption}
 
-n_remove <- 16
-filter1 <- dt_flows[order(-flows), head(.SD, n_remove), keyby = .(fromdist, agegroup)]
-filter2 <- dt_flows[order(-preds), head(.SD, n_remove), keyby = .(fromdist, agegroup)]
-filter12 <- rbind(filter1, filter2)[, .(agegroup, fromdist, todist, year)]
-setkeyv(filter12, colnames(filter12))
-setkeyv(dt_flows, colnames(filter12))
+rm_largest_flows_and_preds <- function(dt, n_rm = 8) {
+    flows_from <- dt_flows[order(-flows), head(.SD, n_rm), keyby = .(fromdist, agegroup)]
+    preds_from <- dt_flows[order(-preds), head(.SD, n_rm), keyby = .(fromdist, agegroup)]
+    flows_to <- dt_flows[order(-flows), head(.SD, n_rm), keyby = .(todist, agegroup)]
+    preds_to <- dt_flows[order(-preds), head(.SD, n_rm), keyby = .(todist, agegroup)]
+    all <- rbind(flows_from, preds_from, flows_to, preds_to)[
+      , .(agegroup, fromdist, todist, year)]
+    setkeyv(all, colnames(all))
+    setkeyv(dt, colnames(all))
+    dt2 <- copy(dt) ## otherwise dt is modified in place
+    dt2 <- dt[!all]
+    return(dt2)
+}
 
-flows_constrained <- dt_flows[!filter12]
+
+flows_constrained <- rm_largest_flows_and_preds(dt_flows)
 net <- calculate_net(flows_constrained, "flows", by = c("year", "agegroup"))
 net_pred <- calculate_net(flows_constrained, "preds", by = c("year", "agegroup"))
 dt_geog[net, net_constrained := i.net, on = .(distcode = region, year, agegroup)]
@@ -218,14 +227,6 @@ netm <- melt(dt_geog, id.vars = c("distcode", "year", "agegroup", "geometry", "p
              measure.vars = c("net_constrained", "net_pred_constrained"))
 make_net_map(netm[agegroup == "18-25"])
 make_net_map(netm[agegroup == "below18"])
-
-
-```
-
-```{r}
-
-fit  <- plot_fit(dt_flows[flows > 0], (preds), log(flows / preds),
-         th_min = 0, p_sample = .1, th_max = 50)
 
 
 ```
