@@ -184,7 +184,6 @@ caption <- "Net migration and predicted net migration"
 netm <- melt(dt_geog, id.vars = c("distcode", "year", "agegroup", "geometry", "pop"),
              measure.vars = c("net", "net_pred"))
 
-
 make_net_map <- function(dt) {
     plt <-  ggplot(set_geom(dt, F)) +
         geom_sf(aes(fill = value / pop * 100)) +
@@ -197,36 +196,26 @@ lapply(ages, function(age) make_net_map(netm[agegroup == age]))
 
 ```
 
-```{r net-migration-maps-constrained,  out.width = "140%", fig.width = 10, fig.cap = caption}
+```{r constrain-flows,  out.width = "140%", fig.width = 10, fig.cap = caption}
 
 rm_largest_flows_and_preds <- function(dt, n_rm = 8) {
     flows_from <- dt_flows[order(-flows), head(.SD, n_rm), keyby = .(fromdist, agegroup)]
-    preds_from <- dt_flows[order(-preds), head(.SD, n_rm), keyby = .(fromdist, agegroup)]
     flows_to <- dt_flows[order(-flows), head(.SD, n_rm), keyby = .(todist, agegroup)]
-    preds_to <- dt_flows[order(-preds), head(.SD, n_rm), keyby = .(todist, agegroup)]
-    all <- rbind(flows_from, preds_from, flows_to, preds_to)[
-      , .(agegroup, fromdist, todist, year)]
+    all <- rbind(flows_from, flows_to)[, .(agegroup, fromdist, todist, year)]
     setkeyv(all, colnames(all))
     setkeyv(dt, colnames(all))
     dt2 <- copy(dt) ## otherwise dt is modified in place
     dt2 <- dt[!all]
+    message(sprintf("%s rows removed", nrow(all)))
     return(dt2)
 }
 
-
-flows_constrained <- rm_largest_flows_and_preds(dt_flows)
+flows_constrained <- rm_largest_flows_and_preds(dt_flows, 16)
+flows_constrained <- dt_flows[fromdens < 1000 & todens < 1000]
 net <- calculate_net(flows_constrained, "flows", by = c("year", "agegroup"))
 net_pred <- calculate_net(flows_constrained, "preds", by = c("year", "agegroup"))
 dt_geog[net, net_constrained := i.net, on = .(distcode = region, year, agegroup)]
 dt_geog[net_pred, net_pred_constrained := i.net, on = .(distcode = region, year, agegroup)]
-
-
-caption <- "Net migration and predicted net migration without 8 biggest flows"
-
-netm <- melt(dt_geog, id.vars = c("distcode", "year", "agegroup", "geometry", "pop"),
-             measure.vars = c("net_constrained", "net_pred_constrained"))
-make_net_map(netm[agegroup == "18-25"])
-make_net_map(netm[agegroup == "below18"])
 
 
 ```
@@ -254,6 +243,16 @@ dt_geog[, .(correlation_net_constrained = cor(net_constrained, net_pred_constrai
 
 ```
 
+```{r, net-maps-constrained}
+
+caption <- "Net migration and predicted net migration without 8 biggest flows"
+netm <- melt(dt_geog, id.vars = c("distcode", "year", "agegroup", "geometry", "pop"),
+             measure.vars = c("net_constrained", "net_pred_constrained"))
+make_net_map(netm[agegroup == "18-25"])
+make_net_map(netm[agegroup == "below18"])
+
+```
+
 ## Density Hexbin charts
 ```{r density, fig.cap = caption}
 
@@ -262,7 +261,7 @@ make_dens_hex <- function(dt, q_max = .99) {
     max_val <- dt[, round(quantile(funval, q_max), 2)]
     main <- sprintf("%s, Density function, funval < %s (%s quantile)",
                     dt[, unique(agegroup)], max_val, q_max)
-    plt <- ggplot(dt[funval < max_val]) +
+    plt <- ggplot(dt[funval <= max_val]) +
         stat_summary_hex(aes(fromdens, todens, z = funval), fun = sum) +
         ggtitle(main) +
         theme_bw()
@@ -312,4 +311,49 @@ kable(invent, caption = "Does our models invent flows?")
 
 ```
 
+
+## Where are the biggest errors?
+
+```{r, flow-errors}
+
+get_districts_with_large_net_error <- function(dt, n_largest = 10) {
+    dt[, net_rel_error := (net - net_pred) / pop * 100]
+    dt2 <- dt[order( - abs(net_rel_error)),
+                   .(distcode, agegroup, net, net_pred, net_rel_error)]
+    dt2 <- dt2[, head(.SD, n_largest), keyby = agegroup]
+    return(dt2)
+}
+
+filter_rows <- function(dt, dt_filter) {
+    age <- dt_filter[, agegroup]
+    ags <- dt_filter[, distcode]
+    err <- dt_filter[, round(net - net_pred, 0)]
+    dt2 <- dt[agegroup == age][fromdist == ags | todist == ags]
+    dt2[, group := sprintf("net error: %s", err)]
+    return(dt2)
+}
+
+plot_flows <- function(dt) {
+    plt <- ggplot(dt, aes(log(flows), flows - preds)) +
+        geom_point(alpha = .2) +
+        geom_smooth(se = FALSE) +
+        facet_wrap(~group, scales = "free") +
+        ggtitle(dt[, unique(agegroup)]) +
+        theme_bw()
+    return(plt)
+}
+
+
+plot_and_save <- function(dt, age, path) {
+    plot_flows(dt[agegroup == age])
+    fn <- paste0(age, ".pdf")
+    ggsavew(, filename = file.path(path, fn))
+    return(NULL)
+}
+
+net_errs <- get_districts_with_large_net_error(dt_geog, 10)
+flows_filtered <- rbindlist(lapply(1:nrow(net_errs), function(i) filter_rows(dt_flows, net_errs[i, ])))
+lapply(ages, function(x) plot_and_save(flows_filtered[agegroup == x], x, "~/Desktop/plots"))
+
+```
 
