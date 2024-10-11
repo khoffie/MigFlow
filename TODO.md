@@ -20,11 +20,11 @@ approaches. What are the two most important goals of our writing?
 1. Describing clearly what we did and why we did it.
 2. Describing clearly how this relates to standard approaches.
 
-To many papers only do 1. and neglect 2. This is a mistake, if you do
-new and complicated stuff, you have to explain to readers why they
-should care. This responsibility lies with the authors, not the
-readers. They have to understand and understanding is easier if
-someone talks about things you already know.
+Many papers only do 1. and neglect 2. This is a mistake, if you do new
+and complicated stuff, you have to explain to readers why they should
+care. This responsibility lies with the authors, not the readers. They
+have to understand and understanding is easier if someone talks about
+things you already know.
 
 Other than that, our paper should be as simple as possible. I suggest
 the following:
@@ -42,10 +42,35 @@ rents, whereas here a factory closed). I guess this is clear if we
 write a methods paper.
 
 ## Outline of Paper
+1. Introduction: What do we write here? We could focus on:
+   - Debates around gravity model: Do not explain anything v are
+     empirically very successful. Always good to start with an
+     apparent paradox!
+   - Concrete improvement of gravity models: Distance sensitive v
+     distance insensitive
+   - Scientific v Statistical model: Nobody has any idea how to think
+     scientifically about functional relationship. We do! Maybe some
+     abstract thoughts about science in general
+2. Main Part / Methods
+   - Comparing our d0 model with gravity model. Explain new distance
+     dependence, plot log(actual / pred) v distance
+   - Adding forth gravity variable density. Explaining, density hex plots
+   - Geographical attractiveness
+3. Summary / Discussion
+   - ?
 
+## Who writes what?
+So, how do we write the paper? I like to write and I have to write
+about our model anyways for my thesis. However, the model is based
+mainly on your thoughts. You are likely much better at explaining the
+model. And you are a native speaker. What do you think? I could write
+about German context and since I know the literature better about the
+context.
+
+## Open Questions
 
 ## Further Thoughts
-While this seems straightforward, not everything is clear. 
+While this seems straightforward, not everything is clear.
 
 1. I presented the gravity model as standard approach and I think it
    still is, but clear trends are visibly going in a different (and
@@ -60,8 +85,18 @@ While this seems straightforward, not everything is clear.
    differ, but doing it well would be a new paper I feel. There are
    some issues: In Germany we have agegroups, in the US we only fit
    positive flows. 
-
-## Who writes what?
+3. Gravity models are used in internal migration modeling,
+   international migration modeling and modeling of international
+   trade flows. Our critique of the gravity model is partly general:
+   Coefs on pop, singularity in distance = zero. Density and
+   geographic ideas are more specific to internal migration, so I
+   think we choose this as topic
+4. We always speak about internal migration. The literature is not
+   clear on what this means. It is also common, and useful, to
+   differentiate between residential mobility (short distance moves)
+   and internal migration (long distance). Our model is really about
+   both, we only have to stick to one term and mention it refers to
+   moves across all distances.
 
 # Workflow
 ## Bugs and what to improve
