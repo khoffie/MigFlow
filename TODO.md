@@ -68,6 +68,14 @@ about German context and since I know the literature better about the
 context.
 
 ## Open Questions
+1. Who is the audience? Where do we want to publish? Maybe good to
+   decide beforehand, since econ journals may have different
+   requirements than demography journals.
+2. Related: In which journal do we want to publish? I have no real
+   overview tbh. I could ask someone I know and who publishes a lot
+   (not particularly great). I know of The World Economy which had
+   some good papers (which is rare). I could also sift through my
+   papers about internal migration / gravity models
 
 ## Further Thoughts
 While this seems straightforward, not everything is clear.
