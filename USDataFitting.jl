@@ -1,6 +1,5 @@
-using Pkg
-Pkg.activate(".")
-using CSV,DataFrames,StatsPlots,Distributions,Turing,StatsBase,StatsFuns,FixedWidthTables,DataFramesMeta
+using CSV, DataFrames,  Turing, , FixedWidthTables, DataFramesMeta
+using StatsBase, StatsFuns, StatsPlots, Distributions,
 using Printf, CategoricalArrays, Random, ReverseDiff, Revise, RCall, Dates, Enzyme
 using OptimizationOptimJL, ApproxFun, Serialization, LogDensityProblems,LogDensityProblemsAD, Distances,
     StatProfilerHTML, OptimizationBBO, OptimizationNLopt, NLopt, LinearAlgebra
@@ -8,7 +7,7 @@ Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://dis
 import PlotlyJS
 
 includet("models.jl")
-include("models.jl")
+includet("samplerows.jl")
 
 #using DuckDB
 
@@ -156,10 +155,14 @@ function loadallGermData(nzeros = 0; sample)
     return (geog=geog, flows=flows)
 end
 
-function loadallUSdata(nzeros = 0)
+function loadallUSdata(nzeros = 0; sample)
 
     flows = loadUS48flows()
     geog = loadUS48geog()
+    if sample == true
+        geog, flows = sample_us(geog, flows)
+    end
+    
     pop = loadUScountypop()
     pop = DataFramesMeta.@select!(pop,:STATEFP,:COUNTYFP,:POPESTIMATE2016)
     geog = leftjoin(geog,pop,on = [:STATEFP,:COUNTYFP])
@@ -236,8 +239,12 @@ function main_interact()
             fill(50.50,36)]
     ini = rand(Normal(0.0,0.10),length(ub))
     ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0] 
-    mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),initial_params=ini,
-        lb=lb,ub=ub, maxiters = 500, maxtime = 400, reltol=1e-3,progress=true)
+    mapest = Turing.Optimisation.maximum_a_posteriori(alldata.model, algo;
+                                                      adtype = AutoReverseDiff(false),
+                                                      initial_params = ini,
+                                                      lb = lb,ub = ub,
+                                                      maxiters = 500, maxtime = 400,
+                                                      reltol = 1e-3, progress = true)
     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
     paramvec = mapest.values.array
     usdiagplots(alldata,paramvec)
@@ -391,14 +398,14 @@ end
 function main()
     @sync begin
         Threads.@spawn begin
-            usd = loadallUSdata(0) # add no zeros, 
+            usd = loadallUSdata(0; sample = sample) # add no zeros, 
 
             Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
             usd.geog.x = usd.geog.INTPTLONG
             usd.geog.y = usd.geog.INTPTLAT
             fitandwritefile(usd,"manuscript_input/usflows.csv","manuscript_input/usgeog.csv","manuscript_input/usdensfun.csv","manuscript_input/usparams.csv")
         end
-        germ = loadallGermData(0)
+        germ = loadallGermData(0; sample = sample)
         germ.geog.x = germ.geog.xcoord
         germ.geog.y = germ.geog.ycoord
 
@@ -421,4 +428,5 @@ end
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
+sample = true
 main()
