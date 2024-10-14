@@ -2,26 +2,13 @@ using StatsBase
 germ = loadallGermData(; sample = false)
 us = loadallUSdata()
 
-sample_rows = function(df, p)
-    nrows = nrow(df)
-    n = Int(floor(nrows * p))
-    df = df[Random.shuffle(1:nrows)[1 : n], : ]
-    return(df)
-end
 
-sample_rows_germ = function(df; p = .1)
-    df = sample_rows(df, p = p)
-    CategoricalArrays.droplevels!(df.distcode)
-    return df
-end
+sample = true    
+test = loadallGermData(0; sample = sample)
+test = loadallUSdata(0; sample = sample)
+nzeros = 0
+names(geog)
 
-sample_rows_us = function(df; p = .1)
-    df = sample_rows(df, p = p)
-    return df
-end
+@which maximum_a_posteriori
 
-    
-
-test_germ = sample_rows_germ(germ.geog)
-test_us = sample_rows_us(us.geog)
-
+?Turing.Optimisation.maximum_a_posteriori
