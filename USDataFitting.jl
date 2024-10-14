@@ -368,7 +368,7 @@ function fitandwritefile(alldata,flowout,geogout,densout,paramout)
     paramvec = mapest.values.array
 
     #usdiagplots(alldata,paramvec,parnames)
-    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),10; thinning=50, initial_params = paramvec)
+    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),10; thinning=5000, initial_params = paramvec)
 #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
     paramvec = grabparams(mhsamp,10)
 
@@ -431,5 +431,5 @@ end
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
-sample = true
+sample = false
 main()
