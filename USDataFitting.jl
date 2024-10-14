@@ -1,8 +1,8 @@
-using CSV, DataFrames,  Turing, , FixedWidthTables, DataFramesMeta
-using StatsBase, StatsFuns, StatsPlots, Distributions,
-using Printf, CategoricalArrays, Random, ReverseDiff, Revise, RCall, Dates, Enzyme
-using OptimizationOptimJL, ApproxFun, Serialization, LogDensityProblems,LogDensityProblemsAD, Distances,
-    StatProfilerHTML, OptimizationBBO, OptimizationNLopt, NLopt, LinearAlgebra
+using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, 
+using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML
+using Turing, OptimizationOptimJL, ApproxFun, OptimizationBBO, OptimizationNLopt, NLopt, ReverseDiff
+using Printf, Revise, Dates, Enzyme, Serialization
+using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
 import PlotlyJS
 
@@ -417,8 +417,11 @@ function main()
                             germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
                             germ.geog.logreldens,minimum(germ.geog.logreldens),maximum(germ.geog.logreldens),
                             germ.geog.pop,nrow(germ.geog),100.0,36,36) ## nothing == netactual, we're not using it anymore
-            fitandwritefile((flows=agedat,geog=germ.geog,model=modl),"manuscript_input/germflows_$(age).csv","manuscript_input/germgeog_$(age).csv",
-                "manuscript_input/germdensfun_$(age).csv","manuscript_input/germparams_$(age).csv")
+            fitandwritefile((flows=agedat,geog=germ.geog,model=modl),
+                            "manuscript_input/germflows_$(age).csv",
+                            "manuscript_input/germgeog_$(age).csv",
+                            "manuscript_input/germdensfun_$(age).csv",
+                            "manuscript_input/germparams_$(age).csv")
         end
     end
     println("Computation finished!")
