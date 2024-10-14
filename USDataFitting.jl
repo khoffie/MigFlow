@@ -138,18 +138,22 @@ function loadGermGeog()
 end
 
 function loadGermFlows(distcodes)
-    fl = CSV.read("data/FlowDataGermans.csv",DataFrame)
-    fl.fromdist = categorical(fl.fromdist,levels=distcodes)
-    fl.todist = categorical(fl.todist,levels=distcodes)
-    fl
+    fl = CSV.read("data/FlowDataGermans.csv", DataFrame)
+    fl = filter(row -> row.fromdist in distcodes, fl)
+    fl = filter(row -> row.todist in distcodes, fl)
+    fl.fromdist = categorical(fl.fromdist, levels = distcodes)
+    fl.todist = categorical(fl.todist, levels = distcodes)
+    return fl
 end
 
 
-function loadallGermData(nzeros = 0)
+function loadallGermData(nzeros = 0; sample)
     geog = loadGermGeog()
+    if sample == true
+        geog = sample_germ(geog)
+    end
     flows = loadGermFlows(levels(geog.distcode))
-
-    (geog=geog, flows=flows)
+    return (geog=geog, flows=flows)
 end
 
 function loadallUSdata(nzeros = 0)
