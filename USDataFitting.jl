@@ -1,16 +1,11 @@
+using Pkg
+Pkg.activate(".")
 using CSV,DataFrames,StatsPlots,Distributions,Turing,StatsBase,StatsFuns,FixedWidthTables,DataFramesMeta
-
-using Enzyme
+using Printf, CategoricalArrays, Random, ReverseDiff, Revise, RCall, Dates, Enzyme
+using OptimizationOptimJL, ApproxFun, Serialization, LogDensityProblems,LogDensityProblemsAD, Distances,
+    StatProfilerHTML, OptimizationBBO, OptimizationNLopt, NLopt, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
-
-using Printf, CategoricalArrays
 import PlotlyJS
-using CSV, DataFrames, Turing, CategoricalArrays, StatsBase, StatsPlots, Random,
-    ReverseDiff, Revise, RCall, Dates
-using OptimizationOptimJL, Distributions, ApproxFun, Serialization, Printf, DataFramesMeta,
-    StatProfilerHTML, StatsFuns, OptimizationBBO, Printf,OptimizationNLopt,NLopt, LinearAlgebra
-
-using LogDensityProblems,LogDensityProblemsAD, Distances
 
 includet("models.jl")
 include("models.jl")
