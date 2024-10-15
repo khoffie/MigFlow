@@ -217,8 +217,9 @@ end
     desfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax), desirecoefs ./ 10) 
     desvals = [desfun(xcoord, ycoord) for (xcoord, ycoord) in zip(xcoord, ycoord)]
 
-    Turing.@addlogprob!(logpdf(MvNormal(fill(0.0, length(desvals)), fill(3.0, length(desvals))),
-                               desvals))
+    mu = fill(0.0, length(desvals))
+    sigma = fill(3.0, length(desvals))
+    Turing.@addlogprob!(logpdf(MvNormal(mu, sigma), desvals))
     ## tamp down the corners of the map
     Turing.@addlogprob!(logpdf(MvNormal(fill(0.0, 4), fill(0.125, 4)),
                                [desfun(xmin, ymin),
@@ -233,25 +234,19 @@ end
         a + (ktopop / 10.0) *
         log(distpop[todist[i]] / medcpop) +
         log1p(1.0 / (distance[i] / distscale + d0 / 100.0) ^ c) +
-        desvals[todist[i]] - desvals[fromdist[i]])
-             for i in eachindex(flows)]
+        desvals[todist[i]] - desvals[fromdist[i]]) for i in eachindex(flows)]
     #logpreds = log.(preds)
-    
     ## the logarithm of predicted rates is in the range of about -9 to +10 this is more or less a prior on 
     ## the kd and desfun parameters
 #    Turing.@addlogprob!(logpdf(MvNormal(fill(1.0,length(logpreds)),fill(2.0,length(logpreds))),logpreds)) 
 
     sumpreds = sum(preds)
-    allmoves ~ Normal(sumpreds,0.01*sumpreds)
-
-
-    if any(isnan,preds)
+    allmoves ~ Normal(sumpreds, 0.01 * sumpreds)
+    if any(isnan, preds)
         println("NaN in predictions")
     end
-
-
     flows ~ arraydist([Poisson(p) for p in preds])
-    return (preds=preds)
+    return (preds = preds)
 end
 
 
