@@ -210,11 +210,16 @@ end
     c ~ Gamma(10.0, 1.5 / 9.0)
     d0 ~ Gamma(5.0, 2.0 / 4.0)
     dscale ~ Gamma(20.0, 5.0 / 19.0)
-    ktopop ~ Normal(0.0, 5.0) # remove?
+    ktopop ~ Normal(0.0, 5.0) # remove? model should be linear in topop
     kd ~ MvNormal(zeros(ndenscoef), fill(40.0, ndenscoef))
     desirecoefs ~ MvNormal(zeros(ncoefs), fill(50.0, ncoefs))
 
-    desfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax), desirecoefs ./ 10) 
+    ## The operator * creates a 2D space from both 1D spaces as
+    ## defined by Chebyshev(xmin .. xmax) and Chebyshev(ymin
+    ## .. ymax). At each point (x, y) in the 2D plane, we have a
+    ## product between two Cheby polynomials. 
+    desfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax), desirecoefs ./ 10)
+    ## 
     desvals = [desfun(xcoord, ycoord) for (xcoord, ycoord) in zip(xcoord, ycoord)]
 
     mu = fill(0.0, length(desvals))
