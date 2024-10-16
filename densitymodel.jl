@@ -1,42 +1,28 @@
-using Turing, CSV, DataFrames, StatsPlots
-
-@model function densmod(fd, td, y)
-    a ~ Normal(0, 5)
-    b ~ Normal(1, 5)
-    s ~ truncated(Normal(3, 3), 0, Inf)
-
-    for i in 1:length(y)
-        ratio = exp(td[i] - fd[i])
-        m = ratio ^ (a + b * exp(fd[i]))
-        y[i] ~ Normal(m , s )
-    end
-end
-
-gen_preds = function(df, chain)
-    predict = function(fd, td, a, b)
-        p = exp(td - fd) ^ (a + b * exp(fd))
-        return p
-    end
-
-    df.preds = zeros(nrow(df))
-    for i in 1:nrow(df)
-        df.preds[i] = predict(df.fromdens[i], df.todens[i], mean(chain[:a]), mean(chain[:b]))
-    end
-    return df
-end
+using Pkg
+Pkg.activate(".")
+using Turing, CSV, DataFrames, StatsPlots, Plots
 
 df = CSV.read("./manuscript_input/germdensfun_18-25.csv", DataFrame)
 histogram(df.funval)
 scatter(df.fromdens, df.funval)
 scatter(df.todens, df.funval)
 
+@model function densmod(fd, td, y)
+    a ~ Normal(0, 5)
+    b ~ Normal(1, 5)
+    s ~ truncated(Normal(3, 3), 0, Inf)
+
+    preds = [exp(td[i] - fd[i]) ^ (a + b * exp(fd[i])) for i in 1:length(fd)]
+    y ~ arraydist([Normal(m, s) for m in preds])
+    return preds
+end
 
 model = densmod(df.fromdens, df.todens, df.funval)                       
 chain = Turing.sample(model, NUTS(), 1000)
+df.preds = generated_quantities(model, chain[1000])[1]
 
-
-gen_preds(df, chain)
-    
-
-scatter(df.preds, df.funval)
+cc = round(cor(df.preds, df.funval), digits = 2)
+plot(df.preds, df.funval, seriestype = :scatter,
+     xlabel = "Prediction", ylabel = "Cheby value",
+     title = "Densiy model", label = "Correlation = $(cc)")
 
