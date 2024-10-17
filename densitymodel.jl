@@ -1,12 +1,9 @@
 using Pkg
 Pkg.activate(".")
-using Turing, CSV, DataFrames, StatsPlots, Plots
+using Turing, CSV, DataFrames, StatsPlots, Plots, LaTeXStrings
 
 df = CSV.read("./manuscript_input/germdensfun_18-25.csv", DataFrame)
 # districts = CSV.read("./data/districts.csv", DataFrame)
-histogram(df.funval)
-scatter(df.fromdens, df.funval)
-scatter(df.todens, df.funval)
 
 @model function densmod(fd, td, y)
     a ~ Normal(0, 5)
@@ -29,3 +26,25 @@ plot(df.preds, df.funval, seriestype = :scatter,
      title = "Density model", label = "Correlation = $(cc)")
 
 
+histogram(df.funval)
+histogram(df.fromdens)
+scatter(df.fromdens, df.funval)
+scatter(df.todens, df.funval)
+sort!(df)
+
+plot_surface = function(df, max)
+    df2 = df[df.fromdens .< max, :]
+    df2 = df2[df2.todens .< max, :]
+    Plots.surface(df2.todens, df2.fromdens, df2.funval,
+                  title = "Cheby density function evaluation\n
+                  max logreldens = $(max)",
+                  xlab = L"$\rho_o$", ylab = L"$\rho_d$",
+                  camera = (10, 45))
+end
+
+
+plot_surface(df, 2.7)
+
+
+
+df[df.fromdens .< 2.7, :]
