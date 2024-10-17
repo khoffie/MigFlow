@@ -84,14 +84,26 @@ df = df[df.todens.<2.7, :]
 districts = CSV.read("../data/districts.csv", DataFrame)
 md = median(districts.density)
 districts.logreldens = log.(districts.density ./ md)
-shp = GDF.read("/home/konstantin/Diss/inst/extdata/clean/shapes/districts.shp")
+f_shp = "/home/konstantin/Diss/inst/extdata/clean/shapes/districts.shp"
+shp = GDF.read(f_shp)
+shp[shp.geometry != "Geometry: wkbPolygon", :]
+filter(:geometry => ==("Geometry: wkbPolygon"), shp)
+buffer.(shp.geometry, 10)
+plot(shp.geometry[1:2], fill_z = )
+
 shp.AGS = parse.(Int64, shp.AGS)
 to_join = select(districts, [:distcode, :logreldens])
 shp = innerjoin(shp,  to_join, on = :AGS => :distcode)
 
+test = shp.geometry[3]
+push!(test
 
-plot(shp.geometry, fillrange = shp.logreldens)
+shp.geometry
+println(length(shp.geometry))  # Number of geometries (districts)
+println(length(shp.logreldens))  # Number of logreldens values
 
+plot(shp.geometry, fill_z = shp.logreldens)
+plot(shp.geometry[3])
 df = fit_model(df)
 plot_prediction(df)
 
