@@ -1,4 +1,3 @@
-
 using Pkg
 Pkg.activate("..")
 using Turing, CSV, DataFrames, StatsPlots, Plots, LaTeXStrings
@@ -79,13 +78,16 @@ for age in ages
 end
 
 df = CSV.read("../manuscript_input/germdensfun_18-25.csv", DataFrame)
-df = df[df.fromdens.<2.7, :]
-df = df[df.todens.<2.7, :]
 districts = CSV.read("../data/districts.csv", DataFrame)
-md = median(districts.density)
-districts.logreldens = log.(districts.density ./ md)
 f_shp = "/home/konstantin/Diss/inst/extdata/clean/shapes/districts.shp"
 shp = GDF.read(f_shp)
+
+df = df[df.fromdens.<2.7, :]
+df = df[df.todens.<2.7, :]
+
+md = median(districts.density)
+districts.logreldens = log.(districts.density ./ md)
+
 shp[shp.geometry != "Geometry: wkbPolygon", :]
 filter(:geometry => ==("Geometry: wkbPolygon"), shp)
 buffer.(shp.geometry, 10)
