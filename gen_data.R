@@ -115,4 +115,4 @@ distances <- pop_weighted_distance() ## would be good to calc all distances here
 flows[distances, dist := i.distance_w, on = .(fromdist, todist)]
 
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
-fwrite(coords_dt, "~/Documents/GermanMigration/data/districts.csv")
+fwrite(districts, "~/Documents/GermanMigration/data/districts.csv")
