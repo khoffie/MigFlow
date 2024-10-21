@@ -65,9 +65,9 @@ calculate_distances <- function(flows, coords) {
 }
 
 flows <- clean_flows(flows, age_for)
-coords_dt <- gen_coords_dt(shp, age_for, density)
-check_tables(flows, coords_dt)
-calculate_distances(flows, coords_dt) #joins distances to flows
+districts <- gen_coords_dt(shp, age_for, density)
+check_tables(flows, districts)
+calculate_distances(flows, districts) #joins distances to flows
 
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(coords_dt, "~/Documents/GermanMigration/data/districts.csv")
