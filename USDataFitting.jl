@@ -347,7 +347,7 @@ end
 grabparams(chain,n) = chain.value.data[n,1:end-1,1]
 
 
-function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout, plotout)
+function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
 
     algo = LBFGS()
 
@@ -366,17 +366,17 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout,
     ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0]
     println("Optimization starts")
     mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),
-                                  initial_params = ini, lb = lb, ub = ub, maxiters = 1, maxtime = 400,
+                                  initial_params = ini, lb = lb, ub = ub, maxiters = 500, maxtime = 400,
                                   reltol=1e-3, progress=true)
     println("Optimization finished")
     paramvec = mapest.values.array
 
     #usdiagplots(alldata,paramvec,parnames)
     println("Sampling starts")
-    mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 10;
-                           thinning=1, initial_params = paramvec)
-    plt = Plots.plot(mhsamp[:lp])
-    Plots.savefig(plt, plotout)
+    mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 100;
+                           thinning=500, initial_params = paramvec)
+    # plt = Plots.plot(mhsamp[:lp])
+    # Plots.savefig(plt, plotout)
 
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
@@ -419,8 +419,7 @@ function main()
                             "manuscript_input/usgeog.csv",
                             "manuscript_input/usdensfun.csv",
                             "manuscript_input/usparams.csv",
-                            "manuscript_input/uschain",
-                            "manuscript_input/usplot.pdf")
+                            "manuscript_input/uschain")
         end
         germ = loadallGermData(0; sample = sample)
         germ.geog.x = germ.geog.xcoord
@@ -439,8 +438,7 @@ function main()
                             "manuscript_input/germgeog_$(age).csv",
                             "manuscript_input/germdensfun_$(age).csv",
                             "manuscript_input/germparams_$(age).csv",
-                            "manuscript_input/germchain_$(age)",
-                            "manuscript_input/germplot_$(age).pdf")
+                            "manuscript_input/germchain_$(age)")
         end
     end
     println("Computation finished!")
@@ -450,5 +448,5 @@ end
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
-sample = true
+sample = false
 main()
