@@ -1,3 +1,5 @@
+using Pkg
+Pkg.activate(".")
 using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays
 using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML
 using Turing, OptimizationOptimJL, ApproxFun, OptimizationBBO, OptimizationNLopt, NLopt, ReverseDiff
@@ -248,7 +250,7 @@ function main_interact()
     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
     paramvec = mapest.values.array
     usdiagplots(alldata,paramvec)
-    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=400, initial_params = paramvec)
+    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=50, initial_params = paramvec)
 #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
 
     serialize("./fitted_models/samps_$(now()).dat",mhsamp)
@@ -368,7 +370,7 @@ function fitandwritefile(alldata,flowout,geogout,densout,paramout)
     paramvec = mapest.values.array
 
     #usdiagplots(alldata,paramvec,parnames)
-    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),10; thinning=5000, initial_params = paramvec)
+    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),10; thinning=10, initial_params = paramvec)
 #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
     paramvec = grabparams(mhsamp,10)
 
