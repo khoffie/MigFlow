@@ -419,7 +419,7 @@ function main()
                             "manuscript_input/usgeog.csv",
                             "manuscript_input/usdensfun.csv",
                             "manuscript_input/usparams.csv",
-                            "manuscript_input/uschain.csv",
+                            "manuscript_input/uschain",
                             "manuscript_input/usplot.pdf")
         end
         germ = loadallGermData(0; sample = sample)
@@ -439,7 +439,7 @@ function main()
                             "manuscript_input/germgeog_$(age).csv",
                             "manuscript_input/germdensfun_$(age).csv",
                             "manuscript_input/germparams_$(age).csv",
-                            "manuscript_input/germchain_$(age).csv",
+                            "manuscript_input/germchain_$(age)",
                             "manuscript_input/germplot_$(age).pdf")
         end
     end
