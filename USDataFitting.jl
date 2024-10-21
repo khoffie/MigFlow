@@ -363,14 +363,19 @@ function fitandwritefile(alldata,flowout,geogout,densout,paramout)
             fill(50.50,36);
             fill(50.50,36)]
     ini = rand(Normal(0.0,0.10),length(ub))
-    ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0] 
-    mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),initial_params=ini,
-        lb=lb,ub=ub, maxiters = 500, maxtime = 400, reltol=1e-3,progress=true)
-    
+    ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0]
+    println("Optimization starts")
+    mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),
+                                  initial_params = ini, lb = lb, ub = ub, maxiters = 500, maxtime = 400,
+                                  reltol=1e-3, progress=true)
+    println("Optimization finished")
     paramvec = mapest.values.array
 
     #usdiagplots(alldata,paramvec,parnames)
-    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),10; thinning=10, initial_params = paramvec)
+    println("Sampling starts")
+    mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 10;
+                           thinning=10, initial_params = paramvec)
+    println("Sampling finished")
 #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
     paramvec = grabparams(mhsamp,10)
 
