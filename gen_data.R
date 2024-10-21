@@ -30,13 +30,18 @@ clean_flows <- function(flows, age_dt) {
     return(flows)
 }
 
+gen_coords <- function(dt) {
+        dt[, pos := sf::st_centroid(geometry)]
+        dt[, xcoord := st_coordinates(pos)[, 1] / 1e3]
+        dt[, ycoord := st_coordinates(pos)[, 2] / 1e3]
+        return(dt)
+}
+
 gen_coords_dt <- function(shp, age_dt, density_dt) {
     shp[, year := 2017] ## actual year is 2018, hacky but otherwise join fails
-    shp[, pos := sf::st_point_on_surface(geometry)]
-    shp[, x := st_coordinates(pos)[, 1]]
-    shp[, y := st_coordinates(pos)[, 2]]
+    gen_coords(shp)
     dt <- shp[, .(distcode = AGS, year, name = GEN, 
-                         xcoord = x / 1e3, ycoord = y / 1e3,
+                         xcoord, ycoord,
                          bl_name, bl_ags)]
 
     dt[density, density := i.density, on = .(distcode = region, year)]
@@ -71,3 +76,43 @@ calculate_distances(flows, districts) #joins distances to flows
 
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(coords_dt, "~/Documents/GermanMigration/data/districts.csv")
+
+gen_munis <- function() {
+    munis <- setDT(sf::read_sf("~/Diss/inst/extdata/clean/shapes/munis_all.shp"))[year == 2017]
+    ink <- fread("~/Diss/inst/extdata/clean/inkar/inkar_2021.csv")
+    munis_pop <- modeleR::create_design_mat(ink, 425, "Gemeinden", 2017)
+    munis_pop[X425 == 0.1, X425 := 0] ## because create_design_mat sets them to 0.1
+    munis[, distcode := as.integer(substr(AGS, 1, 5))]
+    munis[, AGS := as.integer(AGS)]
+    munis[munis_pop, pop := i.X425, on = .(AGS)]
+    gen_coords(munis)
+    munis[, pop_dist := sum(pop, na.rm = TRUE), keyby = .(distcode)]
+    munis <- munis[, .(municode = AGS, distcode, pop, pop_dist, xcoord, ycoord)]
+    munis <- munis[!is.na(pop)]
+    return(munis)
+}
+
+gen_dist_muni_dt <- function(munis) {
+    distances <- data.table::CJ(fromdist = districts[, distcode], todist = districts[, distcode])
+    distances <- distances[fromdist != todist]
+    cols <- setdiff(colnames(munis), "distcode")
+    distances <- distances[munis, on = .(fromdist = distcode), allow.cartesian = TRUE]
+    setnames(distances, cols, paste0("from_", cols))
+    distances <- distances[munis, on = .(todist = distcode), allow.cartesian = TRUE]
+    setnames(distances, cols, paste0("to_", cols))
+    return(distances)
+}
+
+calc_weighted_distance <- function(dt) {
+    distances[, distance := sqrt((from_xcoord - to_xcoord)^2 + (from_ycoord - to_ycoord)^2)]
+    distances[, fromweights := from_pop / from_pop_dist]
+    distances[, toweights := to_pop / to_pop_dist]
+    distances[, .(distance_w = sum(distance * fromweights * toweights)), keyby = .(fromdist, todist)]
+    return(NULL)
+}
+
+munis <- gen_munis()
+distances <- gen_dist_muni_dt(munis)
+
+flows[distances, distance_w := i.distance_w, on = .(fromdist, todist)]
+
