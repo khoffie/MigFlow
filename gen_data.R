@@ -12,7 +12,7 @@ read_age <- function() {
 
 p_clean <- "~/Diss/inst/extdata/clean/"
 flows <- fread(file.path(p_clean, "flows_districts/districts_2000_2017_ger.csv"))
-age_fot <- read_age()
+age_for <- read_age()
 shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
 density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))[
                          , .(region, year, density, bl_ags)]
@@ -116,8 +116,9 @@ pop_weighted_distance <- function() {
 flows <- clean_flows(flows, age_for)
 districts <- gen_coords_dt(shp, age_for, density)
 check_tables(flows, districts)
-distances <- pop_weighted_distance() ## would be good to calc all distances here
-flows[distances, dist := i.distance_w, on = .(fromdist, todist)]
+calculate_distances(flows, districts)
+## distances <- pop_weighted_distance() ## would be good to calc all distances here
+## flows[distances, dist_w := i.distance_w, on = .(fromdist, todist)]
 
 fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(districts, "~/Documents/GermanMigration/data/districts.csv")
