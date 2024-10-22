@@ -3,11 +3,16 @@ library(helpeR)
 library(sfheaders)
 library(sf)
 
+read_age <- function() {
+    dt <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
+    data.table::setnames(dt, "age_group", "agegroup")
+    helpeR::rec_ages(dt)
+    return(dt)
+}
+
 p_clean <- "~/Diss/inst/extdata/clean/"
 flows <- fread(file.path(p_clean, "flows_districts/districts_2000_2017_ger.csv"))
-age_for <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
-setnames(age_for, "age_group", "agegroup")
-helpeR::rec_ages(age_for)
+age_fot <- read_age()
 shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
 density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))[
                          , .(region, year, density, bl_ags)]
