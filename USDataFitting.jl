@@ -217,132 +217,57 @@ end
 
 
 
-function main_interact()
-#    densdict = Dict(alldata.county.countyid .=> alldata.county.logreldens)
-#    histogram2d([densdict[f] for f in alldata.flows.fromcounty],[densdict[f] for f in alldata.flows.tocounty])
+# function main_interact()
+# #    densdict = Dict(alldata.county.countyid .=> alldata.county.logreldens)
+# #    histogram2d([densdict[f] for f in alldata.flows.fromcounty],[densdict[f] for f in alldata.flows.tocounty])
 
-@eval begin
-    alldata = loadallUSdata(0) # add no zeros
+# @eval begin
+#     alldata = loadallUSdata(0) # add no zeros
 
-    #algo = BBO_de_rand_1_bin_radiuslimited()
-    algo = LBFGS()
-    #algo = NLopt.LN_BOBYQA()
+#     #algo = BBO_de_rand_1_bin_radiuslimited()
+#     algo = LBFGS()
+#     #algo = NLopt.LN_BOBYQA()
 
-    parnames = [["a","c","d0","dscale","neterr","ktopop"];
-        ["kd[$i]" for i in 1:36];
-        ["desirecoefs[$i]" for i in 1:36]]
-
-
-    lb = [[-60.0,0.0,0.0,1.0,0.01,-10.0];
-            fill(-50.50,36);
-            fill(-50.50,36)]
-    ub = [[60.0, 20.0,10.0,15.0,100.0,10.0];
-            fill(50.50,36);
-            fill(50.50,36)]
-    ini = rand(Normal(0.0,0.10),length(ub))
-    ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0] 
-    mapest = Turing.Optimisation.maximum_a_posteriori(alldata.model, algo;
-                                                      adtype = AutoReverseDiff(false),
-                                                      initial_params = ini,
-                                                      lb = lb,ub = ub,
-                                                      maxiters = 500, maxtime = 400,
-                                                      reltol = 1e-3, progress = true)
-    serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
-    paramvec = mapest.values.array
-    usdiagplots(alldata,paramvec)
-    mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=50, initial_params = paramvec)
-#    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
-
-    serialize("./fitted_models/samps_$(now()).dat",mhsamp)
-
-    usdiagplots(alldata,mhsamp.value.data[50,1:end-1,1])
-    usdiagplots(alldata,mhsamp.value.data[75,1:end-1,1])
-    usdiagplots(alldata,mhsamp.value.data[100,1:end-1,1])
-
-    hmcsamp = Turing.sample(alldata.model,HMC(1e-5,50; adtype = AutoReverseDiff(true)),20; init_params = paramvec)
-#    nutsamp = Turing.sample(alldata.model,NUTS(300,.75; adtype=AutoReverseDiff(false)),100)
-#    vfit = vi(alldata.model,ADVI(15,200),AutoReverseDiff(true))
-end
-
-end
+#     parnames = [["a","c","d0","dscale","neterr","ktopop"];
+#         ["kd[$i]" for i in 1:36];
+#         ["desirecoefs[$i]" for i in 1:36]]
 
 
+#     lb = [[-60.0,0.0,0.0,1.0,0.01,-10.0];
+#             fill(-50.50,36);
+#             fill(-50.50,36)]
+#     ub = [[60.0, 20.0,10.0,15.0,100.0,10.0];
+#             fill(50.50,36);
+#             fill(50.50,36)]
+#     ini = rand(Normal(0.0,0.10),length(ub))
+#     ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0] 
+#     mapest = Turing.Optimisation.maximum_a_posteriori(alldata.model, algo;
+#                                                       adtype = AutoReverseDiff(false),
+#                                                       initial_params = ini,
+#                                                       lb = lb,ub = ub,
+#                                                       maxiters = 500, maxtime = 400,
+#                                                       reltol = 1e-3, progress = true)
+#     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
+#     paramvec = mapest.values.array
+#     usdiagplots(alldata,paramvec)
+#     mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=50, initial_params = paramvec)
+# #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
 
-function usdiagplots(alldata,paramvec,parnames)
+#     serialize("./fitted_models/samps_$(now()).dat",mhsamp)
 
-    bar(1:length(paramvec),paramvec; title="Parameter Values",xlab="index") |> display
-    #mapest=deserialize("fitted_models/USmodel_map_2024-08-29T17:24:15.073.dat")
-    (densmin,densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
-    (xmin,xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
-    (ymin,ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)
+#     usdiagplots(alldata,mhsamp.value.data[50,1:end-1,1])
+#     usdiagplots(alldata,mhsamp.value.data[75,1:end-1,1])
+#     usdiagplots(alldata,mhsamp.value.data[100,1:end-1,1])
 
-    kdindx = (1:36) .+ 6
-    desindx = (1:36) .+ (6+36)
-    kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),paramvec[kdindx] ./ 10)
-    desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax ),paramvec[desindx] ./ 10)
+#     hmcsamp = Turing.sample(alldata.model,HMC(1e-5,50; adtype = AutoReverseDiff(true)),20; init_params = paramvec)
+# #    nutsamp = Turing.sample(alldata.model,NUTS(300,.75; adtype=AutoReverseDiff(false)),100)
+# #    vfit = vi(alldata.model,ADVI(15,200),AutoReverseDiff(true))
+# end
 
-    plotlyjs()# set the background
-
-    p1=heatmap(kdfun;  title="dens Fun (dens,dens)",bins=(40,40),size=(600,600),xlim=(-7,7),ylim=(-7,7)) 
-
-    p2=StatsPlots.histogram2d(StatsBase.sample(alldata.model.args.logreldens,1000),StatsBase.sample(alldata.model.args.logreldens,1000),normalize=true,
-        size=(600,600),xlim=(-7,7),ylim=(-7,7),alpha=.25, title="Distribution of logreldens pairs")
-    StatsPlots.plot(p1,p2; layout=(2,1)) |> display
-
-    PlotlyJS.plot(PlotlyJS.histogram2dcontour(x=StatsBase.sample(alldata.model.args.logreldens,1000), y=StatsBase.sample(alldata.model.args.logreldens,1000)),
-        PlotlyJS.Layout(alpha=0.1, title="Distribution of Randomly chosen Density Pairs",xlab="logreldensity",ylab="logreldensity")) |> display
-
-    heatmap(desirfun, title="Desirability Fun (long,lat)",c=:rainbow) |> display
-
-    preds = generated_quantities(alldata.model,paramvec,parnames)
-    alldata.flows.preds = preds
-
-    netactual = usnetmig(levelcode.(alldata.flows.fromcounty),levelcode.(alldata.flows.tocounty),alldata.flows.COUNT)
-    netpred = usnetmig(levelcode.(alldata.flows.fromcounty),levelcode.(alldata.flows.tocounty),alldata.flows.preds)
-
-    density(netactual-netpred; title="Residual Net error (actual - pred)",xlab="Count of people") |> display
-    density((netactual-netpred) ./ alldata.geog.POPESTIMATE2016; xlim=(-.3,.3),legend=false, title="Residual Net error (actual - pred)",xlab="Fraction of source county") |> display
-    density(netactual ./ alldata.geog.POPESTIMATE2016; xlim=(-.3,.3),legend=false,title="Net migration as fraction of population") |> display
-    density(netactual ./ 1000.0; title="Actual Net Migration (thousands)",xlim=(-20,20)) |> display
-    density(netactual ./ 1000.0; title="Actual Net Migration (thousands, full range") |> display
-
-    scatter(netpred ./ 1000, netactual ./ 1000; ylab="actual net migration (thousands)",xlab="predicted (thousands)",xlim=(-20,20),ylim=(-20,20),
-        title= "Net Migration prediction")
-    Plots.abline!(1,0; legend=false) |> display
-
-    scatter(netpred ./ 1000, netactual ./ 1000; ylab="actual net migration (thousands)",xlab="predicted (thousands)",
-        title = "Net Migration prediction")
-    Plots.abline!(1,0) |> display
-
-    samps = StatsBase.sample(eachindex(alldata.flows.dist),5000; replace=false)
-
-    flowsamp = alldata.flows[samps,:]
-
-    density(log.(flowsamp.preds); label = "log(preds)", title="Density of log predictions")    
-    density!(log.(flowsamp.COUNT .+ .01); label="actuals + .01") |> display
-    StatsPlots.scatter(flowsamp.dist,log.((flowsamp.COUNT .+ .01) ./ flowsamp.preds); alpha=0.1, title="log(flow/pred) vs dist (in km)") |> display
-
-    scatter(log.(flowsamp.preds/median(flowsamp.preds)),log.(flowsamp.COUNT/median(flowsamp.preds)); title="Comparing prediction to actual",
-        xlab="log(pred/median(pred))", ylab="log(COUNT/median(pred))",xlim=(-5,5),ylim=(-5,5), alpha=0.1) |> display
+# end
 
 
-    StatsPlots.scatter(flowsamp.dist,[log.((r.COUNT .+ 1) ./alldata.geog.POPESTIMATE2016[levelcode(r.fromcounty)]) for r in eachrow(flowsamp)];
-        title = "log((flow+1)/from_pop) vs distance", alpha=0.1) |> display
 
-    StatsPlots.scatter(flowsamp.dist,[log.((r.preds) ./alldata.geog.POPESTIMATE2016[levelcode(r.fromcounty)]) for r in eachrow(flowsamp)];
-        title = "log((pred+1)/from_pop) vs distance", alpha=0.1) |> display
-
-    kfrom = paramvec[6] / 10.0
-    density(kfrom .* log.(alldata.geog.POPESTIMATE2016[levelcode.(flowsamp.tocounty)] ./ median(alldata.geog.POPESTIMATE2016)); title="DIstribution of log population US * kfrom") |> display
-
-    tots = totalflow(alldata.flows.fromcounty,alldata.flows.tocounty,alldata.flows.COUNT,alldata.geog.countyid)
-    totpreds = totalflow(alldata.flows.fromcounty,alldata.flows.tocounty,alldata.flows.preds,alldata.geog.countyid)
-
-    scatter(log.(totpreds ./ alldata.geog.POPESTIMATE2016),log.(tots ./ alldata.geog.POPESTIMATE2016),
-        xlab="log(Pred total flux / Pop)", ylab = "log(Actual Total Flux / Pop)", title = "Total Flux comparison")
-    Plots.abline!(1,0; label = "y = x", legend = false) |> display
-
-end
 
 grabparams(chain,n) = chain.value.data[n,1:end-1,1]
 
