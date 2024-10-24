@@ -10,7 +10,7 @@ import PlotlyJS
 
 includet("models.jl")
 includet("samplerows.jl")
-
+includet("post_process.jl")
 #using DuckDB
 
 
@@ -280,26 +280,25 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
         ["kd[$i]" for i in 1:36];
         ["desirecoefs[$i]" for i in 1:36]]
 
-
     lb = [[-60.0, 0.0, 0.0, 1.0, -10.0];
-            fill(-50.50,36);
-            fill(-50.50,36)]
+            fill(-50.50, 36);
+            fill(-50.50, 36)]
     ub = [[60.0, 20.0, 10.0, 15.0, 10.0];
-            fill(50.50,36);
-            fill(50.50,36)]
-    ini = rand(Normal(0.0,0.10), length(ub))
-    ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0]
+            fill(50.50, 36);
+            fill(50.50, 36)]
+    ini = rand(Normal(0.0, 0.10), length(ub))
+    ini[1:5] .= [-7.6, 1.81, 1.5, 5.0, 3.5]
     println("Optimization starts")
     mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),
-                                  initial_params = ini, lb = lb, ub = ub, maxiters = 500, maxtime = 400,
-                                  reltol=1e-3, progress=true)
+                                  initial_params = ini, lb = lb, ub = ub, maxiters = 200, maxtime = 400,
+                                  reltol=1e-3, progress = true)
     println("Optimization finished")
     paramvec = mapest.values.array
 
     #usdiagplots(alldata,paramvec,parnames)
     println("Sampling starts")
     mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 100;
-                           thinning=500, initial_params = paramvec)
+                           thinning = 1, initial_params = paramvec)
     # plt = Plots.plot(mhsamp[:lp])
     # Plots.savefig(plt, plotout)
 
@@ -373,5 +372,6 @@ end
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
-sample = false
+sample = true
 main()
+post_process()
