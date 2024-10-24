@@ -287,17 +287,17 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
             fill(50.50, 36);
             fill(50.50, 36)]
     ini = rand(Normal(0.0, 0.10), length(ub))
-    ini[1:5] .= [-7.6, 1.81, 1.5, 5.0, 3.5]
+    ini[1:6] .= [-7.6, 1.81, 1.5, 5.0, 3.5, 0.0]
     println("Optimization starts")
     mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),
-                                  initial_params = ini, lb = lb, ub = ub, maxiters = 200, maxtime = 400,
+                                  initial_params = ini, lb = lb, ub = ub, maxiters = 100, maxtime = 400,
                                   reltol=1e-3, progress = true)
     println("Optimization finished")
     paramvec = mapest.values.array
 
     #usdiagplots(alldata,paramvec,parnames)
     println("Sampling starts")
-    mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 100;
+    mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 10;
                            thinning = 5, initial_params = paramvec)
     # plt = Plots.plot(mhsamp[:lp])
     # Plots.savefig(plt, plotout)
