@@ -34,16 +34,22 @@ clean_flows <- function(flows, age_dt) {
     return(flows)
 }
 
-gen_coords <- function(dt) {
+gen_coords <- function(dt, type = c("centroid", "pos")) {
+    t <- match.arg(type)
+    if(t == "centroid") {
         dt[, pos := sf::st_centroid(geometry)]
-        dt[, xcoord := st_coordinates(pos)[, 1] / 1e3]
-        dt[, ycoord := st_coordinates(pos)[, 2] / 1e3]
-        return(dt)
+    }
+    if(t == "pos") {
+        dt[, pos := sf::st_point_on_surface(geometry)]
+    }
+    dt[, xcoord := st_coordinates(pos)[, 1] / 1e3]
+    dt[, ycoord := st_coordinates(pos)[, 2] / 1e3]
+    return(dt)
 }
 
-gen_coords_dt <- function(shp, age_dt, density_dt) {
+gen_coords_dt <- function(shp, age_dt, density_dt, type) {
     shp[, year := 2017] ## actual year is 2018, hacky but otherwise join fails
-    gen_coords(shp)
+    gen_coords(shp, type = type)
     dt <- shp[, .(distcode = AGS, year, name = GEN, 
                          xcoord, ycoord,
                          bl_name, bl_ags)]
@@ -114,7 +120,7 @@ pop_weighted_distance <- function() {
 }
 
 flows <- clean_flows(flows, age_for)
-districts <- gen_coords_dt(shp, age_for, density)
+districts <- gen_coords_dt(shp, age_for, density, type = "pos")
 check_tables(flows, districts)
 calculate_distances(flows, districts)
 ## distances <- pop_weighted_distance() ## would be good to calc all distances here
