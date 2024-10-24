@@ -34,5 +34,9 @@ savelp = function()
     savefig(path * "/plots/lp_values.pdf")
 end
 
-savelp()
-plot_surface()
+post_process = function()
+    savelp()
+    plot_surface()
+end
+
+    
