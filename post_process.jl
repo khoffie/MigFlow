@@ -1,6 +1,6 @@
 using Pkg
 Pkg.activate(".")
-using Turing, CSV, DataFrames, StatsPlots, Plots, LaTeXStrings, Serialization
+using Turing, CSV, DataFrames, StatsPlots, Plots, LaTeXStrings, Serialization, Random
 
 plot_surface = function()
     plot_surface_ = function(df, age, max)
@@ -46,6 +46,9 @@ plot_distance = function()
     ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
     for age in ages
         df = CSV.read("./manuscript_input/germflows_$(age).csv", DataFrame)
+        N = nrow(df)
+        size = 2000
+        df = df[Random.shuffle(1:N)[1:min(size, N)], :]
         df.out = log.((df.flows .+ 1) ./ df.preds)
         out[age] = plot_distance_(df, age)
     end
@@ -64,3 +67,4 @@ post_process = function()
 end
     
 post_process()
+
