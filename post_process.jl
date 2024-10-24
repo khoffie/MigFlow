@@ -34,9 +34,33 @@ savelp = function()
     savefig(path * "/plots/lp_values.pdf")
 end
 
+
+plot_distance = function()
+    path = "./manuscript_input"
+    plot_distance_ = function(df, age)
+        Plots.plot(df.dist, df.out, seriestype = :scatter, alpha = .1,
+                   xlab = "Distance", ylab = "log.((df.flows .+ 1) ./ df.preds)",
+                   title = "agegroup $(age)")
+    end
+    out = Dict{String, Any}()  # Create a dictionary to store the plots
+    ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
+    for age in ages
+        df = CSV.read("./manuscript_input/germflows_$(age).csv", DataFrame)
+        df.out = log.((df.flows .+ 1) ./ df.preds)
+        out[age] = plot_distance_(df, age)
+    end
+    p = Plots.plot(out["below18"], out["18-25"], out["25-30"],
+                   out["30-50"], out["50-65"], out["above65"],
+                   layout = (3, 2))
+    display(p)
+    savefig(path * "/plots/distance.pdf")
+end
+
 post_process = function()
     savelp()
     plot_surface()
+    Plots.scalefontsizes(.4)    
+    plot_distance()
 end
-
     
+post_process()
