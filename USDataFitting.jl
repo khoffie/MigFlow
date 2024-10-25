@@ -245,6 +245,7 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
             println("Optimization finished")
             vals.optis = mapest.values.array
         else
+            println("No optimization, using random inits for sampling")
             vals.optis = vals.inits
         end
         println(vals[[1:10; 43:47], :])
