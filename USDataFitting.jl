@@ -217,34 +217,39 @@ end
 
 grabparams(chain,n) = chain.value.data[n,1:end-1,1]
 
+function gen_inits()
+    parnames = [["a", "c", "d0", "dscale", "ktopop"];
+                ["kd[$i]" for i in 1:36];
+                ["desirecoefs[$i]" for i in 1:36]]
+    lb = [[-60.0, 0.0, 0.0, 1.0, -10.0];
+          fill(-50.50, 36);
+          fill(-50.50, 36)]
+    ub = [[60.0, 20.0, 10.0, 15.0, 10.0];
+          fill(50.50, 36);
+          fill(50.50, 36)]
+    ini = rand(Normal(0.0, 0.10), length(ub))
+    ini[1:6] .= [-7.6, 1.81, 1.5, 5.0, 3.5, 0.0]
+    df = DataFrame(:pars => parnames, :lb => lb, :ub => ub, :inits => ini)
+    print(inits[[1:10; 43:47], :])
+    return(df)
+end
 
 function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
 
     algo = LBFGS()
-
-    parnames = [["a", "c", "d0", "dscale", "ktopop"];
-        ["kd[$i]" for i in 1:36];
-        ["desirecoefs[$i]" for i in 1:36]]
-
-    lb = [[-60.0, 0.0, 0.0, 1.0, -10.0];
-            fill(-50.50, 36);
-            fill(-50.50, 36)]
-    ub = [[60.0, 20.0, 10.0, 15.0, 10.0];
-            fill(50.50, 36);
-            fill(50.50, 36)]
-    ini = rand(Normal(0.0, 0.10), length(ub))
-    ini[1:6] .= [-7.6, 1.81, 1.5, 5.0, 3.5, 0.0]
+    vals = gen_inits()
     println("Optimization starts")
     mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),
-                                  initial_params = ini, lb = lb, ub = ub, maxiters = 100, maxtime = 400,
+                                  initial_params = vals.inits, lb = vals.lb, ub = vals.ub,
+                                  maxiters = 100, maxtime = 400,
                                   reltol=1e-3, progress = true)
     println("Optimization finished")
-    paramvec = mapest.values.array
+    vals.optis = mapest.values.array
 
     #usdiagplots(alldata,paramvec,parnames)
     println("Sampling starts")
     mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 10;
-                           thinning = 5, initial_params = paramvec)
+                           thinning = 5, initial_params = vals.optis)
     # plt = Plots.plot(mhsamp[:lp])
     # Plots.savefig(plt, plotout)
 
