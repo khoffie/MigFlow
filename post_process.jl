@@ -66,5 +66,4 @@ post_process = function()
     plot_distance()
 end
     
-post_process()
 
