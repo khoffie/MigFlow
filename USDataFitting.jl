@@ -1,6 +1,6 @@
 using Pkg
 Pkg.activate(".")
-using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays
+using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall
 using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML
 using Turing, OptimizationOptimJL, ApproxFun, OptimizationBBO, OptimizationNLopt, NLopt, ReverseDiff
 using Printf, Revise, Dates, Enzyme, Serialization
@@ -217,27 +217,26 @@ end
 
 grabparams(chain,n) = chain.value.data[n,1:end-1,1]
 
-function gen_inits()
-    parnames = [["a", "c", "d0", "dscale", "ktopop"];
-                ["kd[$i]" for i in 1:36];
-                ["desirecoefs[$i]" for i in 1:36]]
-    lb = [[-60.0, 0.0, 0.0, 1.0, -10.0];
-          fill(-50.50, 36);
-          fill(-50.50, 36)]
-    ub = [[60.0, 20.0, 10.0, 15.0, 10.0];
-          fill(50.50, 36);
-          fill(50.50, 36)]
-    ini = rand(Normal(0.0, 0.10), length(ub))
-    ini[1:6] .= [-7.6, 1.81, 1.5, 5.0, 3.5, 0.0]
-    df = DataFrame(:pars => parnames, :lb => lb, :ub => ub, :inits => ini)
-    print(inits[[1:10; 43:47], :])
-    return(df)
-end
-
 function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
+    function gen_inits()
+        parnames = [["a", "c", "d0", "dscale", "ktopop"];
+                    ["kd[$i]" for i in 1:36];
+                    ["desirecoefs[$i]" for i in 1:36]]
+        lb = [[-60.0, 0.0, 0.0, 1.0, -10.0];
+              fill(-50.50, 36);
+              fill(-50.50, 36)]
+        ub = [[60.0, 20.0, 10.0, 15.0, 10.0];
+              fill(50.50, 36);
+              fill(50.50, 36)]
+        ini = rand(Normal(0.0, 0.10), length(ub))
+        ini[1:6] .= [-7.6, 1.81, 1.5, 5.0, 3.5, 0.0]
+        df = DataFrame(:pars => parnames, :lb => lb, :ub => ub, :inits => ini)
+        return(df)
+    end
 
     algo = LBFGS()
     vals = gen_inits()
+    println(vals[[1:10; 43:47], :])
     println("Optimization starts")
     mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),
                                   initial_params = vals.inits, lb = vals.lb, ub = vals.ub,
@@ -245,7 +244,7 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
                                   reltol=1e-3, progress = true)
     println("Optimization finished")
     vals.optis = mapest.values.array
-
+    println(vals[[1:10; 43:47], :])
     #usdiagplots(alldata,paramvec,parnames)
     println("Sampling starts")
     mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 10;
@@ -256,9 +255,9 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
 #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
-    paramvec = grabparams(mhsamp,10)
-
-    preds = generated_quantities(alldata.model,paramvec,parnames)
+    vals.optsam = grabparams(mhsamp,10)
+    println(vals[[1:10; 43:47], :])
+    preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
     alldata.flows.preds = preds
 
     CSV.write(flowout,alldata.flows)
@@ -268,8 +267,10 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
     (ymin,ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)    
     kdindx = (1:36) .+ 5 #number of non kd or cheby inits/ priors
     desindx = (1:36) .+ (5 + 36)
-    kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),paramvec[kdindx] ./ 10)
-    desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax ),paramvec[desindx] ./ 10)
+    kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
+                vals.optsam[kdindx] ./ 10)
+    desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax ),
+                   vals.optsam[desindx] ./ 10)
 
     alldata.geog.desirability = [desirfun(x,y) for (x,y) in zip(alldata.geog.x,alldata.geog.y)]
 
@@ -277,7 +278,7 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
     densvals = range(minimum(alldata.geog.logreldens),maximum(alldata.geog.logreldens),100)
     densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd,td)) for fd in densvals, td in densvals)
     CSV.write(densout,densfundf)
-    CSV.write(paramout,DataFrame(paramval=paramvec,parname=parnames))
+    CSV.write(paramout,DataFrame(paramval = vals.optsam, parname = vals.pars))
 end
 
 
@@ -301,6 +302,7 @@ function main()
         germ.geog.y = germ.geog.ycoord
 
         Threads.@threads for age in levels(germ.flows.agegroup)
+            println(age)
             agedat = @subset(germ.flows,germ.flows.agegroup .== age)
             modl = usmodel(agedat.flows,sum(agedat.flows),levelcode.(agedat.fromdist), levelcode.(agedat.todist),
                             median(germ.geog.pop),agedat.dist,
@@ -323,6 +325,8 @@ end
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
-sample = false
+sample = true
 main()
 post_process()
+## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
+## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
