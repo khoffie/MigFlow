@@ -256,7 +256,7 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
     vals = runoptim(vals, false)
     #usdiagplots(alldata,paramvec,parnames)
     println("Sampling starts")
-    mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 10;
+    mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(vals.optis))), 10;
                            thinning = 5, initial_params = vals.optis)
     # plt = Plots.plot(mhsamp[:lp])
     # Plots.savefig(plt, plotout)
