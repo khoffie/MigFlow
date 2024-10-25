@@ -215,60 +215,6 @@ function totalflow(fromc, toc, flow, counties)
 end
 
 
-
-
-# function main_interact()
-# #    densdict = Dict(alldata.county.countyid .=> alldata.county.logreldens)
-# #    histogram2d([densdict[f] for f in alldata.flows.fromcounty],[densdict[f] for f in alldata.flows.tocounty])
-
-# @eval begin
-#     alldata = loadallUSdata(0) # add no zeros
-
-#     #algo = BBO_de_rand_1_bin_radiuslimited()
-#     algo = LBFGS()
-#     #algo = NLopt.LN_BOBYQA()
-
-#     parnames = [["a","c","d0","dscale","neterr","ktopop"];
-#         ["kd[$i]" for i in 1:36];
-#         ["desirecoefs[$i]" for i in 1:36]]
-
-
-#     lb = [[-60.0,0.0,0.0,1.0,0.01,-10.0];
-#             fill(-50.50,36);
-#             fill(-50.50,36)]
-#     ub = [[60.0, 20.0,10.0,15.0,100.0,10.0];
-#             fill(50.50,36);
-#             fill(50.50,36)]
-#     ini = rand(Normal(0.0,0.10),length(ub))
-#     ini[1:7] .= [-7.6,1.81,1.5,5.0,1.0,3.5,0.0] 
-#     mapest = Turing.Optimisation.maximum_a_posteriori(alldata.model, algo;
-#                                                       adtype = AutoReverseDiff(false),
-#                                                       initial_params = ini,
-#                                                       lb = lb,ub = ub,
-#                                                       maxiters = 500, maxtime = 400,
-#                                                       reltol = 1e-3, progress = true)
-#     serialize("fitted_models/USmodel_map_$(now()).dat",mapest)
-#     paramvec = mapest.values.array
-#     usdiagplots(alldata,paramvec)
-#     mhsamp = Turing.sample(alldata.model,MH(.1^2*I(length(mapest.values))),100; thinning=50, initial_params = paramvec)
-# #    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
-
-#     serialize("./fitted_models/samps_$(now()).dat",mhsamp)
-
-#     usdiagplots(alldata,mhsamp.value.data[50,1:end-1,1])
-#     usdiagplots(alldata,mhsamp.value.data[75,1:end-1,1])
-#     usdiagplots(alldata,mhsamp.value.data[100,1:end-1,1])
-
-#     hmcsamp = Turing.sample(alldata.model,HMC(1e-5,50; adtype = AutoReverseDiff(true)),20; init_params = paramvec)
-# #    nutsamp = Turing.sample(alldata.model,NUTS(300,.75; adtype=AutoReverseDiff(false)),100)
-# #    vfit = vi(alldata.model,ADVI(15,200),AutoReverseDiff(true))
-# end
-
-# end
-
-
-
-
 grabparams(chain,n) = chain.value.data[n,1:end-1,1]
 
 
