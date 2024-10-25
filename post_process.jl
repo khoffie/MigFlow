@@ -20,22 +20,25 @@ plot_surface = function()
     end
 end
 
-savelp = function()
-    path = "./manuscript_input/bu"
+savelp = function(from = 1)
+    path = "./manuscript_input/"
     out = Dict{String, Any}()  # Create a dictionary to store the plots
     ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
     for age in ages
         chain = deserialize(path * "/germchain_$(age)")
-        lastlp = chain[:lp][length(chain)]
+        ss = length(chain)
+        lastlp = chain[:lp][ss]
         lastlp = round(lastlp, digits = 0)
-        out[age] = Plots.plot(chain[:lp],
+        xvals = [from:ss]
+        out[age] = Plots.plot(xvals, chain[:lp][from:ss],
                               title = "LP for $(age)",
-                              label = "lastlp: $(lastlp)")
+                              label = "lastlp: $(lastlp)",
+                              xlab = "Sample", ylab = "LP")
     end
     p = Plots.plot(out["below18"], out["18-25"], out["25-30"],
                    out["30-50"], out["50-65"], out["above65"],
                    layout = (3, 2))
-    savefig(path * "/plots/lp_values_old.pdf")
+    savefig(path * "/plots/lp_values.pdf")
 end
 
 plot_distance = function()
@@ -68,5 +71,3 @@ post_process = function()
     Plots.scalefontsizes(.4)    
     plot_distance()
 end
-    
-
