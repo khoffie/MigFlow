@@ -338,4 +338,5 @@ sample = false
 main()
 post_process()
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
-## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
+## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'definitions.tex')"
+R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
