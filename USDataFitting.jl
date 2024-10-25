@@ -234,7 +234,7 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
         return(df)
     end
 
-    function = runoptim(vals, optim)
+    function runoptim(vals, optim)
         if optim == true
             algo = LBFGS()
             println("Optimization starts")
