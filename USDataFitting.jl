@@ -234,17 +234,25 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
         return(df)
     end
 
-    algo = LBFGS()
+    function = runoptim(vals, optim)
+        if optim == true
+            algo = LBFGS()
+            println("Optimization starts")
+            mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),
+                                          initial_params = vals.inits, lb = vals.lb, ub = vals.ub,
+                                          maxiters = 50, maxtime = 400,
+                                          reltol=1e-3, progress = true)
+            println("Optimization finished")
+            vals.optis = mapest.values.array
+        else
+            vals.optis = vals.inits
+        end
+        println(vals[[1:10; 43:47], :])
+        return vals
+    end
+
     vals = gen_inits()
-    println(vals[[1:10; 43:47], :])
-    println("Optimization starts")
-    mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),
-                                  initial_params = vals.inits, lb = vals.lb, ub = vals.ub,
-                                  maxiters = 100, maxtime = 400,
-                                  reltol=1e-3, progress = true)
-    println("Optimization finished")
-    vals.optis = mapest.values.array
-    println(vals[[1:10; 43:47], :])
+    vals = runoptim(vals, false)
     #usdiagplots(alldata,paramvec,parnames)
     println("Sampling starts")
     mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(mapest.values))), 10;
@@ -325,7 +333,7 @@ end
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
-sample = true
+sample = false
 main()
 post_process()
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
