@@ -182,7 +182,9 @@ function loadallUSdata(nzeros = 0; sample, positive_only)
     zerosamp = DataFrame((COUNT = 0,fromcounty = f,tocounty = t) for (f,t) in 
         zip(StatsBase.sample(geog.countyid,nzeros),StatsBase.sample(geog.countyid,nzeros)) if !((f,t)  in flowset))
     flows = [flows; zerosamp]
-    flows = filter(row -> row.flows .> o, flows)
+    # if positive_only
+    #     flows = filter(row -> row.flows .> o, flows)        
+    # end
     flows.dist = [haversine((geog[levelcode(r.fromcounty),:INTPTLONG],geog[levelcode(r.fromcounty),:INTPTLAT]), 
                         (geog[levelcode(r.tocounty),:INTPTLONG],geog[levelcode(r.tocounty),:INTPTLAT])) / 1000.0 for r in eachrow(flows)] ## haversine is in m, calculate km
     #netactual::Vector{Float64} = usnetmig(levelcode.(flows.fromcounty),levelcode.(flows.tocounty),flows.COUNT)
