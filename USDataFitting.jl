@@ -138,26 +138,29 @@ function loadGermGeog()
     geog
 end
 
-function loadGermFlows(distcodes)
+function loadGermFlows(distcodes, positive_only)
     fl = CSV.read("data/FlowDataGermans.csv", DataFrame)
     fl = filter(row -> row.fromdist in distcodes, fl)
     fl = filter(row -> row.todist in distcodes, fl)
     fl.fromdist = categorical(fl.fromdist, levels = distcodes)
     fl.todist = categorical(fl.todist, levels = distcodes)
+    if positive_only
+        fl = filter(row -> row.flows .> 0, fl)
+    end
     return fl
 end
 
 
-function loadallGermData(nzeros = 0; sample)
+function loadallGermData(nzeros = 0; sample, positive_only)
     geog = loadGermGeog()
     if sample == true
         geog = sample_germ(geog)
     end
-    flows = loadGermFlows(levels(geog.distcode))
+    flows = loadGermFlows(levels(geog.distcode), positive_only)
     return (geog=geog, flows=flows)
 end
 
-function loadallUSdata(nzeros = 0; sample)
+function loadallUSdata(nzeros = 0; sample, positive_only)
 
     flows = loadUS48flows()
     geog = loadUS48geog()
@@ -179,7 +182,7 @@ function loadallUSdata(nzeros = 0; sample)
     zerosamp = DataFrame((COUNT = 0,fromcounty = f,tocounty = t) for (f,t) in 
         zip(StatsBase.sample(geog.countyid,nzeros),StatsBase.sample(geog.countyid,nzeros)) if !((f,t)  in flowset))
     flows = [flows; zerosamp]
-
+    flows = filter(row -> row.flows .> o, flows)
     flows.dist = [haversine((geog[levelcode(r.fromcounty),:INTPTLONG],geog[levelcode(r.fromcounty),:INTPTLAT]), 
                         (geog[levelcode(r.tocounty),:INTPTLONG],geog[levelcode(r.tocounty),:INTPTLAT])) / 1000.0 for r in eachrow(flows)] ## haversine is in m, calculate km
     #netactual::Vector{Float64} = usnetmig(levelcode.(flows.fromcounty),levelcode.(flows.tocounty),flows.COUNT)
@@ -294,7 +297,8 @@ end
 function main(settings)
     @sync begin
         Threads.@spawn begin
-            usd = loadallUSdata(0; sample = settings[:sample_rows]) # add no zeros, 
+            usd = loadallUSdata(0; sample = settings[:sample_rows],
+                                positive_only = settings[:positive]) # add no zeros, 
 
             Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
             usd.geog.x = usd.geog.INTPTLONG
@@ -306,7 +310,7 @@ function main(settings)
                             "manuscript_input/usparams.csv",
                             "manuscript_input/uschain")
         end
-        germ = loadallGermData(0; sample = settings[:sample_rows])
+        germ = loadallGermData(0; sample = settings[:sample_rows], positive_only = settings[:positive])
         germ.geog.x = germ.geog.xcoord
         germ.geog.y = germ.geog.ycoord
 
@@ -336,7 +340,8 @@ settings = Dict(
     :sample_size => 10,
     :thinning => 1,
     :run_optim => false,
-    :sample_rows => false
+    :sample_rows => false,
+    :positive => true
 )
 
 
@@ -348,4 +353,3 @@ post_process()
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'definitions.tex')"
 R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
-R"library(data.table)"
