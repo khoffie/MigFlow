@@ -4,11 +4,11 @@ using Turing, CSV, DataFrames, StatsPlots, Plots, LaTeXStrings, Serialization, R
 
 plot_surface = function()
     plot_surface_ = function(df, age, max)
-        Plots.surface(df.todens, df.fromdens, df.funval,
+        Plots.surface(df.fromdens, df.todens, df.funval,
                       title = "Cheby density, agegroup $(age)\n
                   max logreldens = $(max)",
                       xlab = L"$\rho_o$", ylab = L"$\rho_d$",
-                      camera = (10, 45))
+                      camera = (45, 45))
     end
     ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
     for age in ages
