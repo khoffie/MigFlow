@@ -20,7 +20,7 @@ plot_surface = function()
     end
 end
 
-savelp = function(from = 1)
+savelp = function(from = nothing, to = nothing)
     path = "./manuscript_input/"
     out = Dict{String, Any}()  # Create a dictionary to store the plots
     ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
@@ -29,8 +29,14 @@ savelp = function(from = 1)
         ss = length(chain)
         lastlp = chain[:lp][ss]
         lastlp = round(lastlp, digits = 0)
-        xvals = [from:ss]
-        out[age] = Plots.plot(xvals, chain[:lp][from:ss],
+        if to == nothing
+            to = ss
+        end
+        if from == nothing
+            from = 1
+        end
+        xvals = [from:to]
+        out[age] = Plots.plot(xvals, chain[:lp][from:to],
                               title = "LP for $(age)",
                               label = "lastlp: $(lastlp)",
                               xlab = "Sample", ylab = "LP")
