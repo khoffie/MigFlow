@@ -233,7 +233,6 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
         df = DataFrame(:pars => parnames, :lb => lb, :ub => ub, :inits => ini)
         return(df)
     end
-
     function runoptim(vals, optim)
         if optim == true
             algo = LBFGS()
@@ -251,24 +250,22 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
         println(vals[[1:10; 43:47], :])
         return vals
     end
+    function runsampling(alldata, vals, chainout, samples, thinning)
+        println("Sampling starts")
+        mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(vals.optis))), samples;
+                               thinning = thinning, initial_params = vals.optis)
+        Serialization.serialize(chainout, mhsamp)
+        println("Sampling finished")
+        vals.optsam = grabparams(mhsamp, 10)
+        println(vals[[1:10; 43:47], :])
+        preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
+        alldata.flows.preds = preds
+        return alldata, vals
+    end
 
     vals = gen_inits()
     vals = runoptim(vals, false)
-    #usdiagplots(alldata,paramvec,parnames)
-    println("Sampling starts")
-    mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(vals.optis))), 10;
-                           thinning = 50, initial_params = vals.optis)
-    # plt = Plots.plot(mhsamp[:lp])
-    # Plots.savefig(plt, plotout)
-
-    Serialization.serialize(chainout, mhsamp)
-    println("Sampling finished")
-#    mhsamp = Turing.sample(alldata.model,HMCDA(200,.7,1.0; adtype=AutoReverseDiff(true)),100; thinning=1, initial_params = paramvec)
-    vals.optsam = grabparams(mhsamp,10)
-    println(vals[[1:10; 43:47], :])
-    preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
-    alldata.flows.preds = preds
-
+    alldata, vals = runsampling(alldata, vals, chainout, 10, 1)
     CSV.write(flowout,alldata.flows)
 
     (densmin,densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
