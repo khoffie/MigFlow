@@ -330,6 +330,13 @@ function main()
     println("Computation finished!")
 end
 
+settings = Dict(
+    :sample_size => 10,
+    :thinning => 1,
+    :run_optim => false
+)
+
+
 
 # getUSflows()
 # getUSgeog()
