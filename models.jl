@@ -46,6 +46,6 @@
     if any(isnan, preds)
         println("NaN in predictions")
     end
-    flows ~ arraydist([Poisson(p) for p in preds])
+    flows ~ arraydist([truncated(Poisson(p), 1, Inf) for p in preds])
     return (preds = preds)
 end
