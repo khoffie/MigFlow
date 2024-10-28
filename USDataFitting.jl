@@ -233,8 +233,9 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
         df = DataFrame(:pars => parnames, :lb => lb, :ub => ub, :inits => ini)
         return(df)
     end
-    function runoptim(vals, optim)
-        if optim == true
+    
+    function runoptim(vals; run)
+        if run == true
             algo = LBFGS()
             println("Optimization starts")
             mapest = maximum_a_posteriori(alldata.model, algo; adtype = AutoReverseDiff(false),
@@ -250,6 +251,7 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
         println(vals[[1:10; 43:47], :])
         return vals
     end
+    
     function runsampling(alldata, vals, chainout, samples, thinning)
         println("Sampling starts")
         mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(vals.optis))), samples;
@@ -262,29 +264,30 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
         alldata.flows.preds = preds
         return alldata, vals
     end
-
+    
+    function moreout(alldata, flowout, geogout, densout, paramout)
+        (densmin,densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
+        (xmin,xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
+        (ymin,ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)    
+        kdindx = (1:36) .+ 5 #number of non kd or cheby inits/ priors
+        desindx = (1:36) .+ (5 + 36)
+        kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
+                    vals.optsam[kdindx] ./ 10)
+        desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax ),
+                       vals.optsam[desindx] ./ 10)
+        alldata.geog.desirability = [desirfun(x,y) for (x,y) in zip(alldata.geog.x,alldata.geog.y)]
+        densvals = range(minimum(alldata.geog.logreldens),maximum(alldata.geog.logreldens),100)
+        densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd,td)) for fd in densvals, td in densvals)
+        CSV.write(geogout, alldata.geog)
+        CSV.write(densout, densfundf)
+        CSV.write(paramout, DataFrame(paramval = vals.optsam, parname = vals.pars))
+        CSV.write(flowout, alldata.flows)
+    end
+    
     vals = gen_inits()
-    vals = runoptim(vals, false)
+    vals = runoptim(vals; run = false)
     alldata, vals = runsampling(alldata, vals, chainout, 10, 1)
-    CSV.write(flowout,alldata.flows)
-
-    (densmin,densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
-    (xmin,xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
-    (ymin,ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)    
-    kdindx = (1:36) .+ 5 #number of non kd or cheby inits/ priors
-    desindx = (1:36) .+ (5 + 36)
-    kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
-                vals.optsam[kdindx] ./ 10)
-    desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax ),
-                   vals.optsam[desindx] ./ 10)
-
-    alldata.geog.desirability = [desirfun(x,y) for (x,y) in zip(alldata.geog.x,alldata.geog.y)]
-
-    CSV.write(geogout,alldata.geog)
-    densvals = range(minimum(alldata.geog.logreldens),maximum(alldata.geog.logreldens),100)
-    densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd,td)) for fd in densvals, td in densvals)
-    CSV.write(densout,densfundf)
-    CSV.write(paramout,DataFrame(paramval = vals.optsam, parname = vals.pars))
+    moreout(alldata, flowout, geogout, densout, paramout)
 end
 
 
