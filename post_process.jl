@@ -29,12 +29,8 @@ savelp = function(from = nothing, to = nothing)
         ss = length(chain)
         lastlp = chain[:lp][ss]
         lastlp = round(lastlp, digits = 0)
-        if to == nothing
-            to = ss
-        end
-        if from == nothing
-            from = 1
-        end
+        from = isnothing(from) ? 1 : from
+        to = isnothing(to) ? ss : to
         xvals = [from:to]
         out[age] = Plots.plot(xvals, chain[:lp][from:to],
                               title = "LP for $(age)",
