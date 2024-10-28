@@ -217,7 +217,7 @@ end
 
 grabparams(chain,n) = chain.value.data[n,1:end-1,1]
 
-function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
+function fitandwritefile(alldata, settings, flowout, geogout, densout, paramout, chainout)
     function gen_inits()
         parnames = [["a", "c", "d0", "dscale", "ktopop"];
                     ["kd[$i]" for i in 1:36];
@@ -285,28 +285,28 @@ function fitandwritefile(alldata, flowout, geogout, densout, paramout, chainout)
     end
     
     vals = gen_inits()
-    vals = runoptim(vals; run = false)
-    alldata, vals = runsampling(alldata, vals, chainout, 10, 1)
+    vals = runoptim(vals; run = settings[:run_optim])
+    alldata, vals = runsampling(alldata, vals, chainout, settings[:sample_size], settings[:thinning])
     moreout(alldata, flowout, geogout, densout, paramout)
 end
 
 
-function main()
+function main(settings)
     @sync begin
         Threads.@spawn begin
-            usd = loadallUSdata(0; sample = sample) # add no zeros, 
+            usd = loadallUSdata(0; sample = settings[:sample_rows]) # add no zeros, 
 
             Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
             usd.geog.x = usd.geog.INTPTLONG
             usd.geog.y = usd.geog.INTPTLAT
-            fitandwritefile(usd,
+            fitandwritefile(usd, settings,
                             "manuscript_input/usflows.csv",
                             "manuscript_input/usgeog.csv",
                             "manuscript_input/usdensfun.csv",
                             "manuscript_input/usparams.csv",
                             "manuscript_input/uschain")
         end
-        germ = loadallGermData(0; sample = sample)
+        germ = loadallGermData(0; sample = settings[:sample_rows])
         germ.geog.x = germ.geog.xcoord
         germ.geog.y = germ.geog.ycoord
 
@@ -319,7 +319,7 @@ function main()
                             germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
                             germ.geog.logreldens,minimum(germ.geog.logreldens),maximum(germ.geog.logreldens),
                             germ.geog.pop,nrow(germ.geog),100.0,36,36) ## nothing == netactual, we're not using it anymore
-            fitandwritefile((flows=agedat,geog=germ.geog,model=modl),
+            fitandwritefile((flows=agedat,geog=germ.geog,model=modl), settings,
                             "manuscript_input/germflows_$(age).csv",
                             "manuscript_input/germgeog_$(age).csv",
                             "manuscript_input/germdensfun_$(age).csv",
@@ -328,22 +328,24 @@ function main()
         end
     end
     println("Computation finished!")
+    settings = DataFrame(settings)
+    CSV.write("manuscript_input/settings.csv", settings)    
 end
 
 settings = Dict(
     :sample_size => 10,
     :thinning => 1,
-    :run_optim => false
+    :run_optim => false,
+    :sample_rows => false
 )
-
 
 
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
-sample = false
-main()
+main(settings)
 post_process()
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'definitions.tex')"
 R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
+R"library(data.table)"
