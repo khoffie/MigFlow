@@ -222,7 +222,7 @@ end
 
 grabparams(chain,n) = chain.value.data[n,1:end-1,1]
 
-function fitandwritefile(alldata, settings, flowout, geogout, densout, paramout, chainout)
+function fitandwritefile(alldata, settings, outpaths)
     function gen_inits()
         parnames = [["a", "c", "d0", "dscale", "ktopop"];
                     ["kd[$i]" for i in 1:36];
@@ -270,7 +270,7 @@ function fitandwritefile(alldata, settings, flowout, geogout, densout, paramout,
         return alldata, vals
     end
     
-    function moreout(alldata, flowout, geogout, densout, paramout)
+    function moreout(alldata, outpaths)
         (densmin,densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
         (xmin,xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
         (ymin,ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)    
@@ -283,20 +283,26 @@ function fitandwritefile(alldata, settings, flowout, geogout, densout, paramout,
         alldata.geog.desirability = [desirfun(x,y) for (x,y) in zip(alldata.geog.x,alldata.geog.y)]
         densvals = range(minimum(alldata.geog.logreldens),maximum(alldata.geog.logreldens),100)
         densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd,td)) for fd in densvals, td in densvals)
-        CSV.write(geogout, alldata.geog)
-        CSV.write(densout, densfundf)
-        CSV.write(paramout, DataFrame(paramval = vals.optsam, parname = vals.pars))
-        CSV.write(flowout, alldata.flows)
+        CSV.write(outpaths["geog"], alldata.geog)
+        CSV.write(outpaths["densfun"], densfundf)
+        CSV.write(outpaths["params"], DataFrame(paramval = vals.optsam, parname = vals.pars))
+        CSV.write(outpaths["flows"], alldata.flows)
     end
     
     vals = gen_inits()
     vals = runoptim(vals; run = settings[:run_optim])
-    alldata, vals = runsampling(alldata, vals, chainout, settings[:sample_size], settings[:thinning])
-    moreout(alldata, flowout, geogout, densout, paramout)
+    alldata, vals = runsampling(alldata, vals, outpaths["chain"], settings[:sample_size], settings[:thinning])
+    moreout(alldata, outpaths)
 end
 
 
-function main(settings, path)
+function main(settings, outpath)
+    function createpaths(path, type, age)
+        datasets = ["flows", "geog", "densfun", "params", "chain"]
+        paths = Dict(d => "$(path)/$(type)$(d)_$(age).csv" for d in datasets)
+        return paths
+    end
+    mkpath(outpath)
     @sync begin
         Threads.@spawn begin
             usd = loadallUSdata(0; sample = settings[:sample_rows],
@@ -305,12 +311,8 @@ function main(settings, path)
             Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
             usd.geog.x = usd.geog.INTPTLONG
             usd.geog.y = usd.geog.INTPTLAT
-            fitandwritefile(usd, settings,
-                            "manuscript_input/usflows.csv",
-                            "manuscript_input/usgeog.csv",
-                            "manuscript_input/usdensfun.csv",
-                            "manuscript_input/usparams.csv",
-                            "manuscript_input/uschain")
+            outpaths = createpaths(outpath, "us", "all")
+            fitandwritefile(usd, settings, outpaths)
         end
         germ = loadallGermData(0; sample = settings[:sample_rows], positive_only = settings[:zeroflows])
         germ.geog.x = germ.geog.xcoord
@@ -324,13 +326,10 @@ function main(settings, path)
                             germ.geog.xcoord,minimum(germ.geog.xcoord),maximum(germ.geog.xcoord),
                             germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
                             germ.geog.logreldens,minimum(germ.geog.logreldens),maximum(germ.geog.logreldens),
-                            germ.geog.pop,nrow(germ.geog),100.0,36,36) ## nothing == netactual, we're not using it anymore
-            fitandwritefile((flows=agedat,geog=germ.geog,model=modl), settings,
-                            "manuscript_input/germflows_$(age).csv",
-                            "manuscript_input/germgeog_$(age).csv",
-                            "manuscript_input/germdensfun_$(age).csv",
-                            "manuscript_input/germparams_$(age).csv",
-                            "manuscript_input/germchain_$(age)")
+                           germ.geog.pop,nrow(germ.geog),100.0,36,36) ## nothing == netactual, we're not using it anymore
+            outpaths = createpaths(outpath, "germ", age)
+            germd = (flows = agedat, geog = germ.geog, model = modl)
+            fitandwritefile(germd, settings, outpaths)
         end
     end
     println("Computation finished!")
@@ -338,25 +337,18 @@ function main(settings, path)
     CSV.write("manuscript_input/settings.csv", settings)    
 end
 
-function createpaths(path, type, age)
-    datasets = ["flows", "geog", "densfun", "params", "chain"]
-    paths = (path * "/" * type) .* ds .* "_" .* age  .* ".csv"# chain gets .csv ending
-    paths = Dict(d => "$(path)/$(type)/$(d)_$(age).csv" for d in datasets)
-    return paths
-end
-
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :zeroflows => false,
-    :sample_size => 50000,
+    :sample_size => 10,
     :thinning => 1,
     :run_optim => false
 )
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
-timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
-main(settings, timestamp)
+
+main(settings, "manuscript_input/" * Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
 post_process()
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'definitions.tex')"
