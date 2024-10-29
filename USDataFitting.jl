@@ -350,9 +350,9 @@ end
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sample_size => 10,
+    :sample_size => 100,
     :nchains => 4,
-    :thinning => 1,
+    :thinning => 50,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
