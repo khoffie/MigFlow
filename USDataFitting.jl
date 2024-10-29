@@ -194,7 +194,7 @@ function loadallUSdata(nzeros = 0; sample, positive_only)
                 geog.INTPTLONG,minimum(geog.INTPTLONG),maximum(geog.INTPTLONG),
                 geog.INTPTLAT,minimum(geog.INTPTLAT),maximum(geog.INTPTLAT),
                 geog.logreldens,minimum(geog.logreldens),maximum(geog.logreldens),
-                geog.POPESTIMATE2016,nrow(geog),100.0,36,36)
+                geog.POPESTIMATE2016,nrow(geog),100.0,36,36, positive_only)
     (geog=geog, flows = flows, model=mod) #zerosamp=zerosamp,model=mod)
 end
 
@@ -332,7 +332,7 @@ function main(settings, outpath)
                             germ.geog.xcoord,minimum(germ.geog.xcoord),maximum(germ.geog.xcoord),
                             germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
                             germ.geog.logreldens,minimum(germ.geog.logreldens),maximum(germ.geog.logreldens),
-                           germ.geog.pop,nrow(germ.geog),100.0,36,36) ## nothing == netactual, we're not using it anymore
+                           germ.geog.pop,nrow(germ.geog),100.0,36,36, settings[:positive_only]) ## nothing == netactual, we're not using it anymore
             outpaths = createpaths(outpath, "germ", age)
             germd = (flows = agedat, geog = germ.geog, model = modl)
             fitandwritefile(germd, settings, outpaths)
@@ -357,4 +357,3 @@ settings = Dict(
 outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
 main(settings, outpath)
 post_process(outpath)
-

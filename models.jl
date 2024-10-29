@@ -1,6 +1,6 @@
 @model function usmodel(flows, allmoves, fromdist, todist, medcpop, distance,
     xcoord, xmin, xmax, ycoord, ymin, ymax, logreldens,densmin, densmax, distpop,
-    Ndist, meddist, ncoefs, ndenscoef)
+    Ndist, meddist, ncoefs, ndenscoef, positive_only)
 
     a ~ Normal(-14.0, 7)
     c ~ Gamma(10.0, 1.5 / 9.0)
@@ -46,6 +46,10 @@
     if any(isnan, preds)
         println("NaN in predictions")
     end
-    flows ~ arraydist([truncated(Poisson(p), 1, Inf) for p in preds])
+    if positive_only
+        flows ~ arraydist([truncated(Poisson(p), 1, Inf) for p in preds])        
+    else
+        flows ~ arraydist([Poisson(p) for p in preds])
+    end
     return (preds = preds)
 end
