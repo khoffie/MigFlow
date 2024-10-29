@@ -334,7 +334,7 @@ function main(settings, outpath)
     end
     println("Computation finished!")
     settings = DataFrame(settings)
-    CSV.write("manuscript_input/settings.csv", settings)    
+    CSV.write(outpath * "/settings.csv", settings)    
 end
 
 settings = Dict(
@@ -348,8 +348,10 @@ settings = Dict(
 # getUSgeog()
 # getUScountypop()
 
-main(settings, "manuscript_input/" * Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
-post_process()
+outpath = "manuscript_input/" * Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
+main(settings, outpath)
+post_process(outpath)
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'definitions.tex')"
 R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
+R"library(sf)"
