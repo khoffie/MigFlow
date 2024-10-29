@@ -300,7 +300,7 @@ function main(settings)
     @sync begin
         Threads.@spawn begin
             usd = loadallUSdata(0; sample = settings[:sample_rows],
-                                positive_only = settings[:positive]) # add no zeros, 
+                                positive_only = settings[:zeroflows]) # add no zeros, 
 
             Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
             usd.geog.x = usd.geog.INTPTLONG
@@ -312,7 +312,7 @@ function main(settings)
                             "manuscript_input/usparams.csv",
                             "manuscript_input/uschain")
         end
-        germ = loadallGermData(0; sample = settings[:sample_rows], positive_only = settings[:positive])
+        germ = loadallGermData(0; sample = settings[:sample_rows], positive_only = settings[:zeroflows])
         germ.geog.x = germ.geog.xcoord
         germ.geog.y = germ.geog.ycoord
 
@@ -338,14 +338,20 @@ function main(settings)
     CSV.write("manuscript_input/settings.csv", settings)    
 end
 
-settings = Dict(
-    :sample_size => 10,
-    :thinning => 1,
-    :run_optim => false,
-    :sample_rows => false,
-    :positive => true
-)
+function createpaths(path, type, age)
+    ds = ["flows", "geog", "densfun", "params", "chain"]
+    paths = (path * "/" * type) .* ds .* "_" .* age  .* ".csv"# chain gets .csv ending
+    return paths
+end
+createpaths("us", "below18")
 
+settings = Dict(
+    :sample_rows => false, # if true 10% sample of rows is used
+    :zeroflows => false,
+    :sample_size => 50000,
+    :thinning => 1,
+    :run_optim => false
+)
 
 # getUSflows()
 # getUSgeog()
