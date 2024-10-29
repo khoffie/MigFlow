@@ -71,4 +71,16 @@ post_process = function(path)
     plot_surface(path)
     Plots.scalefontsizes(.4)    
     plot_distance(path)
+    println("Plots saved")
+
+    file = "./writeup/juliaout_path.txt"
+    open(file, "w") do f
+        write(f, path)
+    end
+    # report.Rmd reads julia_output_path from file = "./writeup/juliaout_path.txt"
+    R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
+    R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
+    println("Report generated")
 end
+
+
