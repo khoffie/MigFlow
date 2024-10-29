@@ -1,6 +1,6 @@
 using Pkg
 Pkg.activate(".")
-using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall
+using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2
 using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML
 using Turing, OptimizationOptimJL, ApproxFun, OptimizationBBO, OptimizationNLopt, NLopt, ReverseDiff
 using Printf, Revise, Dates, Enzyme, Serialization
@@ -347,13 +347,14 @@ settings = Dict(
     :positive_only => true,
     :sample_size => 10,
     :thinning => 1,
-    :run_optim => false
+    :run_optim => false,
+    :commit_hash => LibGit2.head(".")
 )
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
 
-outpath = "manuscript_input/" * Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
+outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
 main(settings, outpath)
 post_process(outpath)
 
