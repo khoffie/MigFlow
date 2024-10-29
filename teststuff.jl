@@ -41,9 +41,10 @@ test = Iterators.repeated(inits.inits, 4)
 end
 
 
-inits = [1, 2, 1, 2]
+inits = rand(Normal(), 4)
 p1 = Turing.sample(gdemo(missing, missing), NUTS(), 100, thinning = 5,
                    initial_params = inits)
-p1 = Turing.sample(gdemo(missing, missing), NUTS(),  MCMCThreads(), 100, 2, thinning = 5,
-                   initial_params = Iterators.repeated(inits))
+p2 = Turing.sample(gdemo(missing, missing), NUTS(),  MCMCThreads(), 100, 2; thinning = 5,
+                   initial_params = fill(inits))
 
+p2[:, :, 1]

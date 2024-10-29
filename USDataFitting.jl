@@ -261,17 +261,15 @@ function fitandwritefile(alldata, settings, outpaths)
 
     function runsampling(alldata, vals, chainout, nchains, nsamples, thinning)
         println("Sampling starts")
-        ## MH(.1^2*I(length(vals.optis)))
-        mhsamp = Turing.sample(alldata.model, NUTS(), MCMCThreads(),
+        mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(vals.optis))), MCMCThreads(),
                                nsamples, nchains, thinning = thinning,
-                               initial_params = Iterators.repeated(vals.optis),
+                               initial_params = fill(vals.optis, nchains),
                                verbose = true, progress = true)
         Serialization.serialize(chainout, mhsamp)
         println("Sampling finished")
-        vals.optsam = mhsamp.value.data[end, 1 : end - 1, 1] # last sample, all params but no LP
+        vals.optsam = mhsamp.value.data[end, 1 : end - 1, 1] # last sample, all params but no LP, first chain
         println(vals[[1:10; 43:47], :])
-        preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
-        alldata.flows.preds
+        alldata.flows.preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
         return alldata, vals
     end
     
