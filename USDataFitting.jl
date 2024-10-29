@@ -219,9 +219,6 @@ function totalflow(fromc, toc, flow, counties)
     totflow
 end
 
-
-grabparams(chain,n) = chain.value.data[n,1:end-1,1]
-
 function fitandwritefile(alldata, settings, outpaths)
     function gen_inits()
         parnames = [["a", "c", "d0", "dscale", "ktopop"];
@@ -263,7 +260,7 @@ function fitandwritefile(alldata, settings, outpaths)
                                thinning = thinning, initial_params = vals.optis)
         Serialization.serialize(chainout, mhsamp)
         println("Sampling finished")
-        vals.optsam = grabparams(mhsamp, 10)
+        vals.optsam = chain.value.data[end, 1 : end - 1, 1]
         println(vals[[1:10; 43:47], :])
         preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
         alldata.flows.preds = preds
@@ -318,8 +315,9 @@ function main(settings, outpath)
             usd.geog.x = usd.geog.INTPTLONG
             usd.geog.y = usd.geog.INTPTLAT
             outpaths = createpaths(outpath, "us", "all")
-            fitandwritefile(usd, settings, outpaths)
+            settings[:fit_us] ? fitandwritefile(usd, settings, outpaths) : println("US data not fitted")
         end
+        
         germ = loadallGermData(0; sample = settings[:sample_rows], positive_only = settings[:positive_only])
         germ.geog.x = germ.geog.xcoord
         germ.geog.y = germ.geog.ycoord
@@ -335,20 +333,22 @@ function main(settings, outpath)
                            germ.geog.pop,nrow(germ.geog),100.0,36,36, settings[:positive_only]) ## nothing == netactual, we're not using it anymore
             outpaths = createpaths(outpath, "germ", age)
             germd = (flows = agedat, geog = germ.geog, model = modl)
-            fitandwritefile(germd, settings, outpaths)
+            settings[:fit_germ] ? fitandwritefile(germd, settings, outpaths) : println("German data not fitted")
         end
+        println("Computation finished!")
+        savesettings(settings, outpath)
     end
-    println("Computation finished!")
-    savesettings(settings, outpath)
 end
 
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sample_size => 10,
-    :thinning => 1,
+    :sample_size => 200,
+    :thinning => 20,
     :run_optim => false,
-    :commit_hash => LibGit2.head(".")
+    :commit_hash => LibGit2.head("."),
+    :fit_us => false,
+    :fit_germ => true
 )
 # getUSflows()
 # getUSgeog()
