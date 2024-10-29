@@ -296,7 +296,7 @@ function fitandwritefile(alldata, settings, flowout, geogout, densout, paramout,
 end
 
 
-function main(settings)
+function main(settings, path)
     @sync begin
         Threads.@spawn begin
             usd = loadallUSdata(0; sample = settings[:sample_rows],
@@ -339,11 +339,11 @@ function main(settings)
 end
 
 function createpaths(path, type, age)
-    ds = ["flows", "geog", "densfun", "params", "chain"]
+    datasets = ["flows", "geog", "densfun", "params", "chain"]
     paths = (path * "/" * type) .* ds .* "_" .* age  .* ".csv"# chain gets .csv ending
+    paths = Dict(d => "$(path)/$(type)/$(d)_$(age).csv" for d in datasets)
     return paths
 end
-createpaths("us", "below18")
 
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
@@ -352,11 +352,11 @@ settings = Dict(
     :thinning => 1,
     :run_optim => false
 )
-
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
-main(settings)
+timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
+main(settings, timestamp)
 post_process()
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
 ## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'definitions.tex')"
