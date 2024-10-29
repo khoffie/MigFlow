@@ -254,16 +254,17 @@ function fitandwritefile(alldata, settings, outpaths)
         return vals
     end
     
-    function runsampling(alldata, vals, chainout, samples, thinning)
+    function runsampling(alldata, vals, chainout, nchains, nsamples, thinning)
         println("Sampling starts")
-        mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(vals.optis))), samples;
-                               thinning = thinning, initial_params = vals.optis)
+        mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(vals.optis))), MCMCThreads(),
+                               nsamples, nchains; thinning = thinning,
+                               initial_params = Iterators.repeated(vals.optis))
         Serialization.serialize(chainout, mhsamp)
         println("Sampling finished")
-        vals.optsam = chain.value.data[end, 1 : end - 1, 1]
+        vals.optsam = mhsamp.value.data[end, 1 : end - 1, 1]
         println(vals[[1:10; 43:47], :])
         preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
-        alldata.flows.preds = preds
+        alldata.flows.preds
         return alldata, vals
     end
     
@@ -288,7 +289,8 @@ function fitandwritefile(alldata, settings, outpaths)
     
     vals = gen_inits()
     vals = runoptim(vals; run = settings[:run_optim])
-    alldata, vals = runsampling(alldata, vals, outpaths["chain"], settings[:sample_size], settings[:thinning])
+    alldata, vals = runsampling(alldata, vals, outpaths["chain"],
+                                settings[:nchains], settings[:sample_size], settings[:thinning])
     moreout(alldata, outpaths)
 end
 
@@ -343,8 +345,9 @@ end
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sample_size => 200,
-    :thinning => 20,
+    :sample_size => 10,
+    :nchains => 4,
+    :thinning => 1,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,

@@ -22,3 +22,6 @@ ini[1:5] .= [-7.6, 1.81, 1.5, 5.0, 3.5]
 
 new = DataFrame([ :pars => parnames, :lb => lb, :inits => ini, :ub => ub])
 
+
+repeat(inits, 1, 4)
+test = Iterators.repeated(inits.inits, 4)
