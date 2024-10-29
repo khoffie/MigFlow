@@ -306,7 +306,7 @@ function main(settings, outpath)
     @sync begin
         Threads.@spawn begin
             usd = loadallUSdata(0; sample = settings[:sample_rows],
-                                positive_only = settings[:zeroflows]) # add no zeros, 
+                                positive_only = settings[:positive_only]) # add no zeros, 
 
             Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
             usd.geog.x = usd.geog.INTPTLONG
@@ -314,7 +314,7 @@ function main(settings, outpath)
             outpaths = createpaths(outpath, "us", "all")
             fitandwritefile(usd, settings, outpaths)
         end
-        germ = loadallGermData(0; sample = settings[:sample_rows], positive_only = settings[:zeroflows])
+        germ = loadallGermData(0; sample = settings[:sample_rows], positive_only = settings[:positive_only])
         germ.geog.x = germ.geog.xcoord
         germ.geog.y = germ.geog.ycoord
 
@@ -339,7 +339,7 @@ end
 
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
-    :zeroflows => false,
+    :positive_only => true,
     :sample_size => 10,
     :thinning => 1,
     :run_optim => false
@@ -351,7 +351,4 @@ settings = Dict(
 outpath = "manuscript_input/" * Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
 main(settings, outpath)
 post_process(outpath)
-## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
-## R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'definitions.tex')"
-R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
-R"library(sf)"
+
