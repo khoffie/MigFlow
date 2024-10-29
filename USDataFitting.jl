@@ -302,6 +302,12 @@ function main(settings, outpath)
         paths = Dict(d => "$(path)/$(type)$(d)_$(age).csv" for d in datasets)
         return paths
     end
+    function savesettings(settings, path)
+        settings = DataFrame(setting = [string(k) for k in keys(settings)],
+                             value = [string(k) for k in values(settings)])
+        CSV.write(joinpath(path, "settings.csv"), settings)
+    end
+
     mkpath(outpath)
     @sync begin
         Threads.@spawn begin
@@ -333,8 +339,7 @@ function main(settings, outpath)
         end
     end
     println("Computation finished!")
-    settings = DataFrame(settings)
-    CSV.write(outpath * "/settings.csv", settings)    
+    savesettings(settings, outpath)
 end
 
 settings = Dict(
