@@ -78,7 +78,7 @@ post_process = function(path = nothing, lp_from = nothing, lp_to = nothing)
     println("Plots saved")
 
     # report.Rmd reads julia_output_path from file = "./writeup/juliaout_path.txt"
-    R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
-    R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
+    R"helpeR::render_doc('./writeup', 'report.Rmd')"
     println("Report generated")
 end
+
