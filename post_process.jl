@@ -29,8 +29,7 @@ savelp = function(path, from = nothing, to = nothing)
         to = isnothing(to) ? ss : to
         xvals = [from:to]
         p = Plots.plot(xvals, chain[:lp][from : to, :],
-                       title = "LP for $(age)",
-                       xlab = "Sample", label = "")
+                       title = "LP for $(age)", label = "")
         return p
     end
     out = Dict{String, Any}()  # Create a dictionary to store the plots
@@ -83,5 +82,3 @@ post_process = function(path = nothing, lp_from = nothing, lp_to = nothing)
     R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
     println("Report generated")
 end
-
-
