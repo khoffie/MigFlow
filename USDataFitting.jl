@@ -342,10 +342,16 @@ function main(settings, outpath)
             germd = (flows = agedat, geog = germ.geog, model = modl)
             settings[:fit_germ] ? fitandwritefile(germd, settings, outpaths) : println("German data not fitted")
         end
-        println("Computation finished!")
-        savesettings(settings, outpath)
     end
+    println("Computation finished!")
+    savesettings(settings, outpath)
+
+    file = "./writeup/juliaout_path.txt"
+    open(file, "w") do f
+        write(f, path)
+   end
 end
+
 
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
