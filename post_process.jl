@@ -68,7 +68,7 @@ plot_distance = function(path)
     savefig(joinpath(path,  "plots/distance.pdf"))
 end
 
-post_process = function(path = nothing, lp_from = nothing, lp_to = nothing)
+post_process = function(path = nothing, lp_from = nothing, lp_to = nothing, render_doc = true)
     isnothing(path) ? path = path = readdlm("./writeup/juliaout_path.txt")[1] : path
     println(path)
     mkpath(joinpath(path, "plots"))
@@ -78,7 +78,9 @@ post_process = function(path = nothing, lp_from = nothing, lp_to = nothing)
     println("Plots saved")
 
     # report.Rmd reads julia_output_path from file = "./writeup/juliaout_path.txt"
-    R"helpeR::render_doc('./writeup', 'report.Rmd')"
-    println("Report generated")
+    f = "./writeup/_main.Rmd"
+    isfile(f) ? rm(f) : 
+    render_doc ? R"helpeR::render_doc('./writeup', 'report.Rmd')" : println("Report not generated")
 end
 
+post_process(nothing, 70, nothing, true)
