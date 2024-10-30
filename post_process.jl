@@ -21,38 +21,28 @@ plot_surface = function(path)
 end
 
 savelp = function(path, from = nothing, to = nothing)
+    function plotlp(chain, age, from = nothing, to = nothing)
+        ss = length(chain)
+        # lastlp = chain[:lp][ss, :].data
+        # lastlp = round(mean(lastlp), digits = 0)
+        from = isnothing(from) ? 1 : from
+        to = isnothing(to) ? ss : to
+        xvals = [from:to]
+        plt = Plots.plot(xvals, chain[:lp][from : to, :],
+                         title = "LP for $(age)",
+                         xlab = "Sample", ylab = "LP")
+        return plt
+    end
     out = Dict{String, Any}()  # Create a dictionary to store the plots
     ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
     for age in ages
         chain = deserialize(joinpath(path ,"germchain_$(age).csv"))
-        ss = length(chain)
-        lastlp = chain[:lp][ss]
-        lastlp = round(lastlp, digits = 0)
-        from = isnothing(from) ? 1 : from
-        to = isnothing(to) ? ss : to
-        xvals = [from:to]
-        out[age] = Plots.plot(xvals, chain[:lp][from:to],
-                              title = "LP for $(age)",
-                              label = "lastlp: $(lastlp)",
-                              xlab = "Sample", ylab = "LP")
+        out[age] = plotlp(chain, age, from, to)
     end
     p = Plots.plot(out["below18"], out["18-25"], out["25-30"],
                    out["30-50"], out["50-65"], out["above65"],
                    layout = (3, 2))
     savefig(joinpath(path, "plots/lp_values.pdf"))
-end
-
-function plotlp(chain, age, from = nothing, to = nothing)
-    ss = length(chain)
-    # lastlp = chain[:lp][ss, :].data
-    # lastlp = round(mean(lastlp), digits = 0)
-    from = isnothing(from) ? 1 : from
-    to = isnothing(to) ? ss : to
-    xvals = [from:to]
-    plt = Plots.plot(xvals, chain[:lp][from:to, :],
-                     title = "LP for $(age)",
-                     xlab = "Sample", ylab = "LP")
-    return plt
 end
 
 plot_distance = function(path)
@@ -78,7 +68,7 @@ plot_distance = function(path)
     savefig(joinpath(path,  "plots/distance.pdf"))
 end
 
-post_process = function(path)
+post_process = function(settings, path)
     mkpath(joinpath(path, "plots"))
     savelp(path)
     plot_surface(path)
@@ -98,3 +88,4 @@ end
 
 
 chain = deserialize(joinpath("manuscript_input/2024-10-29_16-20-27", "germchain_25-30.csv"))
+savelp("manuscript_input/2024-10-29_16-20-27", 75)
