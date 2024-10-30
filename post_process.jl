@@ -85,7 +85,3 @@ post_process = function(settings, path)
     R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
     println("Report generated")
 end
-
-
-chain = deserialize(joinpath("manuscript_input/2024-10-29_16-20-27", "germchain_25-30.csv"))
-savelp("manuscript_input/2024-10-29_16-20-27", 75)
