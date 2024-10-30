@@ -42,6 +42,19 @@ savelp = function(path, from = nothing, to = nothing)
     savefig(joinpath(path, "plots/lp_values.pdf"))
 end
 
+function plotlp(chain, age, from = nothing, to = nothing)
+    ss = length(chain)
+    # lastlp = chain[:lp][ss, :].data
+    # lastlp = round(mean(lastlp), digits = 0)
+    from = isnothing(from) ? 1 : from
+    to = isnothing(to) ? ss : to
+    xvals = [from:to]
+    plt = Plots.plot(xvals, chain[:lp][from:to, :],
+                     title = "LP for $(age)",
+                     xlab = "Sample", ylab = "LP")
+    return plt
+end
+
 plot_distance = function(path)
     plot_distance_ = function(df, age)
         Plots.plot(df.dist, df.out, seriestype = :scatter, alpha = .1,
@@ -84,3 +97,4 @@ post_process = function(path)
 end
 
 
+chain = deserialize(joinpath("manuscript_input/2024-10-29_16-20-27", "germchain_25-30.csv"))
