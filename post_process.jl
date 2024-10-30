@@ -1,6 +1,6 @@
 using Pkg
 Pkg.activate(".")
-using Turing, CSV, DataFrames, StatsPlots, Plots, LaTeXStrings, Serialization, Random
+using Turing, CSV, DataFrames, StatsPlots, Plots, LaTeXStrings, Serialization, Random, RCall, DelimitedFiles
 
 plot_surface = function(path)
     plot_surface_ = function(df, age, max)
@@ -28,10 +28,10 @@ savelp = function(path, from = nothing, to = nothing)
         from = isnothing(from) ? 1 : from
         to = isnothing(to) ? ss : to
         xvals = [from:to]
-        plt = Plots.plot(xvals, chain[:lp][from : to, :],
-                         title = "LP for $(age)",
-                         xlab = "Sample", ylab = "LP")
-        return plt
+        p = Plots.plot(xvals, chain[:lp][from : to, :],
+                       title = "LP for $(age)",
+                       xlab = "Sample", label = "")
+        return p
     end
     out = Dict{String, Any}()  # Create a dictionary to store the plots
     ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
@@ -42,6 +42,7 @@ savelp = function(path, from = nothing, to = nothing)
     p = Plots.plot(out["below18"], out["18-25"], out["25-30"],
                    out["30-50"], out["50-65"], out["above65"],
                    layout = (3, 2))
+    display(p)
     savefig(joinpath(path, "plots/lp_values.pdf"))
 end
 
@@ -68,20 +69,19 @@ plot_distance = function(path)
     savefig(joinpath(path,  "plots/distance.pdf"))
 end
 
-post_process = function(settings, path)
+post_process = function(path = nothing, lp_from = nothing, lp_to = nothing)
+    isnothing(path) ? path = path = readdlm("./writeup/juliaout_path.txt")[1] : path
+    println(path)
     mkpath(joinpath(path, "plots"))
-    savelp(path)
+    savelp(path, lp_from, lp_to)
     plot_surface(path)
-    Plots.scalefontsizes(.4)    
     plot_distance(path)
     println("Plots saved")
 
-    file = "./writeup/juliaout_path.txt"
-    open(file, "w") do f
-        write(f, path)
-    end
     # report.Rmd reads julia_output_path from file = "./writeup/juliaout_path.txt"
     R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'report.Rmd')"
     R"helpeR::render_doc('~/Documents/GermanMigration/writeup', 'math.tex')"
     println("Report generated")
 end
+
+
