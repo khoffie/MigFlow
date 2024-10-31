@@ -83,4 +83,3 @@ post_process = function(path = nothing, lp_from = nothing, lp_to = nothing, rend
     render_doc ? R"helpeR::render_doc('./writeup', 'report.Rmd')" : println("Report not generated")
 end
 
-post_process(nothing, 70, nothing, true)

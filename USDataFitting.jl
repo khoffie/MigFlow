@@ -273,7 +273,7 @@ function fitandwritefile(alldata, settings, outpaths)
         return alldata, vals
     end
     
-    function moreout(alldata, outpaths)
+    function moreout(alldata, outpaths, vals)
         (densmin,densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
         (xmin,xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
         (ymin,ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)    
@@ -296,7 +296,7 @@ function fitandwritefile(alldata, settings, outpaths)
     vals = runoptim(vals; run = settings[:run_optim])
     alldata, vals = runsampling(alldata, vals, outpaths["chain"],
                                 settings[:nchains], settings[:sample_size], settings[:thinning])
-    moreout(alldata, outpaths)
+    moreout(alldata, outpaths, vals)
 end
 
 
@@ -346,9 +346,9 @@ function main(settings, outpath)
     println("Computation finished!")
     savesettings(settings, outpath)
 
-    file = "./writeup/juliaout_path.txt"
+    file = "./writeup/juliaout_path.txt" ## report.Rmd reads the path from here
     open(file, "w") do f
-        write(f, path)
+        write(f, outpath)
    end
 end
 
