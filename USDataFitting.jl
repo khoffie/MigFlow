@@ -300,7 +300,7 @@ function fitandwritefile(alldata, settings, outpaths)
 end
 
 
-function main(settings, outpath)
+function mainfit(settings, outpath)
     function createpaths(path, type, age)
         datasets = ["flows", "geog", "densfun", "params", "chain"]
         paths = Dict(d => "$(path)/$(type)$(d)_$(age).csv" for d in datasets)
@@ -358,16 +358,24 @@ settings = Dict(
     :positive_only => true,
     :sample_size => 100,
     :nchains => 4,
-    :thinning => 50,
+    :thinning => 1,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
-    :fit_germ => true
+    :fit_germ => true,
+    :distance_type => "pos" ## Either pos: point_on_surface or centroid
 )
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
 
-outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
-main(settings, outpath)
-post_process(outpath)
+function main(settings)
+    ## install helpeR only if newer version in repo, never upgrade dependencies
+    R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
+    R"helpeR::gen_data(dist_type = $(settings[:distance_type]))"
+    outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
+    mainfit(settings, outpath)
+    post_process(outpath)
+end
+
+main(settings)
