@@ -356,14 +356,18 @@ end
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sample_size => 100,
-    :nchains => 4,
+    :sample_size => 10,
+    :nchains => 1,
     :thinning => 1,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
-    :fit_us => false,
+    :fit_us => true,
     :fit_germ => true,
-    :distance_type => "pos" ## Either pos: point_on_surface or centroid
+    :distance_type => "pos" ## pos / centroid. pos uses
+                            ## sf::st_point_on_surface to calculate
+                            ## (xcoord, ycoord). centroid uses
+                            ## sf::st_centroid for that. distances
+                            ## reflect that
 )
 # getUSflows()
 # getUSgeog()
