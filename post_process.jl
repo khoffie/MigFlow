@@ -79,7 +79,7 @@ post_process = function(path = nothing, lp_from = nothing, lp_to = nothing, rend
 
     # report.Rmd reads julia_output_path from file = "./writeup/juliaout_path.txt"
     f = "./writeup/_main.Rmd"
-    isfile(f) ? rm(f) : 
+    if isfile(f);  rm(f); end
     render_doc ? R"helpeR::render_doc('./writeup', 'report.Rmd')" : println("Report not generated")
 end
 
