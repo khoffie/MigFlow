@@ -1,7 +1,6 @@
 library(data.table)
-library(helpeR)
-library(sfheaders)
 library(sf)
+library(helpeR)
 
 read_age <- function() {
     dt <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
@@ -9,13 +8,6 @@ read_age <- function() {
     helpeR::rec_ages(dt)
     return(dt)
 }
-
-p_clean <- "~/Diss/inst/extdata/clean/"
-flows <- fread(file.path(p_clean, "flows_districts/districts_2000_2017_ger.csv"))
-age_for <- read_age()
-shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
-density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))[
-                         , .(region, year, density, bl_ags)]
 
 clean_flows <- function(flows, age_dt) {
     flows <- flows[year == 2017 & age_group != "all", 
@@ -79,18 +71,19 @@ calculate_distances <- function(flows, coords) {
     return(NULL)
 }
 
-pop_weighted_distance <- function() {
+pop_weighted_distance <- function(districts) {
     gen_munis <- function() {
         munis <- setDT(sf::read_sf("~/Diss/inst/extdata/clean/shapes/munis_all.shp"))[year == 2017]
         ink <- fread("~/Diss/inst/extdata/clean/inkar/inkar_2021.csv")
-        munis_pop <- modeleR::create_design_mat(ink, 425, "Gemeinden", 2017)
+        setnames(ink, c("Kennziffer", "Zeitbezug"), c("region", "year"))
+        munis_pop <- helpeR::create_design_mat(ink, 425, "Gemeinden", 2017)
         munis_pop[X425 == 0.1, X425 := 0] ## because create_design_mat sets them to 0.1
         munis[, distcode := as.integer(substr(AGS, 1, 5))]
-        munis[, AGS := as.integer(AGS)]
-        munis[munis_pop, pop := i.X425, on = .(AGS)]
+        munis[, region := as.integer(AGS)]
+        munis[munis_pop, pop := i.X425, on = .(region)]
         gen_coords(munis)
         munis[, pop_dist := sum(pop, na.rm = TRUE), keyby = .(distcode)]
-        munis <- munis[, .(municode = AGS, distcode, pop, pop_dist, xcoord, ycoord)]
+        munis <- munis[, .(municode = region, distcode, pop, pop_dist, xcoord, ycoord)]
         munis <- munis[!is.na(pop)]
         return(munis)
     }
@@ -119,12 +112,19 @@ pop_weighted_distance <- function() {
     return(distances)
 }
 
+p_clean <- "~/Diss/inst/extdata/clean/"
+flows <- fread(file.path(p_clean, "flows_districts/districts_2000_2017_ger.csv"))
+age_for <- read_age()
+shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
+density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))[
+                         , .(region, year, density, bl_ags)]
 flows <- clean_flows(flows, age_for)
 districts <- gen_coords_dt(shp, age_for, density, type = "pos")
 check_tables(flows, districts)
 calculate_distances(flows, districts)
-## distances <- pop_weighted_distance() ## would be good to calc all distances here
+## distances <- pop_weighted_distance(districts) ## would be good to calc all distances here
 ## flows[distances, dist_w := i.distance_w, on = .(fromdist, todist)]
-
-fwrite(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
+write(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(districts, "~/Documents/GermanMigration/data/districts.csv")
+
+
