@@ -2,8 +2,8 @@ library(data.table)
 library(sf)
 library(helpeR)
 
-read_age <- function(age_file) {
-    dt <- fread(age_file)
+read_age <- function(file) {
+    dt <- fread(file)
     data.table::setnames(dt, "age_group", "agegroup")
     helpeR::rec_ages(dt)
     return(dt)
@@ -112,11 +112,11 @@ pop_weighted_distance <- function(districts, municipalities_path, inkar_path) {
     return(distances)
 }
 
-p_clean <- "~/Diss/inst/extdata/clean/"
-flows <- fread(file.path(p_clean, "flows_districts/districts_2000_2017_ger.csv"))
-age_for <- read_age(file.path(p_clean, "aux_data", "age17for.csv"))
-shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
-density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))[
+p_raw <- "./data/raw"
+flows <- fread(file.path(p_raw, "flows_districts_2000_2017_ger.csv"))
+age_for <- read_age(file.path(p_raw, "age17for.csv"))
+shp <- setDT(sf::read_sf(file.path(p_raw, "/shapes/districts_ext.shp")))
+density <- data.table::fread(file.path(p_raw, "density.csv"))[
                          , .(region, year, density, bl_ags)]
 flows <- clean_flows(flows, age_for)
 districts <- gen_coords_dt(shp, age_for, density, type = "pos")
