@@ -2,8 +2,8 @@ library(data.table)
 library(sf)
 library(helpeR)
 
-read_age <- function() {
-    dt <- fread(file.path(p_clean, "aux_data", "age17for.csv"))
+read_age <- function(age_file) {
+    dt <- fread(age_file)
     data.table::setnames(dt, "age_group", "agegroup")
     helpeR::rec_ages(dt)
     return(dt)
@@ -71,10 +71,10 @@ calculate_distances <- function(flows, coords) {
     return(NULL)
 }
 
-pop_weighted_distance <- function(districts) {
+pop_weighted_distance <- function(districts, municipalities_path, inkar_path) {
     gen_munis <- function() {
-        munis <- setDT(sf::read_sf("~/Diss/inst/extdata/clean/shapes/munis_all.shp"))[year == 2017]
-        ink <- fread("~/Diss/inst/extdata/clean/inkar/inkar_2021.csv")
+        munis <- setDT(sf::read_sf(municipalities_file))[year == 2017]
+        ink <- fread(inkar_file)
         setnames(ink, c("Kennziffer", "Zeitbezug"), c("region", "year"))
         munis_pop <- helpeR::create_design_mat(ink, 425, "Gemeinden", 2017)
         munis_pop[X425 == 0.1, X425 := 0] ## because create_design_mat sets them to 0.1
@@ -114,7 +114,7 @@ pop_weighted_distance <- function(districts) {
 
 p_clean <- "~/Diss/inst/extdata/clean/"
 flows <- fread(file.path(p_clean, "flows_districts/districts_2000_2017_ger.csv"))
-age_for <- read_age()
+age_for <- read_age(file.path(p_clean, "aux_data", "age17for.csv"))
 shp <- setDT(sf::read_sf(file.path(p_clean, "/shapes/districts_ext.shp")))
 density <- data.table::fread(file.path(p_clean, "aux_data", "density.csv"))[
                          , .(region, year, density, bl_ags)]
@@ -122,9 +122,13 @@ flows <- clean_flows(flows, age_for)
 districts <- gen_coords_dt(shp, age_for, density, type = "pos")
 check_tables(flows, districts)
 calculate_distances(flows, districts)
-## distances <- pop_weighted_distance(districts) ## would be good to calc all distances here
-## flows[distances, dist_w := i.distance_w, on = .(fromdist, todist)]
+
 write(flows, "~/Documents/GermanMigration/data/FlowDataGermans.csv")
 fwrite(districts, "~/Documents/GermanMigration/data/districts.csv")
+
+## distances <- pop_weighted_distance(districts,
+##                                    "~/Diss/inst/extdata/clean/shapes/munis_all.shp",
+##                                    "~/Diss/inst/extdata/clean/inkar/inkar_2021.csv")
+## flows[distances, dist_w := i.distance_w, on = .(fromdist, todist)]
 
 
