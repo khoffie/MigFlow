@@ -15,11 +15,12 @@
     ## .. ymax). At each point (x, y) in the 2D plane, we have a
     ## product between two Cheby polynomials. 
     desfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax), desirecoefs ./ 10)
-    ## 
+    ## evalueates the 2D desirability cheby for each district
     desvals = [desfun(xcoord, ycoord) for (xcoord, ycoord) in zip(xcoord, ycoord)]
 
     mu = fill(0.0, length(desvals))
     sigma = fill(3.0, length(desvals))
+    ## logpdf returns the log of density of MvN at all 401 districts
     Turing.@addlogprob!(logpdf(MvNormal(mu, sigma), desvals))
     ## tamp down the corners of the map
     Turing.@addlogprob!(logpdf(MvNormal(fill(0.0, 4), fill(0.125, 4)),
