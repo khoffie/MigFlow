@@ -11,41 +11,36 @@ function marginal(x)
     return p
 end
 
-function joint()
+function joint(chain)
     lp = round(chain[:lp][end]; digits = 2)
     p = plot(chain[:X], chain[:Y], seriestype = :scatter,
              label = "LP = $(lp)")
     return p
 end
 
-function fit(;add = true)
+function fit(; add = true)
     @model function foo()
-        X ~ Normal(200, 10)
-        Y ~ Normal(20, 10)
+        X ~ Normal(20, 10)
+        Y ~ Normal(5, 5)
         if add 
-            Turing.@addlogprob!(logpdf(Normal(1, .25), sqrt(X^2 + Y^2)))
+            Turing.@addlogprob!(logpdf(Normal(1, 0.01), sqrt(X^2 + Y^2)))
         end
     end
     chain = Turing.sample(foo(), NUTS(), 1000)
-    x = marginal(chain[:X])
-    y = marginal(chain[:Y])
-    j = joint()
-    return j, x, y
+    return chain
 end
 
 function fitall()
-    j, x, y = fit(; add = false)
-    j2, x2, y2 = fit(; add = true)
-    plt = plot(x, y, x2, y2, p2)
-    display(plt)
+    chain1 = fit(; add = false)
+    chain2 = fit(; add = true)
+    x1 = marginal(chain1[:X])
+    y1 = marginal(chain1[:Y])
+    x2 = marginal(chain2[:X])
+    y2 = marginal(chain2[:Y])
+    j = joint(chain2)
+    p = plot(x1, y1, x2, y2, j, layout = (3, 2), title = ["X" "Y" "X" "Y" "XY"])
     return p
 end
 
-
-j, x, y = fit(; add = false)
-j2, x2, y2 = fit()
-
-plot(j, j2)
-plot(x, y, x2, y2, p2, layout = (3, 2))
-
+p = fitall()
 
