@@ -5,12 +5,15 @@ using StatsBase, Serialization, Turing, Plots, StatsPlots, LaTeXStrings
 @model function custom_model()
     m1 = 2
     m2 = 20
-    s1 = 1
-    s2 = 1
+    m3 = -1
+    s1 = 10
+    s2 = 10
+    s3 = .01
     x ~ Normal(m1, s1)
     y ~ Normal(m2, s2)
+    z ~ Normal(m3, s3)
     function custom_density(x, y)
-        d = exp(-1/2((x / s1)^2 + (y / s2)^2 + ((sqrt(x^2 + y^2) -1) / .001)^2))
+        d = -.5 * ((x / s1)^2 + (y / s2)^2 + ((sqrt(x^2 + y^2) -1) / .001)^2)
         return d
     end
     Turing.@addlogprob!(custom_density(x, y))
@@ -33,3 +36,8 @@ end
 marginal(chain[:x])
 marginal(chain[:y])
 
+function cd(x)
+    d = 2(x)
+end
+
+2(4 + 3)
