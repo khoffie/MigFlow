@@ -1,8 +1,11 @@
-@model function usprior(ndenscoef, ncoefs, xcoord, ycoord)
+@model function usprior(ndenscoef, ncoefs, districts)
+    xcoord = districts.xcoord    
+    ycoord = districts.ycoord
     xmin = minimum(xcoord)
     xmax = maximum(xcoord)
     ymin = minimum(ycoord)
     ymax = maximum(ycoord)
+    
     a ~ Normal(-14.0, 7)
     c ~ Gamma(10.0, 1.5 / 9.0)
     d0 ~ Gamma(5.0, 2.0 / 4.0)
@@ -33,21 +36,23 @@
 end
 
 districts = CSV.read("./data/districts.csv", DataFrame)
-uschain = Turing.sample(usprior(36, 36, districts.xcoord, districts.ycoord), NUTS(), 10)
 
-function sampleprior(model, values, params)
-    n = 10
-    df = DataFrame(Matrix{Float64}(undef, 401, 10), :auto)
+chain = Turing.sample(usprior(36, 36, districts), NUTS(), 10)
+
+function sampleprior(model; n = 1)
+    chain = Turing.sample(model, NUTS(), n)
+    params = chain.name_map.parameters
+    m = length(params)
+    values = chain.value.data[:, 1 : m, 1]
+
+    df = DataFrame(Matrix{Float64}(undef, 401, n), :auto)
     for i in 1 : n
-        df[:, i] = generated_quantities(model, values[i, 1 : 77, 1], params)
+        df[:, i] = generated_quantities(model, values[i, 1 : m, 1], params)
     end
-    return df
+    return df, chain
 end
 
-samples = sampleprior(
-    usprior(36, 36, districts.xcoord, districts.ycoord),
-    uschain.value.data,
-    uschain.name_map.parameters)
-
-samples[:, "distcode"] = districts[:, "distcode"]
-CSV.write("./manuscript_input/priorsamples.csv", samples)
+df, chain = sampleprior(usprior(36, 36, districts); n = 100)
+df[:, "distcode"] = districts[:, "distcode"]
+CSV.write("./manuscript_input/priorsamples.csv", df)
+Serialization.serialize("./manuscript_input/priorchain", chain)
