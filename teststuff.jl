@@ -2,49 +2,34 @@ using Pkg
 Pkg.activate(".")
 using StatsBase, Serialization, Turing, Plots, StatsPlots, LaTeXStrings
 
-function marginal(x)
-    m = round(mean(x); digits = 2)
-    sd = round(std(x); digits = 2)
-    p = density(x, label = L"\mu = %$m, \sigma = %$sd")
-    display(p)
-    return p
-end
-
-function joint(x, y)
-    p = plot(x, y, seriestype = :scatter, label = "")
-    return p
-end
-
-function allplots(chain)
-    x = marginal(chain[:X])
-    y = marginal(chain[:Y])
-    z = marginal(chain[:Z])
-    xy = joint(chain[:X], chain[:Y])
-    xz = joint(chain[:X], chain[:Z])
-    yz = joint(chain[:Y], chain[:Z])
-    p = plot(x, y, z, xy, xz, yz, layout = (3, 3),
-             title = ["X" "Y" "Z" "XY" "XZ" "YZ"])
-    display(p)
-    return p
-end
-
-function fit(; add = true)
-    @model function foo()
-        X ~ Normal(20, 10)
-        Y ~ Normal(5, 5)
-        Z = sqrt(X^2 + Y^2) 
-        Z ~ Normal(10, 1)        
-        if add 
-            Turing.@addlogprob!(logpdf(Normal(1, 0.01), sqrt(X^2 + Y^2)))
-        end
+@model function custom_model()
+    m1 = 2
+    m2 = 20
+    s1 = 1
+    s2 = 1
+    x ~ Normal(m1, s1)
+    y ~ Normal(m2, s2)
+    function custom_density(x, y)
+        d = exp(-1/2((x / s1)^2 + (y / s2)^2 + ((sqrt(x^2 + y^2) -1) / .001)^2))
+        return d
     end
-    chain = Turing.sample(foo(), NUTS(), 1000)
-    p = allplots(chain)
-    return chain, p
+    Turing.@addlogprob!(custom_density(x, y))
+end
+chain = Turing.sample(custom_model(), NUTS(), 1000)
+plot(chain[:x], chain[:y], seriestype = :scatter)
+
+
+@model function custom_model()
+    function custom_density(x, y)
+##        d = exp(-1/2((x/10)^2))
+        d = exp(-.5 * (x^2 + y^2 - 1) / .01)
+        return d
+    end
+    x ~ Normal(20, 1)
+    y ~ Normal(20, 10)
+    Turing.@addlogprob!(custom_density(x, y))
 end
 
-chain1, p1 = fit(; add = false)
-chain2, p2 = fit(; add = true)
-savefig(p1, "./jointdist1.pdf")
-savefig(p2, "./jointdist2.pdf")
+marginal(chain[:x])
+marginal(chain[:y])
 
