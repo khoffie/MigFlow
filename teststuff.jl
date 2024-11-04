@@ -1,4 +1,3 @@
-using Turing: @addlogprob!
 using Pkg
 Pkg.activate(".")
 using StatsBase, Serialization, Turing, Plots, StatsPlots, LaTeXStrings
