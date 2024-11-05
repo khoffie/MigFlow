@@ -1,8 +1,6 @@
-using Pkg
-Pkg.activate(".")
 using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2
 using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML
-using Turing, OptimizationOptimJL, ApproxFun, OptimizationBBO, OptimizationNLopt, NLopt, ReverseDiff
+using Turing, ReverseDiff ##, OptimizationOptimJL, ApproxFun, OptimizationBBO, OptimizationNLopt, NLopt, 
 using Printf, Revise, Dates, Enzyme, Serialization
 using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
@@ -361,7 +359,7 @@ settings = Dict(
     :thinning => 1,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
-    :fit_us => true,
+    :fit_us => false,
     :fit_germ => true,
     :distance_type => "pos" ## pos / centroid. pos uses
                             ## sf::st_point_on_surface to calculate
