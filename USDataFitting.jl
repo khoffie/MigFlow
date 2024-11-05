@@ -265,7 +265,8 @@ function fitandwritefile(alldata, settings, outpaths)
                                verbose = true, progress = true)
         Serialization.serialize(chainout, mhsamp)
         println("Sampling finished")
-        vals.optsam = mhsamp.value.data[end, 1 : end - 1, 1] # last sample, all params but no LP, first chain
+        idxmaxlp = findmax(chain[:lp][end, ])[2]
+        vals.optsam = mhsamp.value.data[end, 1 : end - 1, idxmaxlp] # last sample, no LP, chain with max LP
         println(vals[[1:10; 43:47], :])
         alldata.flows.preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
         return alldata, vals
