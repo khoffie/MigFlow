@@ -5,6 +5,7 @@
     a ~ Normal(-14.0, 7)
     c ~ Gamma(10.0, 1.5 / 9.0)
     d0 ~ Gamma(5.0, 2.0 / 4.0)
+    e ~ Gamma(5.0, 2.0 / 4.0)
     dscale ~ Gamma(20.0, 5.0 / 19.0)
     ktopop ~ Normal(0.0, 5.0) # remove? model should be linear in topop
     kd ~ MvNormal(zeros(ndenscoef), fill(40.0, ndenscoef))
@@ -34,7 +35,7 @@
     preds = [distpop[fromdist[i]] *
         logistic(densfun(logreldens[fromdist[i]], logreldens[todist[i]]) +
         a + (ktopop / 10.0) *
-        log(distpop[todist[i]] / medcpop) +
+        log(distpop[todist[i]] / medcpop + e / 100.0) +
         log1p(1.0 / (distance[i] / distscale + d0 / 100.0) ^ c) +
         desvals[todist[i]] - desvals[fromdist[i]]) for i in eachindex(flows)]
     #logpreds = log.(preds)
