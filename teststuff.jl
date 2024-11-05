@@ -12,7 +12,7 @@ function fitmodel(add)
     chain = Turing.sample(custom_model(add), NUTS(), 1000)
     xy = plot(chain[:x], chain[:y], seriestype = :scatter, label = L"(X, Y)")
     x = density(chain[:x], label = L"X")
-    y = density(chain[:y], label = L"X")
+    y = density(chain[:y], label = L"Y")
     xyd = density(sqrt.(chain[:x].^2 .+ chain[:y].^2), label = L"\sqrt{(X^2 + Y^2)}")
     p = plot(x, y, xy, xyd)
     display(p)
@@ -22,10 +22,10 @@ end
 @model function custom_model(add = true)
     μ₁ = 0
     μ₂ = 0
-    μ₃ = 1
+    μ₃ = 10
     σ₁ = 10
     σ₂ = 10
-    σ₃ = 0.01
+    σ₃ = 0.1
     x ~ Normal(μ₁, σ₁)
     y ~ Normal(μ₂, σ₂)
 ##    z ~ Normal(μ₃, σ₃)
