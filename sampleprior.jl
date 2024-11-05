@@ -9,6 +9,7 @@
     a ~ Normal(-14.0, 7)
     c ~ Gamma(10.0, 1.5 / 9.0)
     d0 ~ Gamma(5.0, 2.0 / 4.0)
+    e ~ Gamma(5.0, 2.0 / 4.0)
     dscale ~ Gamma(20.0, 5.0 / 19.0)
     ktopop ~ Normal(0.0, 5.0) # remove? model should be linear in topop
     kd ~ MvNormal(zeros(ndenscoef), fill(40.0, ndenscoef))
@@ -34,10 +35,11 @@
                                 desfun(xmax, ymax)]))
     return desvals
 end
+chain = Turing.sample(usprior(5, 5, districts), NUTS(), 1)
 
 districts = CSV.read("./data/districts.csv", DataFrame)
 
-chain = Turing.sample(usprior(36, 36, districts), NUTS(), 10)
+
 
 function sampleprior(model; n = 1)
     chain = Turing.sample(model, NUTS(), n)

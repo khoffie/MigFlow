@@ -1,6 +1,6 @@
 using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2
 using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML
-using Turing, ReverseDiff ##, OptimizationOptimJL, ApproxFun, OptimizationBBO, OptimizationNLopt, NLopt, 
+using Turing, ReverseDiff, ApproxFun, OptimizationOptimJL, OptimizationBBO, OptimizationNLopt, NLopt
 using Printf, Revise, Dates, Enzyme, Serialization
 using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
@@ -219,17 +219,17 @@ end
 
 function fitandwritefile(alldata, settings, outpaths)
     function gen_inits()
-        parnames = [["a", "c", "d0", "dscale", "ktopop"];
+        parnames = [["a", "c", "d0", "e", "dscale", "ktopop"];
                     ["kd[$i]" for i in 1:36];
                     ["desirecoefs[$i]" for i in 1:36]]
-        lb = [[-60.0, 0.0, 0.0, 1.0, -10.0];
+        lb = [[-60.0, 0.0, 0.0, 0.0, 1.0, -10.0];
               fill(-50.50, 36);
               fill(-50.50, 36)]
-        ub = [[60.0, 20.0, 10.0, 15.0, 10.0];
+        ub = [[60.0, 20.0, 10.0, 10.0, 15.0, 10.0];
               fill(50.50, 36);
               fill(50.50, 36)]
         ini = rand(Normal(0.0, 0.10), length(ub))
-        ini[1:6] .= [-7.6, 1.81, 1.5, 5.0, 3.5, 0.0]
+        ini[1:7] .= [-7.6, 1.81, 1.5, 1.5, 5.0, 3.5, 0.0]
         df = DataFrame(:pars => parnames, :lb => lb, :ub => ub, :inits => ini)
         return(df)
     end
@@ -275,8 +275,8 @@ function fitandwritefile(alldata, settings, outpaths)
         (densmin,densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
         (xmin,xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
         (ymin,ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)    
-        kdindx = (1:36) .+ 5 #number of non kd or cheby inits/ priors
-        desindx = (1:36) .+ (5 + 36)
+        kdindx = (1:36) .+ 6 #number of non kd or cheby inits/ priors
+        desindx = (1:36) .+ (6 + 36)
         kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
                     vals.optsam[kdindx] ./ 10)
         desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax ),
@@ -354,9 +354,9 @@ end
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sample_size => 10,
-    :nchains => 1,
-    :thinning => 1,
+    :sample_size => 100,
+    :nchains => 4,
+    :thinning => 50,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
