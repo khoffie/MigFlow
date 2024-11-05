@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "c785e7a943853da563b9f46571a45c946c91d4f4"
+project_hash = "24609c06479121ea1418c0e51f98e0ca4f06ad65"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "99a6f5d0ce1c7c6afdb759daa30226f71c54f6b0"
@@ -3259,6 +3259,16 @@ deps = ["Graphs", "LinearAlgebra", "Markdown", "SparseArrays"]
 git-tree-sha1 = "4b33e0e081a825dbfaf314decf58fa47e53d6acb"
 uuid = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 version = "1.4.0"
+
+[[deps.SliceSampling]]
+deps = ["AbstractMCMC", "Accessors", "Distributions", "FillArrays", "LinearAlgebra", "LogDensityProblems", "LogDensityProblemsAD", "Random", "Requires", "SimpleUnPack"]
+git-tree-sha1 = "9f472a2b96a8ff899635d6eb19dd9afeb8bde82b"
+uuid = "43f4d3e8-9711-4a8c-bd1b-03ac73a255cf"
+version = "0.6.1"
+weakdeps = ["Turing"]
+
+    [deps.SliceSampling.extensions]
+    SliceSamplingTuringExt = ["Turing"]
 
 [[deps.Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"

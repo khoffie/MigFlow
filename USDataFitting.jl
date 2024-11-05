@@ -259,6 +259,7 @@ function fitandwritefile(alldata, settings, outpaths)
 
     function runsampling(alldata, vals, chainout, nchains, nsamples, thinning)
         println("Sampling starts")
+        ## SliceSampling.HitAndRun(SliceSteppingOut(2.))
         mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(vals.optis))), MCMCThreads(),
                                nsamples, nchains, thinning = thinning,
                                initial_params = fill(vals.optis, nchains),
@@ -357,7 +358,7 @@ settings = Dict(
     :positive_only => true,
     :sample_size => 100,
     :nchains => 4,
-    :thinning => 50,
+    :thinning => 500,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
