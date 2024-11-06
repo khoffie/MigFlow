@@ -1,6 +1,12 @@
 *.csv
-*~
+# emacs backup
+*~ 
 *.tsv
 *.txt
 *.zip
 *.pdf
+*.log
+# help packages
+helpeR/man
+# tex helping files from emacs
+writeup/macros/auto
