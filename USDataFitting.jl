@@ -1,5 +1,7 @@
-using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2
-using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML
+using Pkg
+Pkg.activate(".")
+using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2, DelimitedFiles
+using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML, LaTeXStrings, Plots
 using Turing, ReverseDiff, ApproxFun, OptimizationOptimJL, OptimizationBBO, OptimizationNLopt, NLopt
 using Printf, Revise, Dates, Enzyme, Serialization, SliceSampling
 using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
@@ -10,7 +12,6 @@ includet("models.jl")
 includet("samplerows.jl")
 includet("post_process.jl")
 #using DuckDB
-
 
 #=
 ## Try fitting migration models to US data. First we need some US data:

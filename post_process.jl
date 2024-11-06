@@ -1,5 +1,3 @@
-using Turing, CSV, DataFrames, StatsPlots, Plots, LaTeXStrings, Serialization, Random, RCall, DelimitedFiles
-
 plot_surface = function(path)
     plot_surface_ = function(df, age, max)
         Plots.surface(df.fromdens, df.todens, df.funval,
