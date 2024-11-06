@@ -1,7 +1,7 @@
 using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2
 using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML
 using Turing, ReverseDiff, ApproxFun, OptimizationOptimJL, OptimizationBBO, OptimizationNLopt, NLopt
-using Printf, Revise, Dates, Enzyme, Serialization
+using Printf, Revise, Dates, Enzyme, Serialization, SliceSampling
 using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
 import PlotlyJS
@@ -257,17 +257,17 @@ function fitandwritefile(alldata, settings, outpaths)
             #                 initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
             #                 verbose = true, progress = true)
 
-    function runsampling(alldata, vals, chainout, nchains, nsamples, thinning)
+    function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning)
         println("Sampling starts")
-        ## SliceSampling.HitAndRun(SliceSteppingOut(2.))
-        mhsamp = Turing.sample(alldata.model, MH(.1^2*I(length(vals.optis))), MCMCThreads(),
+        ## MH(.1^2*I(length(vals.optis)))
+        mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
                                nsamples, nchains, thinning = thinning,
                                initial_params = fill(vals.optis, nchains),
                                verbose = true, progress = true)
         Serialization.serialize(chainout, mhsamp)
         println("Sampling finished")
-        idxmaxlp = findmax(chain[:lp][end, ])[2]
-        vals.optsam = mhsamp.value.data[end, 1 : end - 1, idxmaxlp] # last sample, no LP, chain with max LP
+        idx = findmax(mhsamp[:lp][end, ])[2]
+        vals.optsam = mhsamp.value.data[end, 1 : end - 1, idx] # last sample, no LP, chain with max LP
         println(vals[[1:10; 43:47], :])
         alldata.flows.preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
         return alldata, vals
@@ -294,7 +294,7 @@ function fitandwritefile(alldata, settings, outpaths)
     
     vals = gen_inits()
     vals = runoptim(vals; run = settings[:run_optim])
-    alldata, vals = runsampling(alldata, vals, outpaths["chain"],
+    alldata, vals = runsampling(alldata, settings[:sampler], vals, outpaths["chain"],
                                 settings[:nchains], settings[:sample_size], settings[:thinning])
     moreout(alldata, outpaths, vals)
 end
@@ -356,9 +356,10 @@ end
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
+    :sampler => externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.))),
     :sample_size => 100,
     :nchains => 4,
-    :thinning => 500,
+    :thinning => 10,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
