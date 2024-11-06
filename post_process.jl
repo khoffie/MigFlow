@@ -1,5 +1,3 @@
-using Pkg
-Pkg.activate(".")
 using Turing, CSV, DataFrames, StatsPlots, Plots, LaTeXStrings, Serialization, Random, RCall, DelimitedFiles
 
 plot_surface = function(path)
