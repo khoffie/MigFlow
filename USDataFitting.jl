@@ -361,9 +361,9 @@ settings = Dict(
     :positive_only => true,
     :sampler => MH(.1^2*I(78)),
     ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
-    :sample_size => 1,
+    :sample_size => 100,
     :nchains => 4,
-    :thinning => 1,
+    :thinning => 300,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
