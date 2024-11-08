@@ -297,7 +297,7 @@ function fitandwritefile(alldata, settings, outpaths)
     vals = runoptim(vals; run = settings[:run_optim], printvals = false)
     alldata, vals = runsampling(alldata, settings[:sampler], vals, outpaths["chain"],
                                 settings[:nchains], settings[:sample_size], settings[:thinning];
-                                printvals = true)
+                                printvals = false)
     moreout(alldata, outpaths, vals)
 end
 
@@ -361,9 +361,9 @@ settings = Dict(
     :positive_only => true,
     :sampler => MH(.1^2*I(78)),
     ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
-    :sample_size => 1,
-    :nchains => 1,
-    :thinning => 1,
+    :sample_size => 100,
+    :nchains => 4,
+    :thinning => 90,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
