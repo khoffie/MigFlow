@@ -334,7 +334,8 @@ function mainfit(settings, outpath)
         Threads.@threads for age in levels(germ.flows.agegroup)
             for year in unique(germ.flows.year)
                 agedat = @subset(germ.flows, :agegroup .== age, :year .== year)
-                modl = usmodel(agedat.flows,sum(agedat.flows),levelcode.(agedat.fromdist), levelcode.(agedat.todist),
+                modl = usmodel(agedat.flows, sum(agedat.flows),
+                               levelcode.(agedat.fromdist), levelcode.(agedat.todist),
                                median(germ.geog.pop),agedat.dist,
                                germ.geog.xcoord,minimum(germ.geog.xcoord),maximum(germ.geog.xcoord),
                                germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
@@ -363,7 +364,7 @@ settings = Dict(
     ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
     :sample_size => 100,
     :nchains => 4,
-    :thinning => 1,
+    :thinning => 300,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
