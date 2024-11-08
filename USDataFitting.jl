@@ -302,8 +302,7 @@ end
 
 
 function mainfit(settings, outpath)
-    function createpaths(path, type, age)
-        year = 2017
+    function createpaths(path, type, year, age)
         datasets = ["flows", "geog", "densfun", "params", "chain"]
         paths = Dict(d => "$(path)/$(type)$(d)_$(year)_$(age).csv" for d in datasets)
         return paths
@@ -323,7 +322,7 @@ function mainfit(settings, outpath)
             Random.seed!(Int64(datetime2unix(DateTime("2024-10-01T09:07:14")))) # seed based on current time when I wrote the function
             usd.geog.x = usd.geog.INTPTLONG
             usd.geog.y = usd.geog.INTPTLAT
-            outpaths = createpaths(outpath, "us", "all")
+            outpaths = createpaths(outpath, "us", 999,"all")
             settings[:fit_us] ? fitandwritefile(usd, settings, outpaths) : println("US data not fitted")
         end
         
@@ -340,9 +339,7 @@ function mainfit(settings, outpath)
                                germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
                                germ.geog.logreldens,minimum(germ.geog.logreldens),maximum(germ.geog.logreldens),
                                germ.geog.pop,nrow(germ.geog),100.0,36,36, settings[:positive_only]) ## nothing == netactual, we're not using it anymore
-                println("year:", year, " ", "age:", age)
-                outpaths = createpaths(outpath, "germ", age)
-                println(outpaths)
+                outpaths = createpaths(outpath, "germ", year, age)
                 germd = (flows = agedat, geog = germ.geog, model = modl)
                 settings[:fit_germ] ? fitandwritefile(germd, settings, outpaths) : println("German data not fitted")
             end
