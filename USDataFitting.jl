@@ -361,19 +361,22 @@ settings = Dict(
     :positive_only => true,
     :sampler => MH(.1^2*I(78)),
     ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
-    :sample_size => 100,
+    :sample_size => 1,
     :nchains => 4,
-    :thinning => 90,
+    :thinning => 1,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
     :fit_germ => true,
-    :distance_type => "pos" ## pos / centroid. pos uses
+    :distance_type => "pos", ## pos / centroid. pos uses
                             ## sf::st_point_on_surface to calculate
                             ## (xcoord, ycoord). centroid uses
                             ## sf::st_centroid for that. distances
                             ## reflect that
+    :year_min => 2011, ## for German data
+    :year_max => 2017
 )
+
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
@@ -381,7 +384,9 @@ settings = Dict(
 function main(settings)
     ## install helpeR only if newer version in repo, never upgrade dependencies
     R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
-    R"helpeR::gen_data(dist_type = $(settings[:distance_type]))"
+    R"helpeR::gen_data(year_min = $(settings[:year_min]),
+                       year_max = $(settings[:year_max]),
+                       dist_type = $(settings[:distance_type]))"
     outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     mainfit(settings, outpath)
 ##    post_process(outpath)
