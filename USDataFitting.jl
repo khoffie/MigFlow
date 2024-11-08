@@ -357,7 +357,8 @@ end
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sampler => externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.))),
+    :sampler => MH(.1^2*I(length(vals.optis))),
+    ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
     :sample_size => 100,
     :nchains => 4,
     :thinning => 500,
