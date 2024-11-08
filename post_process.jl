@@ -65,7 +65,7 @@ plot_distance = function(path)
 end
 
 post_process = function(path = nothing, lp_from = nothing, lp_to = nothing, render_doc = true)
-    isnothing(path) ? path = path = readdlm("./writeup/juliaout_path.txt")[1] : path
+    isnothing(path) ? path = path = readline("./writeup/juliaout_path.txt")[1] : path
     println(path)
     mkpath(joinpath(path, "plots"))
     savelp(path, lp_from, lp_to)

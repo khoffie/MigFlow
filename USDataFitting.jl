@@ -1,9 +1,9 @@
 using Pkg
 Pkg.activate(".")
-using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2, DelimitedFiles
-using StatsBase, StatsFuns, StatsPlots, Distributions, Random, StatProfilerHTML, LaTeXStrings, Plots
-using Turing, ReverseDiff, ApproxFun, OptimizationOptimJL, OptimizationBBO, OptimizationNLopt, NLopt
-using Printf, Revise, Dates, Enzyme, Serialization, SliceSampling
+using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2
+using StatsBase, StatsFuns, StatsPlots, Distributions, Random, LaTeXStrings, Plots
+using Turing, ReverseDiff, ApproxFun
+using Printf, Revise, Dates, Enzyme, Serialization
 using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
 import PlotlyJS
@@ -357,11 +357,11 @@ end
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sampler => MH(.1^2*I(length(vals.optis))),
+    :sampler => MH(.1^2*I(78)),
     ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
-    :sample_size => 100,
-    :nchains => 4,
-    :thinning => 500,
+    :sample_size => 1,
+    :nchains => 1,
+    :thinning => 1,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
@@ -378,11 +378,11 @@ settings = Dict(
 
 function main(settings)
     ## install helpeR only if newer version in repo, never upgrade dependencies
-    R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
-    R"helpeR::gen_data(dist_type = $(settings[:distance_type]))"
+    # R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
+    # R"helpeR::gen_data(dist_type = $(settings[:distance_type]))"
     outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     mainfit(settings, outpath)
-    post_process(outpath)
+##    post_process(outpath)
 end
 
 main(settings)
