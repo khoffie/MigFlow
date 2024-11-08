@@ -363,7 +363,7 @@ settings = Dict(
     ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
     :sample_size => 100,
     :nchains => 4,
-    :thinning => 300,
+    :thinning => 1,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
@@ -389,7 +389,7 @@ function main(settings)
                        dist_type = $(settings[:distance_type]))"
     outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     mainfit(settings, outpath)
-##    post_process(outpath)
+    post_process(outpath)
 end
 
 main(settings)
