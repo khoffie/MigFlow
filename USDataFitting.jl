@@ -235,7 +235,7 @@ function fitandwritefile(alldata, settings, outpaths)
         return(df)
     end
     
-    function runoptim(vals; run)
+    function runoptim(vals; run, printvals = false)
         if run == true
             algo = LBFGS()
             println("Optimization starts")
@@ -249,7 +249,7 @@ function fitandwritefile(alldata, settings, outpaths)
             println("No optimization, using random inits for sampling")
             vals.optis = vals.inits
         end
-        println(vals[[1:10; 43:47], :])
+        if printvals; println(vals[[1:10; 43:47], :]); end
         return vals
     end
 
@@ -258,7 +258,7 @@ function fitandwritefile(alldata, settings, outpaths)
             #                 initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
             #                 verbose = true, progress = true)
 
-    function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning)
+    function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning, printvals = false)
         println("Sampling starts")
         ## MH(.1^2*I(length(vals.optis)))
         mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
@@ -269,7 +269,7 @@ function fitandwritefile(alldata, settings, outpaths)
         println("Sampling finished")
         idx = findmax(mhsamp[:lp][end, ])[2]
         vals.optsam = mhsamp.value.data[end, 1 : end - 1, idx] # last sample, no LP, chain with max LP
-        println(vals[[1:10; 43:47], :])
+        if printvals; println(vals[[1:10; 43:47], :]); end
         alldata.flows.preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
         return alldata, vals
     end
@@ -303,8 +303,9 @@ end
 
 function mainfit(settings, outpath)
     function createpaths(path, type, age)
+        year = 2017
         datasets = ["flows", "geog", "densfun", "params", "chain"]
-        paths = Dict(d => "$(path)/$(type)$(d)_$(age).csv" for d in datasets)
+        paths = Dict(d => "$(path)/$(type)$(d)_$(year)_$(age).csv" for d in datasets)
         return paths
     end
     function savesettings(settings, path)
@@ -331,7 +332,6 @@ function mainfit(settings, outpath)
         germ.geog.y = germ.geog.ycoord
 
         Threads.@threads for age in levels(germ.flows.agegroup)
-            println(age)
             for year in unique(germ.flows.year)
                 agedat = @subset(germ.flows, :agegroup .== age, :year .== year)
                 modl = usmodel(agedat.flows,sum(agedat.flows),levelcode.(agedat.fromdist), levelcode.(agedat.todist),
@@ -340,7 +340,9 @@ function mainfit(settings, outpath)
                                germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
                                germ.geog.logreldens,minimum(germ.geog.logreldens),maximum(germ.geog.logreldens),
                                germ.geog.pop,nrow(germ.geog),100.0,36,36, settings[:positive_only]) ## nothing == netactual, we're not using it anymore
+                println("year:", year, " ", "age:", age)
                 outpaths = createpaths(outpath, "germ", age)
+                println(outpaths)
                 germd = (flows = agedat, geog = germ.geog, model = modl)
                 settings[:fit_germ] ? fitandwritefile(germd, settings, outpaths) : println("German data not fitted")
             end
