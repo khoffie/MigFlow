@@ -258,7 +258,7 @@ function fitandwritefile(alldata, settings, outpaths)
             #                 initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
             #                 verbose = true, progress = true)
 
-    function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning, printvals = false)
+    function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning; printvals = false)
         println("Sampling starts")
         ## MH(.1^2*I(length(vals.optis)))
         mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
@@ -294,9 +294,10 @@ function fitandwritefile(alldata, settings, outpaths)
     end
     
     vals = gen_inits()
-    vals = runoptim(vals; run = settings[:run_optim])
+    vals = runoptim(vals; run = settings[:run_optim], printvals = false)
     alldata, vals = runsampling(alldata, settings[:sampler], vals, outpaths["chain"],
-                                settings[:nchains], settings[:sample_size], settings[:thinning])
+                                settings[:nchains], settings[:sample_size], settings[:thinning];
+                                printvals = true)
     moreout(alldata, outpaths, vals)
 end
 
@@ -379,8 +380,8 @@ settings = Dict(
 
 function main(settings)
     ## install helpeR only if newer version in repo, never upgrade dependencies
-    # R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
-    # R"helpeR::gen_data(dist_type = $(settings[:distance_type]))"
+    R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
+    R"helpeR::gen_data(dist_type = $(settings[:distance_type]))"
     outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     mainfit(settings, outpath)
 ##    post_process(outpath)
