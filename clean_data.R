@@ -2,9 +2,24 @@ library(data.table)
 library(helpeR)
 library(sf)
 
-shp <- data.table(sf::read_sf("./data/raw/shapes/districts_ext.shp"))
+gen_popdata <- function() {
+    dt1 <- clean_pop("./data/raw", "12411-03-02-4.csv", shp)
+    dt2 <- clean_pop("./data/raw", "12411-03-03-4.csv", shp)
+### three years are in both tables and there are slight
+### differences. Arbitrarily, we use years from last table
+    ## dt1[year %in% c(2011, 2012, 2013)]
+    ## dt2[year %in% c(2011, 2012, 2013)]
+    dt <- rbind(dt1[year < 2011], dt2)
+    ## there are some missings and as a simple imputation, we use the last observation to fill missings
+    cols <- c("all", "german", "foreign")
+    dt[, c(cols) := lapply(.SD, function(x) nafill(x, "nocb")),
+       keyby = .(region, age_group), .SDcols = cols]
+    fwrite(dt, "./data/clean/germanpop.csv")
+}
 
-clean_pop <- function(path, file = c("12411-03-02-4.csv", "12411-03-03-4.csv"), shp) {
+clean_pop <- function(path, file = c("12411-03-02-4.csv", "12411-03-03-4.csv")) {
+    shp <- data.table(sf::read_sf("./data/raw/shapes/districts_ext.shp"))
+    
     file <- match.arg(file)
     dt <- read_pop(path, file)
     new_cols <- c("year", "region", "region_type", "age_group",
@@ -69,15 +84,3 @@ read_pop <- function(path, file) {
     })
     return(dt)
 }
-
-
-dt1 <- clean_pop("./data/raw", "12411-03-02-4.csv", shp)
-dt2 <- clean_pop("./data/raw", "12411-03-03-4.csv", shp)
-
-dt <- rbind(dt1, dt2)
-mis <- dt[year >= 2000 & age_group == "all", sum(is.na(german)), keyby = .(region)]
-tail(mis[order(V1)], 20)
-
-dt[region == 3159 & age_group == "all"]
-
-shp[AGS == 3159]
