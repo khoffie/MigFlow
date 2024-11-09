@@ -4,16 +4,16 @@ library(sf)
 
 shp <- data.table(sf::read_sf("./data/raw/shapes/districts_ext.shp"))
 
-clean_pop <- function(file, shp) {
-    out <- read_pop(file)
-    dt <- out$dt
+clean_pop <- function(path, file = c("12411-03-02-4.csv", "12411-03-03-4.csv"), shp) {
+    file <- match.arg(file)
+    dt <- read_pop(path, file)
     new_cols <- c("year", "region", "region_type", "age_group",
                   "all_b", "all_m", "all_f",
                   "ger_b", "ger_m", "ger_f",
                   "for_b", "for_m", "for_f")
     setnames(dt, colnames(dt), new_cols)
 
-    dt <- rec_ages(dt, out$type)
+    dt <- rec_ages(dt, file)
 
     dt <- dt[-c(1,2), ] ## colnames in rows
     dt <- dt[region_type != "Deutschland"] ## rm since interested in districts
@@ -37,8 +37,8 @@ clean_pop <- function(file, shp) {
     return(dt)
 }
 
-rec_ages <- function(dt, type) {
-    last <- ifelse(type == "first", 2, 6)
+rec_ages <- function(dt, file) {
+    last <- ifelse(file == "12411-03-02-4.csv", 2, 6)
     rec <- dt[, .(old_age = unique(age_group))]
     a <- c("unter18", "18-25", "25-30", "30-50", "50-65", "über65" )
     new_ages <- c(NA, rep(a[1], 5), rep(a[2], 2), a[3], rep(a[4], 4), rep(a[5], 3), rep(a[6], last), "all")
@@ -47,17 +47,18 @@ rec_ages <- function(dt, type) {
     return(dt)
 }
 
-read_pop <- function(file) {
-    read_pop_ <- function(file) {
-        dt <- fread(file, skip = 6, encoding = "Latin-1", na.strings = c("-", "", "."),
+read_pop <- function(path, file) {
+    read_pop_ <- function(path, file) {
+        dt <- fread(file.path(path, file), skip = 6,
+                    encoding = "Latin-1", na.strings = c("-", "", "."),
                     strip.white = TRUE, fill = FALSE)
         return(dt)
     }
-    type <- ifelse(grepl("12411-03-02-4", file), "first", "second")
-    cond <- ifelse(type == "second", "153877", "184005")
+    ## first linenumbers not part of data
+    cond <- ifelse(file == "12411-03-02-4.csv", "184005", "153877")
     cond <- sprintf("Stopped early on line %s", cond)
     dt <- withCallingHandlers({
-        read_pop_(file)
+        read_pop_(path, file)
     }, warning = function(w) {
         ## data ends there and only meta information follows
         if (grepl(cond, conditionMessage(w))) {
@@ -66,11 +67,12 @@ read_pop <- function(file) {
             warning(w)
         }
     })
-    return(list(dt = dt, type = type))
+    return(dt)
 }
 
-dt1 <- clean_pop(file.path("./data/raw", "12411-03-02-4.csv"), shp)
-dt2 <- clean_pop(file.path("./data/raw", "12411-03-03-4.csv"), shp)
+
+dt1 <- clean_pop("./data/raw", "12411-03-02-4.csv", shp)
+dt2 <- clean_pop("./data/raw", "12411-03-03-4.csv", shp)
 
 dt <- rbind(dt1, dt2)
 mis <- dt[year >= 2000 & age_group == "all", sum(is.na(german)), keyby = .(region)]
