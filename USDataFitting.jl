@@ -362,9 +362,9 @@ settings = Dict(
     :positive_only => true,
     :sampler => MH(.1^2*I(78)),
     ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
-    :sample_size => 100,
+    :sample_size => 1,
     :nchains => 4,
-    :thinning => 300,
+    :thinning => 1,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
@@ -374,7 +374,7 @@ settings = Dict(
                             ## (xcoord, ycoord). centroid uses
                             ## sf::st_centroid for that. distances
                             ## reflect that
-    :year_min => 2011, ## for German data
+    :year_min => 2000, ## for German data
     :year_max => 2017
 )
 
