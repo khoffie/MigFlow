@@ -334,15 +334,16 @@ function mainfit(settings, outpath)
         Threads.@threads for age in levels(germ.flows.agegroup)
             for year in unique(germ.flows.year)
                 agedat = @subset(germ.flows, :agegroup .== age, :year .== year)
+                geodat = @subset(germ.geog, :year .== year)
                 modl = usmodel(agedat.flows, sum(agedat.flows),
                                levelcode.(agedat.fromdist), levelcode.(agedat.todist),
-                               median(germ.geog.pop),agedat.dist,
-                               germ.geog.xcoord,minimum(germ.geog.xcoord),maximum(germ.geog.xcoord),
-                               germ.geog.ycoord,minimum(germ.geog.ycoord),maximum(germ.geog.ycoord),
-                               germ.geog.logreldens,minimum(germ.geog.logreldens),maximum(germ.geog.logreldens),
-                               germ.geog.pop,nrow(germ.geog),100.0,36,36, settings[:positive_only]) ## nothing == netactual, we're not using it anymore
+                               median(geodat.pop), agedat.dist,
+                               geodat.xcoord, minimum(geodat.xcoord), maximum(geodat.xcoord),
+                               geodat.ycoord, minimum(geodat.ycoord), maximum(geodat.ycoord),
+                               geodat.logreldens, minimum(geodat.logreldens), maximum(geodat.logreldens),
+                               geodat.pop, nrow(geodat), 100.0, 36, 36, settings[:positive_only]) ## nothing == netactual, we're not using it anymore
                 outpaths = createpaths(outpath, "germ", year, age)
-                germd = (flows = agedat, geog = germ.geog, model = modl)
+                germd = (flows = agedat, geog = geodat, model = modl)
                 settings[:fit_germ] ? fitandwritefile(germd, settings, outpaths) : println("German data not fitted")
             end
         end
@@ -374,8 +375,8 @@ settings = Dict(
                             ## (xcoord, ycoord). centroid uses
                             ## sf::st_centroid for that. distances
                             ## reflect that
+    :topop_type => "agegroup", ## agegroup for age specific population, all for total population
     :year_min => 2000, ## for German data
-    :topop_type => "agegroup" ## agegroup for age specific population, all for total population
     :year_max => 2017
 )
 
