@@ -4,14 +4,10 @@ library("readxl")
 #################### Data and Functions ##############################
 ## p <- "~/Diss/exec/region_changes/"
 ## p <- "~/Diss/exec/one_run//data/raw/corrections"
-p <- paths$raw_corrections
-changes_f <- "ref-kreise-umrech-2019-1990-2018.xlsx"
-changes_f <- "districts_19.csv"
-p_out <- "~/Diss/exec/one_run//data/clean/corrections"
-p_out <- paths$clean_corrections
-p_shps <- "~/Diss/exec/one_run/data/clean/shapes/"
-p_shps <- paths$clean_shapes
-shp <- MigStat:::read_clean_shps(p_shps, "complete")$districts
+
+flows <- fread("./data/clean/flows_districts_2000_2017_ger.csv")
+districts <- fread("./data/clean/density.csv")
+fn <- "./data/raw/ref-kreise-umrech-2019-1990-2018.xlsx"
 excel_sheet_reader <- function(filename) {
   sheets <- excel_sheets(filename)
   x <- lapply(sheets, function(X) read_excel(filename, sheet = X))
@@ -20,7 +16,7 @@ excel_sheet_reader <- function(filename) {
 }
 
 ################### Making one table #################################
-changes <- excel_sheet_reader(file.path(p, changes_f))
+changes <- excel_sheet_reader(fn)
 ## colnames(changes[["2000-2019"]])[2] <- "name_old"
 ## changes[["2000-2019"]][name_old == "KS Berlin"]
 ## okay so read_xl seems to read in the ags wrongly
@@ -65,8 +61,13 @@ changes[ags_new == 11000000, "ags_new" := 11000]
 ## lapply(2000:2018, function(y) setdiff(shp[year == y, unique(AGS)],
 ##                                       changes[year == y, unique(ags_old)]))
 not_found <- lapply(2000:2018, function(y)
+    length(setdiff(changes[year == y, unique(ags_new)],
+                   districts[, unique(region)])))
+
+not_found <- lapply(2000:2018, function(y)
     length(setdiff(changes[year == y, unique(ags_old)],
-                   shp[year == y, unique(AGS)])))
+                   flows[year == y, unique(origin)])))
+
 
 ## better to only save when really all ags are found
 if (Reduce(sum, not_found) != 0) {
