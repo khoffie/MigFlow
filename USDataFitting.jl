@@ -374,6 +374,7 @@ settings = Dict(
                             ## (xcoord, ycoord). centroid uses
                             ## sf::st_centroid for that. distances
                             ## reflect that
+    :topop_type => "agegroup" ## agegroup for age specific population, all for total population
     :year_min => 2011, ## for German data
     :year_max => 2017
 )
@@ -387,7 +388,8 @@ function main(settings)
     R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
     R"helpeR::gen_data(year_min = $(settings[:year_min]),
                        year_max = $(settings[:year_max]),
-                       dist_type = $(settings[:distance_type]))"
+                       dist_type = $(settings[:distance_type]),
+                       topop_type = $(settings[:topop_type]))"
     outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     mainfit(settings, outpath)
     post_process(outpath)
