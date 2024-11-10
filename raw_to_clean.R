@@ -12,10 +12,11 @@ rawdata_to_cleandata <- function(raw, clean) {
     helpeR::german_popdata(raw, clean)
 
     ## German auxilliary data
-    file.copy(file.path(raw, "correct.csv"), file.path(clean, "correct.csv"),
-              overwrite = TRUE)
+    german_administrative_changes(file.path(raw, "ref-kreise-umrech-2019-1990-2018.xlsx"),
+                                  file.path(clean, "correct.csv"))
     file.copy(file.path(raw, "density.csv"), file.path(clean, "density.csv"),
               overwrite = TRUE)
     file.copy(file.path(raw, "shapes"), file.path(clean, "shapes"),
               recursive = TRUE, overwrite = TRUE)
 }
+
