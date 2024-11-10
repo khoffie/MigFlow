@@ -10,3 +10,6 @@
 helpeR/man
 # tex helping files from emacs
 writeup/macros/auto
+writeup/_main.Rmd
+esa
+manuscript_input
