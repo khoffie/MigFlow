@@ -390,7 +390,7 @@ function main(settings)
                        dist_type = $(settings[:distance_type]))"
     outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     mainfit(settings, outpath)
-    post_process(outpath)
+    post_process(path = outpath)
 end
 
 main(settings)
