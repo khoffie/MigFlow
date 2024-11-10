@@ -1,4 +1,4 @@
-plot_surface = function(path)
+plot_surface = function(path, years)
     plot_surface_ = function(df, age, max)
         Plots.surface(df.fromdens, df.todens, df.funval,
                       title = "Cheby density, agegroup $(age)\n
@@ -7,7 +7,6 @@ plot_surface = function(path)
                       camera = (45, 45))
     end
     ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
-    years = 2011 : 2017
     for y in years
         for a in ages
             df = CSV.read(joinpath(path,  "germdensfun_$(y)_$(a).csv"), DataFrame)
@@ -19,7 +18,7 @@ plot_surface = function(path)
     end
 end
 
-savelp = function(path, from = nothing, to = nothing)
+savelp = function(path, years, from = nothing, to = nothing)
     function plotlp(chain, age, from = nothing, to = nothing)
         ss = length(chain)
         # lastlp = chain[:lp][ss, :].data
@@ -33,7 +32,6 @@ savelp = function(path, from = nothing, to = nothing)
     end
     out = Dict{String, Any}()  # Create a dictionary to store the plots
     ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
-    years = 2011 : 2017
     for y in years
         for a in ages
             chain = deserialize(joinpath(path ,"germchain_$(y)_$(a).csv"))
@@ -47,7 +45,7 @@ savelp = function(path, from = nothing, to = nothing)
     end
 end
 
-plot_distance = function(path)
+plot_distance = function(path, years)
     plot_distance_ = function(df, age)
         Plots.plot(df.dist, df.out, seriestype = :scatter, alpha = .1,
                    xlab = "Distance", ylab = "log.((df.flows .+ 1) ./ df.preds)",
@@ -55,7 +53,6 @@ plot_distance = function(path)
     end
     out = Dict{String, Any}()  # Create a dictionary to store the plots
     ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
-    years = 2011 : 2017
     for y in years
         for a in ages
             df = CSV.read(joinpath(path, "germflows_$(y)_$(a).csv"), DataFrame)
@@ -74,14 +71,15 @@ plot_distance = function(path)
 end
 
 post_process = function(; path = nothing, lp_from = nothing, lp_to = nothing,
-                        render_plots = true, render_doc = true)
+                        render_plots = true, render_doc = true,
+                        years = [y for y in 2000 : 2017 if y != 2003])
     isnothing(path) ? path = path = readline("./writeup/juliaout_path.txt") : path
     println(path)
-    if render_plots 
+    if render_plots
         mkpath(joinpath(path, "plots"))
-        savelp(path, lp_from, lp_to)
-        plot_surface(path)
-        plot_distance(path)
+        savelp(path, years, lp_from, lp_to)
+        plot_surface(path, years)
+        plot_distance(path, years)
         println("Plots saved")
     end
     # report.Rmd reads julia_output_path from file = "./writeup/juliaout_path.txt"
