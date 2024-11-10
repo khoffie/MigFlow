@@ -73,15 +73,17 @@ plot_distance = function(path)
     end
 end
 
-post_process = function(path = nothing, lp_from = nothing, lp_to = nothing, render_doc = true)
+post_process = function(; path = nothing, lp_from = nothing, lp_to = nothing,
+                        render_plots = true, render_doc = true)
     isnothing(path) ? path = path = readline("./writeup/juliaout_path.txt") : path
     println(path)
-    mkpath(joinpath(path, "plots"))
-    savelp(path, lp_from, lp_to)
-    plot_surface(path)
-    plot_distance(path)
-    println("Plots saved")
-
+    if render_plots 
+        mkpath(joinpath(path, "plots"))
+        savelp(path, lp_from, lp_to)
+        plot_surface(path)
+        plot_distance(path)
+        println("Plots saved")
+    end
     # report.Rmd reads julia_output_path from file = "./writeup/juliaout_path.txt"
     f = "./writeup/_main.Rmd"
     if isfile(f);  rm(f); end

@@ -35,11 +35,6 @@
                                 desfun(xmax, ymax)]))
     return desvals
 end
-chain = Turing.sample(usprior(5, 5, districts), NUTS(), 1)
-
-districts = CSV.read("./data/districts.csv", DataFrame)
-
-
 
 function sampleprior(model; n = 1)
     chain = Turing.sample(model, NUTS(), n)
@@ -54,6 +49,7 @@ function sampleprior(model; n = 1)
     return df, chain
 end
 
+districts = CSV.read("./data/districts.csv", DataFrame)
 df, chain = sampleprior(usprior(36, 36, districts); n = 100)
 df[:, "distcode"] = districts[:, "distcode"]
 CSV.write("./manuscript_input/priorsamples.csv", df)
