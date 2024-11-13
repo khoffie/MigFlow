@@ -331,7 +331,9 @@ function mainfit(settings, outpath)
         germ.geog.x = germ.geog.xcoord
         germ.geog.y = germ.geog.ycoord
 
-        Threads.@threads for age in levels(germ.flows.agegroup)
+        ##        Threads.@threads for age in levels(germ.flows.agegroup)
+        ages = settings[:agegroups] == nothing ? levels(germ.flows.agegroup) : settings[:agegroups]
+        Threads.@threads for age in ages
             for year in unique(germ.flows.year)
                 agedat = @subset(germ.flows, :agegroup .== age, :year .== year)
                 geodat = @subset(germ.geog, :year .== year)
@@ -378,6 +380,7 @@ settings = Dict(
     :topop_type => "agegroup", ## agegroup for age specific population, all for total population
     :year_min => 2000, ## for German data
     :year_max => 2017
+    :agegroups => ["30-50"]
 )
 
 # getUSflows()
