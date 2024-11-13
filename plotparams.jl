@@ -31,8 +31,18 @@ function desire(chain)
     return p
 end
 
-fns = readdir(path)
-occursin.("chain", fns)
+function newname(files, new)
+    fnnew = replace.(files, "germchain" => "gravity")
+    fnnew = [f[begin : (end - 4)] for f in fnnew]
+    return fnnew
+end
 
+newname(fnchains, "gravity")
+
+function savegravity(path)
+    fns = readdir(path)
+    fnchains = fns[occursin.("chain", fns)]
+
+    
 function allparams(path)
     
