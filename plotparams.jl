@@ -42,7 +42,12 @@ newname(fnchains, "gravity")
 function savegravity(path)
     fns = readdir(path)
     fnchains = fns[occursin.("chain", fns)]
+    fnnew = newname(fnchains, "gravity")
+    for i in 1 : length(fnnew)
+        chain = deserialize(joinpath(path, fnchains[i]))
+        p = gravity(chain)
+        savefig(joinpath(path, "plots", "$(fnnew[i]).pdf"))
+    end
+end
 
-    
-function allparams(path)
-    
+savegravity(path)
