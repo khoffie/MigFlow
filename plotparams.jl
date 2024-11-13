@@ -31,23 +31,25 @@ function desire(chain)
     return p
 end
 
-function newname(files, new)
-    fnnew = replace.(files, "germchain" => "gravity")
-    fnnew = [f[begin : (end - 4)] for f in fnnew]
-    return fnnew
-end
-
-newname(fnchains, "gravity")
-
-function savegravity(path)
+function saveparams(path, fun)
+    funname = string(fun)
+    function newname(files, new)
+        return fnnew
+    end
     fns = readdir(path)
     fnchains = fns[occursin.("chain", fns)]
-    fnnew = newname(fnchains, "gravity")
+    fnnew = newname(fnchains, funname)
     for i in 1 : length(fnnew)
         chain = deserialize(joinpath(path, fnchains[i]))
-        p = gravity(chain)
+        p = fun(chain)
         savefig(joinpath(path, "plots", "$(fnnew[i]).pdf"))
     end
 end
 
-savegravity(path)
+function allparams(path)
+    saveparams(path, kd)
+    saveparams(path, gravity)
+    saveparams(path, desire)
+end
+
+allparams(path)
