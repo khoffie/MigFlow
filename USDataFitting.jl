@@ -265,6 +265,7 @@ function fitandwritefile(alldata, settings, outpaths)
                                nsamples, nchains, thinning = thinning,
                                initial_params = fill(vals.optis, nchains),
                                verbose = true, progress = true)
+        mhsamp[:, :lp, :] = logjoint(alldata.model, mhsamp)
         Serialization.serialize(chainout, mhsamp)
         println("Sampling finished")
         idx = findmax(mhsamp[:lp][end, ])[2]
