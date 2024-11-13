@@ -379,7 +379,7 @@ settings = Dict(
                             ## reflect that
     :topop_type => "agegroup", ## agegroup for age specific population, all for total population
     :year_min => 2000, ## for German data
-    :year_max => 2017
+    :year_max => 2017,
     :agegroups => ["30-50"]
 )
 
