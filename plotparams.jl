@@ -31,9 +31,17 @@ function desire(chain)
     return p
 end
 
+function lp(chain)
+    p = moreparams(chain, [:lp])
+    display(p)
+    return p
+end
+
 function saveparams(path, fun)
     funname = string(fun)
     function newname(files, new)
+        fnnew = replace.(files, "germchain" => funname)
+        fnnew = [f[begin : (end - 4)] for f in fnnew]
         return fnnew
     end
     fns = readdir(path)
@@ -50,6 +58,5 @@ function allparams(path)
     saveparams(path, kd)
     saveparams(path, gravity)
     saveparams(path, desire)
+    saveparams(path, lp)
 end
-
-allparams(path)
