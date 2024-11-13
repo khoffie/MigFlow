@@ -14,7 +14,7 @@ function moreparams(chain, ps)
 end
 
 function gravity(chain)
-    ps = [:a, :c, :d0, :dscale, :e, :ktopop]
+    ps = [:lp, :a, :c, :d0, :dscale, :e, :ktopop]
     p = moreparams(chain, ps)
     return p
 end
@@ -28,12 +28,6 @@ end
 function desire(chain)
     ps = [Symbol("desirecoefs[$i]") for i in [1, 5, 10, 15, 20, 30]]
     p = moreparams(chain, ps)
-    return p
-end
-
-function lp(chain)
-    p = moreparams(chain, [:lp])
-    display(p)
     return p
 end
 
@@ -58,5 +52,4 @@ function allparams(path)
     saveparams(path, kd)
     saveparams(path, gravity)
     saveparams(path, desire)
-    saveparams(path, lp)
 end

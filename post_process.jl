@@ -1,3 +1,5 @@
+includet("plotparams.jl")
+
 plot_surface = function(path, years)
     plot_surface_ = function(df, age, max)
         Plots.surface(df.fromdens, df.todens, df.funval,
@@ -80,6 +82,7 @@ post_process = function(; path = nothing, lp_from = nothing, lp_to = nothing,
         savelp(path, years, lp_from, lp_to)
         plot_surface(path, years)
         plot_distance(path, years)
+        saveparams(path)
         println("Plots saved")
     end
     # report.Rmd reads julia_output_path from file = "./writeup/juliaout_path.txt"
