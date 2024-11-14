@@ -397,7 +397,7 @@ function main(settings)
                        topop_type = $(settings[:topop_type]))"
     outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     mainfit(settings, outpath)
-    post_process(path = outpath)
+    postprocess(path = outpath)
 end
 
 main(settings)

@@ -1,10 +1,27 @@
 function postprocess(path = nothing)
     if isnothing(path); path = readline("./writeup/juliaout_path.txt"); end
     mkpath(joinpath(path, "plots"))
+
     saveparams(path, "germchain", kd)
     saveparams(path, "germchain", gravity)
     saveparams(path, "germchain", desire)
     saveparams(path, "germchain", densitychains)
+    println("Plots generated")
+
+    ### confusingly compilereport uses path as in writeup/juliaout_path.txt
+    compilereport(render_doc)
+end
+
+function compilereport(render_doc)
+    # report.Rmd reads julia_output_path from file = "./writeup/juliaout_path.txt"
+    if render_doc
+        f = "./writeup/_main.Rmd"
+        if isfile(f);  rm(f); end
+        R"helpeR::render_doc('./writeup', 'report.Rmd')"
+        print("Report generated")
+    else
+        println("Report not generated")
+    end
 end
 
 function saveparams(path, pattern_in, fun)
