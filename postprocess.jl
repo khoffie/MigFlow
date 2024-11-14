@@ -1,4 +1,4 @@
-function postprocess(path = nothing)
+function postprocess(path = nothing, render_doc = true)
     if isnothing(path); path = readline("./writeup/juliaout_path.txt"); end
     mkpath(joinpath(path, "plots"))
 
