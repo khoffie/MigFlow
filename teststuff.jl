@@ -1,16 +1,10 @@
+using LogDensityProblems: logdensity
 using Pkg
 Pkg.activate(".")
 using StatsBase, Serialization, Turing, Plots, StatsPlots, LaTeXStrings, Revise
 
-path = "manuscript_input/2024-11-06_13-37-41"
-chain = deserialize(joinpath(path, "germchain_below18.csv"))
+path = "./manuscript_input/1000slice"
 
-plot(chain[:c])
-plot(chain[:lp])
-
-path = readline("./writeup/juliaout_path.txt")
-
-readdir(path)
 
 chain = deserialize(joinpath(path, "germchain_2017_30-50.csv"))
 geodat, agedat = loadallGermData(sample = false, positive_only = true)
@@ -24,7 +18,27 @@ modl = usmodel(agedat.flows, sum(agedat.flows),
     geodat.pop, nrow(geodat), 100.0, 36, 36, true) ## nothing == neta
 
 logjoint(modl, chain)
-predict(modl, chain[:, :, 1])
+
+
+
+logprobs = zeros(nsamples)
+
+
+
+
+logdensity(ld, chain.value[i, 1 : end -1, j])
+logprobs
+
+chain[: , :lp, :]
+
+
+?logdensity
+weird = -3.2828078659334556
+
+for i in eachindex(modl.args)
+    println(sum(weird .== modl.args[i]))
+end
+
 
 path
 chain
@@ -38,9 +52,28 @@ sam = Turing.sample(foo(),
                     MCMCThreads(), 10, 4,
                     initial_params = fill(fill(10.0,3), 4))
 
-chain
+out = logprob(foo(), sam)
+logjoint(foo(), sam)
 
 
+function logprob(model, chain)
+    ld = Turing.LogDensityFunction(model)
+    nsamples = size(chain)[1]
+    nchains = size(chain)[3]
+    out = zeros(nsamples, nchains)
+    for j in 1 : nchains
+        for i in 1 : nsamples
+            out[i, j] = logdensity(ld, chain.value[i, 1 : end -1, j])
+        end
+    end
+    return out
+end
+
+
+sam[:, :lp, :] = out
+
+
+size(sam)
 densmin = 0
 densmax = 5000
 
