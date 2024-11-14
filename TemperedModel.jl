@@ -41,7 +41,7 @@ function testtempered()
 
     f = foo()
     tem = TemperedModel(f,1.5)
-    sam = sample(tem,SliceSampling.HitAndRun(SliceSteppingOut(0.5)),MCMCThreads(),10,4,
-        initial_params=fill(fill(10.0,3),4))
+    sam = sample(tem,SliceSampling.HitAndRun(SliceSteppingOut(0.5)),MCMCThreads(),100,4,
+        initial_params=fill(fill(1.0,3),4))
     return make_chains(sam,["a1","a2","a3"])
 end
