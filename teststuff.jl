@@ -53,26 +53,13 @@ sam = Turing.sample(foo(),
                     initial_params = fill(fill(10.0,3), 4))
 
 out = logprob(foo(), sam)
-logjoint(foo(), sam)
-
-
-function logprob(model, chain)
-    ld = Turing.LogDensityFunction(model)
-    nsamples = size(chain)[1]
-    nchains = size(chain)[3]
-    out = zeros(nsamples, nchains)
-    for j in 1 : nchains
-        for i in 1 : nsamples
-            out[i, j] = logdensity(ld, chain.value[i, 1 : end -1, j])
-        end
-    end
-    return out
-end
-
 
 sam[:, :lp, :] = out
+sam[:lp]
 
+idx = findmax(sam[:lp][end, ])
 
+sam[:lp]
 size(sam)
 densmin = 0
 densmax = 5000
