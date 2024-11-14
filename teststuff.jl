@@ -52,4 +52,6 @@ Plots.surface(kdfun, colorbar=true, ticks=false)
 
 
 path = "manuscript_input/2024-11-14_14-36-20/"
+path = "manuscript_input/2024-11-14_14-52-39"
 postprocess(path)
+
