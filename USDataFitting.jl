@@ -10,7 +10,7 @@ import PlotlyJS
 
 includet("models.jl")
 includet("samplerows.jl")
-includet("postprocessing/post_process.jl")
+includet("postprocess.jl")
 #using DuckDB
 
 #=
