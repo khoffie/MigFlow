@@ -259,6 +259,18 @@ function fitandwritefile(alldata, settings, outpaths)
             #                 verbose = true, progress = true)
 
     function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning; printvals = false)
+        function logprob(model, chain)
+            ld = Turing.LogDensityFunction(model)
+            nsamples = size(chain)[1]
+            nchains = size(chain)[3]
+            out = zeros(nsamples, nchains)
+            for j in 1:nchains
+                for i in 1:nsamples
+                    out[i, j] = logdensity(ld, chain.value[i, 1:end-1, j])
+                end
+            end
+            return out
+        end
         println("Sampling starts")
         ## MH(.1^2*I(length(vals.optis)))
         mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
@@ -268,6 +280,7 @@ function fitandwritefile(alldata, settings, outpaths)
 ##        mhsamp[:, :lp, :] = logjoint(alldata.model, mhsamp)
         Serialization.serialize(chainout, mhsamp)
         println("Sampling finished")
+        mhsamp[:, :lp, :] = logprob(alldata.modl, mhsamp)
         idx = findmax(mhsamp[:lp][end, ])[2]
         vals.optsam = mhsamp.value.data[end, 1 : end - 1, idx] # last sample, no LP, chain with max LP
         if printvals; println(vals[[1:10; 43:47], :]); end
