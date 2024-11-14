@@ -1,4 +1,5 @@
-function postprocess(path)
+function postprocess(path = nothing)
+    if isnothing(path); path = readline("./writeup/juliaout_path.txt"); end
     mkpath(joinpath(path, "plots"))
     saveparams(path, "germchain", kd)
     saveparams(path, "germchain", gravity)
