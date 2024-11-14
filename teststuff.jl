@@ -49,3 +49,7 @@ kd_dist = MvNormal(zeros(ncoefs), fill(40.0, ncoefs))
 kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
             rand(kd_dist) ./ 10)
 Plots.surface(kdfun, colorbar=true, ticks=false)
+
+
+path = "manuscript_input/2024-11-14_14-36-20/"
+postprocess(path)
