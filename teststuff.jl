@@ -48,6 +48,8 @@ ncoefs = 36
 kd_dist = MvNormal(zeros(ncoefs), fill(40.0, ncoefs))
 kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
             rand(kd_dist) ./ 10)
+Plots.plot(kdfun, seriestpe = :scatter, alpha = .1)
+Plots.heatmap(kdfun)
 Plots.surface(kdfun, colorbar=true, ticks=false)
 
 
