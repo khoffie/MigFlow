@@ -44,8 +44,8 @@ chain
 densmin = 0
 densmax = 5000
 
-ncoefs = 25
+ncoefs = 36
 kd_dist = MvNormal(zeros(ncoefs), fill(40.0, ncoefs))
 kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
             rand(kd_dist) ./ 10)
-Plots.surface(kdfun, colorbar=false, ticks=false)
+Plots.surface(kdfun, colorbar=true, ticks=false)
