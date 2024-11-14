@@ -32,3 +32,16 @@ function make_chains(slices,parmnames)
     lp =  [slices[i][j].lp for j in eachindex(slices[1]),k in 1:1, i in eachindex(slices)]
     ch = Chains(hcat(parms,lp), vcat(parmnames,[:lp]))
 end
+
+
+function testtempered()
+    @model function foo()
+        a ~ MvNormal([0,0,0],1)
+    end
+
+    f = foo()
+    tem = TemperedModel(f,1.5)
+    sam = sample(tem,SliceSampling.HitAndRun(SliceSteppingOut(0.5)),MCMCThreads(),10,4,
+        initial_params=fill(fill(10.0,3),4))
+    return make_chains(sam,["a1","a2","a3"])
+end
