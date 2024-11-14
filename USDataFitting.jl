@@ -3,7 +3,7 @@ Pkg.activate(".")
 using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2
 using StatsBase, StatsFuns, StatsPlots, Distributions, Random, LaTeXStrings, Plots
 using Turing, ReverseDiff, ApproxFun
-using Printf, Revise, Dates, Enzyme, Serialization
+using Printf, Revise, Dates, Enzyme, Serialization, SliceSampling
 using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
 import PlotlyJS
