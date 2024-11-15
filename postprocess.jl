@@ -90,6 +90,7 @@ function fileinout(path, pattern_in, fun)
 end
 
 function param(chain, symbol)
-    p = Plots.plot(chain[symbol], xlab = string(symbol), label = "")
+    p = Plots.plot(chain[symbol].data[50 : 100, :],
+                   xlab = string(symbol), label = "")
     return p
 end
