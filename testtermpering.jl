@@ -42,6 +42,9 @@ germd = (flows = agedat, geog = geodat, model = modl)
 path = "./manuscript_input/tempered/"
 chainout = joinpath(path, "germchain_2017_30-50.csv")
 
-germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut(0.5)), vals,
-                                 chainout, 4, 100, 1; temp = 64.0, printvals = false)
-postprocess(path)
+temp = 2^14.
+
+germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut(1)), vals,
+                                 chainout, 4, 100, 1; temp = temp, printvals = false)
+postprocess(path, false)
+chain[:lp]
