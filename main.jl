@@ -1,4 +1,4 @@
-includet("USDataFitting.jl")
+includet("DataFitting.jl")
 using RCall
 
 

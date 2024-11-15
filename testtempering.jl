@@ -14,7 +14,7 @@ includet("samplerows.jl")
 #includet("postprocess.jl")
 includet("fitandwrite.jl")
 includet("TemperedModel.jl")
-includet("USDataFitting.jl")
+includet("DataFitting.jl")
 
 function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning, inits; temp, printvals=false)
 
