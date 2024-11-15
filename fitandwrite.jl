@@ -52,21 +52,23 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
 
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
-    mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
-        nsamples, nchains, thinning=thinning,
-        initial_params=fill(vals.optis, nchains),
-        verbose=true, progress=true)
-    ##        mhsamp[:, :lp, :] = logjoint(alldata.model, mhsamp)
+    tem = TemperedModel(alldata.model, 128.0)
+    mhsamp = Turing.sample(tem, sampler, MCMCThreads(),
+                           nsamples, nchains, thinning=thinning,
+                           initial_params=fill(vals.optis, nchains),
+                           verbose=true, progress=true)
+    mhsamp = make_chains(mhsamp, vals.pars)
+    println(mhsamp[:, :lp, 1])
+##    mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
-    mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)
     idx = findmax(mhsamp[:lp][end,])[2]
     vals.optsam = mhsamp.value.data[end, 1:end-1, idx] # last sample, no LP, chain with max LP
     if printvals
         println(vals[[1:10; 43:47], :])
     end
     alldata.flows.preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
-    return alldata, vals
+    return alldata, vals, mhsamp
 end
 
 function moreout(alldata, outpaths, vals)

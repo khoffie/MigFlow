@@ -12,6 +12,7 @@ includet("models.jl")
 includet("samplerows.jl")
 includet("postprocess.jl")
 includet("fitandwrite.jl")
+includet("TemperedModel.jl")
 #using DuckDB
 
 #=
@@ -280,9 +281,9 @@ end
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sampler => MH(.1^2*I(78)),
-    ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
-    :sample_size => 1,
+    :sampler => externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.))),
+    ## MH(.1^2*I(78)),
+    :sample_size => 10,
     :nchains => 4,
     :thinning => 1,
     :run_optim => false,
@@ -298,7 +299,7 @@ settings = Dict(
     :year_min => 2017, ## for German data
     :year_max => 2017,
     :agegroups => ["30-50"],
-    :outpath => "test3"
+    :outpath => "tempered"
 )
 
 # getUSflows()

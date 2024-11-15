@@ -36,12 +36,12 @@ end
 
 function testtempered()
     @model function foo()
-        a ~ MvNormal([0,0,0],1)
+        a ~ MvNormal([0,0,0], 1)
     end
-
-    f = foo()
-    tem = TemperedModel(f,1.5)
-    sam = sample(tem,SliceSampling.HitAndRun(SliceSteppingOut(0.5)),MCMCThreads(),100,4,
-        initial_params=fill(fill(1.0,3),4))
-    return make_chains(sam,["a1","a2","a3"])
+    tem = TemperedModel(foo(), 1.5)
+    nchains = 1
+    sam = Turing.sample(tem, SliceSampling.HitAndRun(SliceSteppingOut(0.5)),
+                        MCMCThreads(), 100, nchains, initial_params=fill(fill(1.0, 3), nchains))
+    chain = make_chains(sam, ["a1","a2","a3"])
+    return chain, sam
 end
