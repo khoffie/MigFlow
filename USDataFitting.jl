@@ -395,20 +395,27 @@ settings = Dict(
     :year_min => 2000, ## for German data
     :year_max => 2017,
     :agegroups => ["30-50"]
+    :outpath => "test"
 )
 
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
 
+function makeoutpath(outpath)
+    datepath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
+    out = isnothing(outpath) ? datepath : joinpath("manuscript_input", outpath)
+    return out
+end
+
 function main(settings)
+    outpath = makeoutpath(settings[:outpath])
     ## install helpeR only if newer version in repo, never upgrade dependencies
     R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
     R"helpeR::gen_data(year_min = $(settings[:year_min]),
                        year_max = $(settings[:year_max]),
                        dist_type = $(settings[:distance_type]),
                        topop_type = $(settings[:topop_type]))"
-    outpath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     mainfit(settings, outpath)
     postprocess(path = outpath)
 end

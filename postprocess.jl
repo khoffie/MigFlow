@@ -1,5 +1,7 @@
 function postprocess(path = nothing, render_doc = true)
-    if isnothing(path); path = readline("./writeup/juliaout_path.txt"); end
+    file = "./writeup/juliaout_path.txt"
+    if !isnothing(path); write(file, path); end
+    if isnothing(path); path = readline(file); end
     mkpath(joinpath(path, "plots"))
 
     saveparams(path, "germchain", kd)
