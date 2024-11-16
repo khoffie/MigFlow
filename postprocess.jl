@@ -1,15 +1,18 @@
-function postprocess(path = nothing, render_doc = true)
+function postprocess(path = nothing; render_plots, render_doc = true)
     file = "./writeup/juliaout_path.txt"
     if !isnothing(path); write(file, path); end
     if isnothing(path); path = readline(file); end
     mkpath(joinpath(path, "plots"))
 
-    saveparams(path, "germchain", kd)
-    saveparams(path, "germchain", gravity)
-    saveparams(path, "germchain", desire)
-    saveparams(path, "germchain", densitychains)
-    println("Plots generated")
-
+    if render_plots
+        saveparams(path, "germchain", kd)
+        saveparams(path, "germchain", gravity)
+        saveparams(path, "germchain", desire)
+        saveparams(path, "germchain", densitychains)
+        println("Plots generated")
+    else
+        println("Plots not generated")
+    end
     ### confusingly compilereport uses path as in writeup/juliaout_path.txt
     compilereport(render_doc)
 end
