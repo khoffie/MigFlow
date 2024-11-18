@@ -280,11 +280,10 @@ end
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sampler => MH(.1^2*I(78)),
-    ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
-    :sample_size => 1,
-    :nchains => 4,
-    :thinning => 1,
+    :sampler => externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.))), #MH(.1^2*I(78)),
+    :sample_size => 100,
+    :nchains => 6,
+    :thinning => 10,
     :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
@@ -294,11 +293,11 @@ settings = Dict(
                             ## (xcoord, ycoord). centroid uses
                             ## sf::st_centroid for that. distances
                             ## reflect that
-    :topop_type => "agegroup", ## agegroup for age specific population, all for total population
+    :topop_type => "all", ## agegroup for age specific population, all for total population
     :year_min => 2017, ## for German data
     :year_max => 2017,
     :agegroups => ["30-50"],
-    :outpath => "test3"
+    :outpath => "slice1000"
 )
 
 # getUSflows()
