@@ -56,7 +56,7 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
                            nsamples, nchains, thinning=thinning,
                            initial_params=fill(vals.optis, nchains),
                            verbose=true, progress=true)
-    mhsamp[:, :lp, :] = logjoint(alldata.model, mhsamp)
+    mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
     idx = findmax(mhsamp[:lp][end,])[2]
