@@ -3,9 +3,15 @@ library(data.table)
 library(sf)
 library(readxl)
 
+## probably a good idea to add directories automatically
+## raw/german_flows
+## clean/german_flows
+
+
 rawdata_to_cleandata <- function(raw, clean) {
     helpeR::preprocess_germanflows(file.path(raw, "german_flows"),
                                    file.path(clean, "german_flows"))
+    ## This may create an NA.csv which makes german_flows() fail.
     helpeR::german_flows(file.path(clean, "german_flows"),
                          file.path(clean, "flows_districts_2000_2017_ger.csv"))
 
@@ -19,4 +25,3 @@ rawdata_to_cleandata <- function(raw, clean) {
     file.copy(file.path(raw, "shapes"), file.path(clean, "shapes"),
               recursive = TRUE, overwrite = TRUE)
 }
-

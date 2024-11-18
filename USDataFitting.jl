@@ -307,7 +307,7 @@ settings = Dict(
 function makeoutpath(outpath)
     datepath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     out = isnothing(outpath) ? datepath : joinpath("manuscript_input", outpath)
-    println("Output saved into" * out)
+    println("Output saved into " * out)
     return out
 end
 
