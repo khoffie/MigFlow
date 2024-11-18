@@ -8,10 +8,10 @@ using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
 import PlotlyJS
 
-includet("models.jl")
-includet("samplerows.jl")
-includet("postprocess.jl")
-includet("fitandwrite.jl")
+includet("src/models.jl")
+includet("src/samplerows.jl")
+includet("src/postprocess.jl")
+includet("src/fitandwrite.jl")
 #using DuckDB
 
 #=
