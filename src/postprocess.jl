@@ -44,7 +44,7 @@ function densitychains(chain; densmin = 0, densmax = 5000, title = nothing)
         kds = [k for k in keys(pars) if contains(k, "kd")]
         kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
                     getindex.(Ref(pars), kds) ./ 10)
-        p = Plots.surface(kdfun, colorbar = false, ticks = false)
+        p = Plots.heatmap(kdfun, colorbar = false, ticks = false)
         return p
     end
     plts = [plotdensity(chain[:, :, i], densmin, densmax) for i in 1 : size(chain)[3]]

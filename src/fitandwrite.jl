@@ -53,13 +53,12 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
     mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
-        nsamples, nchains, thinning=thinning,
-        initial_params=fill(vals.optis, nchains),
-        verbose=true, progress=true)
-    ##        mhsamp[:, :lp, :] = logjoint(alldata.model, mhsamp)
+                           nsamples, nchains, thinning=thinning,
+                           initial_params=fill(vals.optis, nchains),
+                           verbose=true, progress=true)
+    mhsamp[:, :lp, :] = logjoint(alldata.model, mhsamp)
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
-    mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)
     idx = findmax(mhsamp[:lp][end,])[2]
     vals.optsam = mhsamp.value.data[end, 1:end-1, idx] # last sample, no LP, chain with max LP
     if printvals
