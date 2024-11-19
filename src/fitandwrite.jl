@@ -52,14 +52,11 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
 
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
-    tem = TemperedModel(alldata.model, 128.0)
-    mhsamp = Turing.sample(tem, sampler, MCMCThreads(),
+    mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
                            nsamples, nchains, thinning=thinning,
                            initial_params=fill(vals.optis, nchains),
                            verbose=true, progress=true)
-    mhsamp = make_chains(mhsamp, vals.pars)
-    println(mhsamp[:, :lp, 1])
-##    mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)
+    mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
     idx = findmax(mhsamp[:lp][end,])[2]

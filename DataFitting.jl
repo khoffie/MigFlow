@@ -9,11 +9,11 @@ using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
 import PlotlyJS
 
-includet("models.jl")
-includet("samplerows.jl")
-includet("postprocess.jl")
-includet("fitandwrite.jl")
-includet("TemperedModel.jl")
+includet("src/models.jl")
+includet("src/samplerows.jl")
+includet("src/postprocess.jl")
+includet("src/fitandwrite.jl")
+includet("src/temperedmodl.jl")
 #using DuckDB
 
 #=
@@ -286,6 +286,6 @@ end
 function makeoutpath(outpath)
     datepath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
     out = isnothing(outpath) ? datepath : joinpath("manuscript_input", outpath)
-    println("Output saved into" * out)
+    println("Output saved into " * out)
     return out
 end
