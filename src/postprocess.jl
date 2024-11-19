@@ -89,14 +89,9 @@ function fileinout(path, pattern_in, fun)
     return fin, fout
 end
 
-<<<<<<< HEAD
-function param(chain, symbol)
-    p = Plots.plot(chain[symbol].data[50 : 100, :],
-=======
 function param(chain, symbol, first)
     x = range(first, last, step = 1)
     p = Plots.plot(x, chain[symbol].data[first : end, :],
->>>>>>> NewDensHeatmap
                    xlab = string(symbol), label = "")
     return p
 end
