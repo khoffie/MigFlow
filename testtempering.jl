@@ -75,8 +75,7 @@ let temp = 10000.0,
         plot(chain[:lp],title="Temperature $temp") |> display
         push!(allresults,(chain=chain,temp=temp))
         temp = temp * 0.9
-        maxlp = findmax(chain[:,:lp,:])
-        inits = chain.value[maxlp[2].I[1],1:end-1,maxlp[2].I[2]]
+        inits = vals.optsam
         inits = inits .+ rand(Normal(0.0,0.05),length(inits))
     end
 end
@@ -94,40 +93,3 @@ germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut
 
 serialize("manuscript_input/tempered/dan_temper_test.serial",chain)
 plot(chain[Symbol.([:a,:c,:d0,:e,:dscale,:ktopop,"kd[1]","kd[2]","kd[3]","desirecoefs[1]","desirecoefs[2]","desirecoefs[3]",:lp])])
-
-
-let temp = 10000.0,
-    inits = vals.optis,
-    germd = germd,
-    vals = vals,
-    chain = Chains([1]),
-    restartcount = 0
-
-    global allresults
-
-    while temp > 4500.0
-            @label restartsample
-        try 
-            germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut(0.25)), vals,
-                                 chainout, 4, 10, 1,fill(inits,4); temp = temp, printvals = false)
-        catch e 
-            println("Error occurred of type $(typeof(e)) potential restart")
-            println(e)
-            if typeof(e) != InterruptException && restartcount < 100
-                inits = inits .+ rand(Normal(0.0,0.05),length(inits))
-                println(inits[1 : 10])
-                restartcount += 1
-                @goto restartsample
-            else
-                break
-            end
-        end
-##        plot(chain[50:100,:lp,:],title="Temperature $temp") |> display
-        plot(chain[:lp],title="Temperature $temp") |> display
-        push!(allresults,(chain=chain,temp=temp))
-        temp = temp * 0.9
-        inits = vals.optsam
-        inits = inits .+ rand(Normal(0.0,0.05),length(inits))
-    end
-end
-
