@@ -26,4 +26,4 @@ plot(p1, p2)
 p1
 
 
-median(geodat.density)
+p = densitychains(chain, flows, districts, 100)
