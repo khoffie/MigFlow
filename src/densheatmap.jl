@@ -12,8 +12,9 @@ function densheatmap(chain, denso, densd)
     kds = [k for k in keys(pars) if contains(k, "kd")]
     kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
                 getindex.(Ref(pars), kds) ./ 10)
-    values = [kdfun(x, y) for x in denso, y in densd]
-    p = Plots.heatmap(denso, densd, values, colorbar = false, ticks = false)
+    # values = [kdfun(x, y) for x in denso, y in densd]
+    # p = Plots.heatmap(denso, densd, values, colorbar = false, ticks = false)
+    p = Plots.heatmap(kdfun)
     return p, values
 end
 
