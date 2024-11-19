@@ -10,15 +10,18 @@ function densheatmap(chain, denso, densd, densmin, densmax)
     kds = [k for k in keys(pars) if contains(k, "kd")]
     kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
                 getindex.(Ref(pars), kds) ./ 10)
-    # values = [kdfun(x, y) for x in denso, y in densd]
-    # p = Plots.heatmap(denso, densd, values, colorbar = false, ticks = false)
-    p = Plots.heatmap(kdfun)
+    values = [kdfun(x, y) for x in denso, y in densd]
+    p = Plots.heatmap(denso, densd, values, colorbar = false, ticks = false)
+##    p = Plots.heatmap(kdfun)
     return p, values
 end
 
 function densodensd(flows, districts, n)
     densities = districts[:, [:distcode, :density]]
     densities.density = log.(districts.density / median(districts.density))
+    minlrd = minimum(densities.density)
+    maxlrd = maximum(densities.density)
+
     df = innerjoin(flows, densities, on = :fromdist => :distcode)
     rename!(df, :density => "fromdens")
     leftjoin!(df, densities, on = :todist => :distcode)
@@ -27,5 +30,5 @@ function densodensd(flows, districts, n)
     df1 = df[shuffle(1 : nrow(df))[1 : n], [:fromdens, :todens]]
     fromdens = sort(df1.fromdens)
     todens = sort(df1.todens)
-    return fromdens, todens, min, max
+    return fromdens, todens, minlrd, maxlrd
 end
