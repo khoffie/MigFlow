@@ -1,20 +1,4 @@
-
-using Pkg
-Pkg.activate(".")
-using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays,  LibGit2
-using StatsBase, StatsFuns, StatsPlots, Distributions, Random, LaTeXStrings, Plots
-using Turing, ReverseDiff, ApproxFun
-using Printf, Revise, Dates, Enzyme, Serialization, SliceSampling
-using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
-Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
-import PlotlyJS
-
-includet("models.jl")
-includet("samplerows.jl")
-#includet("postprocess.jl")
-includet("fitandwrite.jl")
-includet("TemperedModel.jl")
-includet("DataFitting.jl")
+includet("src/datafitting.jl")
 
 function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning, inits; temp, printvals=false)
 
@@ -70,28 +54,26 @@ let temp = 10000.0,
     restartcount = 0
 
     global allresults
-    
+
     while temp > 4500.0
-        
-        @label restartsample
+            @label restartsample
         try 
             germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut(0.25)), vals,
-                                 chainout, 4, 100, 1,fill(inits,4); temp = temp, printvals = false)
-
-#postprocess(path, false)
+                                 chainout, 4, 10, 1,fill(inits,4); temp = temp, printvals = false)
         catch e 
             println("Error occurred of type $(typeof(e)) potential restart")
             println(e)
             if typeof(e) != InterruptException && restartcount < 100
                 inits = inits .+ rand(Normal(0.0,0.05),length(inits))
+                println(inits[1 : 10])
                 restartcount += 1
                 @goto restartsample
             else
                 break
             end
         end
-
-        plot(chain[50:100,:lp,:],title="Temperature $temp") |> display
+##        plot(chain[50:100,:lp,:],title="Temperature $temp") |> display
+        plot(chain[:lp],title="Temperature $temp") |> display
         push!(allresults,(chain=chain,temp=temp))
         temp = temp * 0.9
         maxlp = findmax(chain[:,:lp,:])

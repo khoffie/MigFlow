@@ -1,7 +1,5 @@
-includet("DataFitting.jl")
+includet("src/datafitting.jl")
 using RCall
-
-
 
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
@@ -26,8 +24,6 @@ settings = Dict(
     :agegroups => ["30-50"],
     :outpath => "tempered"
 )
-
-
 
 function main(settings)
     outpath = makeoutpath(settings[:outpath])
