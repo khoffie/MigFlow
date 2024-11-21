@@ -1,24 +1,28 @@
 function densitychains(chain::Chains, flows::DataFrame, districts::DataFrame, n::Int, title = nothing)
-    fromdens, todens, mi, ma = densodensd(flows, districts, n)
-    plts = [densheatmap(chain[:, :, i], fromdens, todens, mi, ma)[1] for i in 1 : size(chain)[3]]
+##    fromdens, todens, mi, ma = densodensd(flows, districts, n)
+    plts = [densheatmap(chain[:, :, i])[1] for i in 1 : size(chain)[3]]
     p = Plots.plot(plts..., plot_title = title == nothing ? "" : title)
     return p
 end
 
-function densheatmap(chain, denso, densd, densmin, densmax)
+function densheatmap(chain)
+    densmin = -1.713679028413716
+    densmax = 3.1516041062884512
     pars = OrderedDict(zip(string.(chain.value.axes[2]), chain.value.data[end, :, 1]))
     kds = [k for k in keys(pars) if contains(k, "kd")]
     kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
                 getindex.(Ref(pars), kds) ./ 10)
     # values = [kdfun(x, y) for x in denso, y in densd]
     # p = Plots.heatmap(denso, densd, values, colorbar = false, ticks = false)
-    p = Plots.heatmap(kdfun)
+    p = Plots.heatmap(kdfun, colorbar = false)
     return p, values
 end
 
 function densodensd(flows, districts, n)
     densities = districts[:, [:distcode, :density]]
     densities.density = log.(districts.density / median(districts.density))
+    minlrd = minimum(densities.density)
+    maxlrd = maximum(densities.density)
     df = innerjoin(flows, densities, on = :fromdist => :distcode)
     rename!(df, :density => "fromdens")
     leftjoin!(df, densities, on = :todist => :distcode)
@@ -27,5 +31,6 @@ function densodensd(flows, districts, n)
     df1 = df[shuffle(1 : nrow(df))[1 : n], [:fromdens, :todens]]
     fromdens = sort(df1.fromdens)
     todens = sort(df1.todens)
-    return fromdens, todens, min, max
+    return fromdens, todens, minlrd, maxlrd
 end
+
