@@ -14,8 +14,12 @@ function densheatmap(chain, fromdens, todens, densmin, densmax, dens_th)
                 getindex.(Ref(pars), kds) ./ 10)
     ikd = InterpKDE(kde((fromdens, todens)))
     interval = densmin : .1 : densmax
-    p = heatmap(interval, interval, [kdfun(x, y) * (pdf(ikd, x, y) > dens_th)
-                                     for y in interval, x in interval])
+    values = [kdfun(x, y) * (pdf(ikd, x, y) > dens_th) for y in interval, x in interval]
+    values = zerotonan.(values)
+    p = heatmap(interval, interval, values,
+                colorbar = false, ticks = false, c = :thermal,
+                xlab=L"\rho_o, low \rightarrow high",
+                ylab=L"\rho_d, low \rightarrow high")
     return p, values
 end
 
@@ -34,3 +38,7 @@ function densodensd(flows, districts, n)
     return df1.fromdens, df1.todens, minlrd, maxlrd
 end
 
+function zerotonan(x)
+    y = x == 0.0 ? NaN : x
+    return y
+end
