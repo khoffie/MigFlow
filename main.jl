@@ -37,4 +37,3 @@ function main(settings)
     postprocess(outpath, true)
 end
 
-main(settings)
