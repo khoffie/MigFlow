@@ -15,9 +15,7 @@ p = densitychains(chain, flows, 10, districts)
 p
 x :: Chains = chain
 
-postprocess(50, path, true, false)
-postprocess()
+postprocess(50, path, false, true)
 
-chain[:lp].data[50 : end, :]
 
 
