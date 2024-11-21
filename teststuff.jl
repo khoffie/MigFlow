@@ -1,9 +1,10 @@
-using LogDensityProblems: logdensity
-using Pkg
-Pkg.activate(".")
-using StatsBase, Serialization, Turing, Plots, StatsPlots, LaTeXStrings, Revise
+using Revise
+includet("main.jl")
 
-path = "./manuscript_input/tempered"
+path = "./manuscript_input/30kMH"
+jo = "./writeup/juliaout_path.txt"
+write(jo, path)
+
 f = "germchain_2017_30-50.csv"
 
 chain = deserialize(joinpath(path, f))
@@ -13,4 +14,10 @@ districts = CSV.read("./data/districts.csv", DataFrame)
 p = densitychains(chain, flows, 10, districts)
 p
 x :: Chains = chain
+
+postprocess(50, path, true, false)
+postprocess()
+
+chain[:lp].data[50 : end, :]
+
 
