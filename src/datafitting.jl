@@ -271,8 +271,6 @@ function mainfit(settings, outpath)
         write(f, outpath)
    end
 end
-
-
 # getUSflows()
 # getUSgeog()
 # getUScountypop()

@@ -45,3 +45,42 @@ function testtempered()
     chain = make_chains(sam, ["a1","a2","a3"])
     return chain, sam
 end
+
+function runtempering(germd, vals, thinning, temp_th, n_samples = 100)
+    allresults=[]
+    let temp = 10000.0,
+        ##    inits = vals.optis,
+        germd = germd,
+        vals = vals,
+        chain = Chains([1]),
+        restartcount = 0
+        
+        while temp > temp_th
+            @label restartsample
+            try
+                tempmodel = TemperedModel(germd.model, temp)
+                println("Sampling starts for temperature $temp")
+                germd, vals, chain = runsampling(tempmodel, germd,
+                                                 SliceSampling.HitAndRun(SliceSteppingOut(0.25)),
+                                                 vals, chainout, 4, n_samples, thinning, printvals = true)
+            catch e ## this catches all errors but it should only catch the domain error
+                println("Error occurred of type $(typeof(e)) potential restart")
+                if typeof(e) != InterruptException && restartcount < 100
+                    vals.optis = vals.optis .+ rand(Normal(0.0,0.05),length(vals.optis))
+                    println(vals.optis[1 : 10])
+                    restartcount += 1
+                    @goto restartsample
+                else
+                    break
+                end
+            end
+            ##        plot(chain[50:100,:lp,:],title="Temperature $temp") |> display
+            plot(chain[:lp],title="Temperature $temp") |> display
+            push!(allresults,(chain = chain, vals = vals, temp = temp))
+            temp = temp * 0.9
+            vals.optis = vals.optsam
+            vals.optis = vals.optis .+ rand(Normal(0.0,0.05),length(vals.optis))
+        end
+    end
+    return allresults[end]
+end

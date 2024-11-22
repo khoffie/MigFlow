@@ -1,6 +1,8 @@
 function fitandwritefile(alldata, settings, outpaths)    
     vals = gen_inits()
     vals = runoptim(vals; run = settings[:run_optim], printvals = false)
+    results = runtempering(alldata, vals, 1, 8000, 10)
+    vals.optis = results[end].vals ## not necessary because runtempering changes them already
     alldata, vals = runsampling(alldata, settings[:sampler], vals, outpaths["chain"],
                                 settings[:nchains], settings[:sample_size], settings[:thinning];
                                 printvals = false)
@@ -48,26 +50,28 @@ end
 #                 initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
 #                 verbose = true, progress = true)
 
-function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning; printvals=false)
+function runsampling(model, alldata, sampler, vals, chainout, nchains, nsamples, thinning; printvals=false)
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
-    mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
+    mhsamp = Turing.sample(model, sampler, MCMCThreads(),
                            nsamples, nchains, thinning=thinning,
                            initial_params=fill(vals.optis, nchains),
                            verbose=true, progress=true)
-    if occursin("TemperedModel", string(typeof(temp)))
+    println("Sampling finished")
+    tempered = occursin("TemperedModel", string(model))
+    slice = occursin("HitAndRun", string(sampler))
+    if tempered
         println("Make chains from tempered model")
         mhsamp = make_chains(mhsamp, vals.pars)
     end
-    if occursin("HitAndRun", string(sampler)) && !occursin("TemperedModel", string(typeof(temp)))
+    if slice && !tempered
         ## lp values are wrong in slice
         println("Compute log probabilities")
-        mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)        
+        mhsamp[:, :lp, :] = logprob(model, mhsamp)        
     end
     Serialization.serialize(chainout, mhsamp)
-    println("Sampling finished")
-    maxlp = findmax(chain[:, :lp, :])
-    vals.optsam = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
+    maxlp = findmax(mhsamp[:, :lp, :])
+    vals.optsam = mhsamp.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
     if printvals
         println(vals[[1:10; 43:47], :])
     end

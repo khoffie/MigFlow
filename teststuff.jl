@@ -1,6 +1,7 @@
 using Revise
 includet("main.jl")
 
+path = "./manuscript_input/pretempering"
 path = "./manuscript_input/30kMH"
 jo = "./writeup/juliaout_path.txt"
 write(jo, path)
