@@ -1,40 +1,23 @@
-includet("src/datafitting.jl")
+using Revise
+includet("main.jl")
 
-function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning, inits; temp, printvals=false)
-    ## MH(.1^2*I(length(vals.optis)))
-    println("Sampling starts, temp = $temp")
-    mdl = isnothing(temp) ? alldata.model : TemperedModel(alldata.model, temp)
-    mhsamp = Turing.sample(mdl, sampler, MCMCThreads(),
-                           nsamples, nchains, thinning=thinning,
-                           initial_params=inits,
-                           verbose=true, progress=true)
-    mhsamp = make_chains(mhsamp, vals.pars)
-##    mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)
-    Serialization.serialize(chainout, mhsamp)
-    println("Sampling finished")
-    maxlp = findmax(chain[:, :lp, :])
-    vals.optsam = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
-    if printvals
-        println(vals[[1:10; 43:47], :])
-    end
-    alldata.flows.preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
-    return alldata, vals, mhsamp
+pos_only = true
+districts, flows = loadallGermData(sample = false, positive_only = pos_only)
+flows = filter(:agegroup => ==("30-50"), flows)
+mdl = germmodel(flows, districts, pos_only)
+
+## germd = (flows = flows, geog = districts, model = model)
+mutable struct germ
+    flows :: DataFrame
+    districts :: DataFrame
+    model :: Any
 end
 
-geodat, agedat = loadallGermData(sample = false, positive_only = true)
-agedat.agegroup .== "30-50"
-agedat = filter(:agegroup => ==("30-50"), agedat)
-
+germd = germ(flows, districts, mdl)
 vals = gen_inits()
-vals.optis = vals.inits
-
-mdl = germmodel(flows, districts, true)
 temp = TemperedModel(mdl, 10000.0)
-!occursin("TemperedModel", string(typeof(temp)))
 
-germd=(flows = agedat, geog = geodat, model = modl)
-
-
+germd = germ(flows, districts, temp)
 path = "./manuscript_input/tempered/"
 chainout = joinpath(path, "germchain_2017_30-50.csv")
 
