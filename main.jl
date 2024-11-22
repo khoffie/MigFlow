@@ -1,6 +1,6 @@
 includet("src/datafitting.jl")
 using RCall
-includet("postprocess.jl")
+includet("src/postprocess.jl")
 
 settings = Dict(
     :sample_rows => false, # if true 10% sample of rows is used
