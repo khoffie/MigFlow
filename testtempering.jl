@@ -10,12 +10,11 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
                            initial_params=inits,
                            verbose=true, progress=true)
     mhsamp = make_chains(mhsamp, vals.pars)
-    println(mhsamp[:, :lp, 1])
 ##    mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
-    idx = findmax(mhsamp[:lp][end,])[2]
-    vals.optsam = mhsamp.value.data[end, 1:end-1, idx] # last sample, no LP, chain with max LP
+    maxlp = findmax(chain[:, :lp, :])
+    vals.optsam = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
     if printvals
         println(vals[[1:10; 43:47], :])
     end
@@ -76,8 +75,7 @@ let temp = 10000.0,
         plot(chain[:lp],title="Temperature $temp") |> display
         push!(allresults,(chain=chain,temp=temp))
         temp = temp * 0.9
-        maxlp = findmax(chain[:,:lp,:])
-        inits = chain.value[maxlp[2].I[1],1:end-1,maxlp[2].I[2]]
+        inits = vals.optsam
         inits = inits .+ rand(Normal(0.0,0.05),length(inits))
     end
 end
