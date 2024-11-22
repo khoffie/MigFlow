@@ -61,8 +61,8 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
     end
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
-    idx = findmax(mhsamp[:lp][end,])[2]
-    vals.optsam = mhsamp.value.data[end, 1:end-1, idx] # last sample, no LP, chain with max LP
+    maxlp = findmax(chain[:, :lp, :])
+    vals.optsam = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
     if printvals
         println(vals[[1:10; 43:47], :])
     end
