@@ -56,10 +56,12 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
                            initial_params=fill(vals.optis, nchains),
                            verbose=true, progress=true)
     if occursin("TemperedModel", string(typeof(temp)))
+        println("Make chains from tempered model")
         mhsamp = make_chains(mhsamp, vals.pars)
     end
     if occursin("HitAndRun", string(sampler)) && !occursin("TemperedModel", string(typeof(temp)))
         ## lp values are wrong in slice
+        println("Compute log probabilities")
         mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)        
     end
     Serialization.serialize(chainout, mhsamp)
