@@ -55,3 +55,15 @@
     end
     return (preds = preds)
 end
+
+function germmodel(flows, districts, positive_only)
+    model = usmodel(flows.flows, sum(flows.flows),
+                   levelcode.(flows.fromdist), levelcode.(flows.todist),
+                   median(districts.pop), flows.dist,
+                   districts.xcoord, minimum(districts.xcoord), maximum(districts.xcoord),
+                   districts.ycoord, minimum(districts.ycoord), maximum(districts.ycoord),
+                   districts.logreldens, minimum(districts.logreldens), maximum(districts.logreldens),
+                   districts.pop, nrow(districts),
+                    100.0, 36, 36, pos_only) ## nothing == netactual, we're not using it anymorec
+    return model
+end

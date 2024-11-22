@@ -221,12 +221,13 @@ function totalflow(fromc, toc, flow, counties)
     totflow
 end
 
+function createpaths(path, type, year, age)
+    datasets = ["flows", "geog", "densfun", "params", "chain"]
+    paths = Dict(d => "$(path)/$(type)$(d)_$(year)_$(age).csv" for d in datasets)
+    return paths
+end
+
 function mainfit(settings, outpath)
-    function createpaths(path, type, year, age)
-        datasets = ["flows", "geog", "densfun", "params", "chain"]
-        paths = Dict(d => "$(path)/$(type)$(d)_$(year)_$(age).csv" for d in datasets)
-        return paths
-    end
     function savesettings(settings, path)
         settings = DataFrame(setting = [string(k) for k in keys(settings)],
                              value = [string(k) for k in values(settings)])
@@ -256,15 +257,9 @@ function mainfit(settings, outpath)
             for year in unique(germ.flows.year)
                 agedat = @subset(germ.flows, :agegroup .== age, :year .== year)
                 geodat = @subset(germ.geog, :year .== year)
-                modl = usmodel(agedat.flows, sum(agedat.flows),
-                               levelcode.(agedat.fromdist), levelcode.(agedat.todist),
-                               median(geodat.pop), agedat.dist,
-                               geodat.xcoord, minimum(geodat.xcoord), maximum(geodat.xcoord),
-                               geodat.ycoord, minimum(geodat.ycoord), maximum(geodat.ycoord),
-                               geodat.logreldens, minimum(geodat.logreldens), maximum(geodat.logreldens),
-                               geodat.pop, nrow(geodat), 100.0, 36, 36, settings[:positive_only]) ## nothing == netactual, we're not using it anymore
+                mdl = germmodel(agedat, geodat, settings[:positive_only])
                 outpaths = createpaths(outpath, "germ", year, age)
-                germd = (flows = agedat, geog = geodat, model = modl)
+                germd = (flows = agedat, geog = geodat, model = mdl)
                 settings[:fit_germ] ? fitandwritefile(germd, settings, outpaths) : println("German data not fitted")
             end
         end
