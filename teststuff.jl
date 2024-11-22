@@ -1,18 +1,16 @@
 using Revise
 includet("main.jl")
-using KernelDensity
-
-write("./writeup/juliaout_path.txt", "./manuscript_input/slice25k")
 
 path = "./manuscript_input/30kMH"
+jo = "./writeup/juliaout_path.txt"
+write(jo, path)
+
 f = "germchain_2017_30-50.csv"
 
 chain = deserialize(joinpath(path, f))
-districts, flows = loadallGermData(sample = false, positive_only = true)
-flows = filter(:agegroup => ==("30-50"), flows)
+flows, districts = loadallGermData(sample = false, positive_only = true)
 
-p = densitychains(chain, flows, districts, 1000, 0.01, "Density preferences, 30-50, 2017")
-
+postprocess(50, path, false, true)
 
 fromdens, todens, densmin, densmax = densodensd(flows, districts, 10000)
 p, v = densheatmap(chain, fromdens, todens, densmin, densmax)

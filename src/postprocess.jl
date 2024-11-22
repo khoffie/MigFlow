@@ -92,9 +92,15 @@ function fileinout(path, pattern_in, fun)
     return fin, fout
 end
 
+# function param(chain, symbol, first = 50)
+#     x = range(first, size(chain)[1], step = 1)
+#     p = Plots.plot(x, chain[symbol].data[first : end, :],
+#                    xlab = string(symbol), label = "")
+#     return p
+# end
+
 function param(chain, symbol, first)
-    x = range(first, last, step = 1)
-    p = Plots.plot(x, chain[symbol].data[first : end, :],
+    p = Plots.plot(chain[symbol].data[50 : end, :],
                    xlab = string(symbol), label = "")
     return p
 end
