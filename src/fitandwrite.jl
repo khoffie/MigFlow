@@ -55,6 +55,7 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
                            nsamples, nchains, thinning=thinning,
                            initial_params=fill(vals.optis, nchains),
                            verbose=true, progress=true)
+    println("Sampling finished")
     tempered = occursin("TemperedModel", string(alldata.model))
     slice = occursin("HitAndRun", string(sampler))
     if tempered
@@ -67,9 +68,8 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
         mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)        
     end
     Serialization.serialize(chainout, mhsamp)
-    println("Sampling finished")
-    maxlp = findmax(chain[:, :lp, :])
-    vals.optsam = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
+    maxlp = findmax(mhsamp[:, :lp, :])
+    vals.optsam = mhsamp.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
     if printvals
         println(vals[[1:10; 43:47], :])
     end
