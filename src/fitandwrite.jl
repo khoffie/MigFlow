@@ -48,15 +48,15 @@ end
 #                 initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
 #                 verbose = true, progress = true)
 
-function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning; printvals=false)
+function runsampling(model, alldata, sampler, vals, chainout, nchains, nsamples, thinning; printvals=false)
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
-    mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
+    mhsamp = Turing.sample(model, sampler, MCMCThreads(),
                            nsamples, nchains, thinning=thinning,
                            initial_params=fill(vals.optis, nchains),
                            verbose=true, progress=true)
     println("Sampling finished")
-    tempered = occursin("TemperedModel", string(alldata.model))
+    tempered = occursin("TemperedModel", string(model))
     slice = occursin("HitAndRun", string(sampler))
     if tempered
         println("Make chains from tempered model")
@@ -65,7 +65,7 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
     if slice && !tempered
         ## lp values are wrong in slice
         println("Compute log probabilities")
-        mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)        
+        mhsamp[:, :lp, :] = logprob(model, mhsamp)        
     end
     Serialization.serialize(chainout, mhsamp)
     maxlp = findmax(mhsamp[:, :lp, :])

@@ -6,7 +6,7 @@ districts, flows = loadallGermData(sample = false, positive_only = pos_only)
 flows = filter(:agegroup => ==("30-50"), flows)
 turingmodel = germmodel(flows, districts, pos_only)
 
-## germd = (flows = flows, geog = districts, model = model)
+## germdd = (flows = flows, geog = districts, model = turingmodel)
 mutable struct germ
     flows :: DataFrame
     districts :: DataFrame
@@ -19,8 +19,11 @@ vals.optis = vals.inits
 path = "./manuscript_input/temperedtest/"
 chainout = joinpath(path, "germchain_2017_30-50.csv")
 
-germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut(0.25)), vals,
-                                 chainout, 1, 10, 1, printvals = false)
+sampler = SliceSampling.HitAndRun(SliceSteppingOut(0.25))
+
+germd, vals, chain = runsampling(TemperedModel(germd.model, 1000.0),
+                                 germd, sampler, vals, chainout, 1, 10, 1, printvals = false)
+
 
 allresults=[]
 let temp = 10000.0,
@@ -35,12 +38,14 @@ let temp = 10000.0,
     while temp > 8000.0
             @label restartsample
         try
-            germd.model = TemperedModel(turingmodel, temp)
-            germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut(0.25)), vals,
-                                 chainout, 1, 10, 1, printvals = false)
+            tempmodel = TemperedModel(turingmodel, temp)
+            println("Sampling starts for temperature $temp")
+            germd, vals, chain = runsampling(tempmodel, germd,
+                                             SliceSampling.HitAndRun(SliceSteppingOut(0.25)),
+                                             vals, chainout, 4, 10, 1, printvals = false)
         catch e 
             println("Error occurred of type $(typeof(e)) potential restart")
-            println(e)
+##            println(e)
             if typeof(e) != InterruptException && restartcount < 100
                 vals.optis = vals.optis .+ rand(Normal(0.0,0.05),length(vals.optis))
                 println(vals.optis[1 : 10])
