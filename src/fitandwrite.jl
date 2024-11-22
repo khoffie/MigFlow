@@ -49,14 +49,16 @@ end
 #                 verbose = true, progress = true)
 
 function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning; printvals=false)
-
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
     mhsamp = Turing.sample(alldata.model, sampler, MCMCThreads(),
                            nsamples, nchains, thinning=thinning,
                            initial_params=fill(vals.optis, nchains),
                            verbose=true, progress=true)
-    mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)
+    if occursin("HitAndRun", string(sampler))
+        ## lp values are wrong in slice
+        mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)        
+    end
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
     idx = findmax(mhsamp[:lp][end,])[2]
