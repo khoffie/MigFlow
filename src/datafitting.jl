@@ -1,6 +1,7 @@
 using Pkg
 Pkg.activate(".")
-using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays, RCall, LibGit2
+using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays
+using LibGit2
 using StatsBase, StatsFuns, StatsPlots, Distributions, Random, LaTeXStrings, Plots
 using Turing, ReverseDiff, ApproxFun
 using Printf, Revise, Dates, Enzyme, Serialization, SliceSampling
@@ -8,10 +9,10 @@ using LogDensityProblems, LogDensityProblemsAD, Distances, LinearAlgebra
 Enzyme.API.runtimeActivity!(true) ## to deal with an Enzyme bug, per https://discourse.julialang.org/t/enzyme-ready-for-everyday-use-2024/118819/7
 import PlotlyJS
 
-includet("src/models.jl")
-includet("src/samplerows.jl")
-includet("src/postprocess.jl")
-includet("src/fitandwrite.jl")
+includet("models.jl")
+includet("samplerows.jl")
+includet("fitandwrite.jl")
+includet("temperedmodel.jl")
 #using DuckDB
 
 #=
@@ -219,12 +220,13 @@ function totalflow(fromc, toc, flow, counties)
     totflow
 end
 
+function createpaths(path, type, year, age)
+    datasets = ["flows", "geog", "densfun", "params", "chain"]
+    paths = Dict(d => "$(path)/$(type)$(d)_$(year)_$(age).csv" for d in datasets)
+    return paths
+end
+
 function mainfit(settings, outpath)
-    function createpaths(path, type, year, age)
-        datasets = ["flows", "geog", "densfun", "params", "chain"]
-        paths = Dict(d => "$(path)/$(type)$(d)_$(year)_$(age).csv" for d in datasets)
-        return paths
-    end
     function savesettings(settings, path)
         settings = DataFrame(setting = [string(k) for k in keys(settings)],
                              value = [string(k) for k in values(settings)])
@@ -254,15 +256,9 @@ function mainfit(settings, outpath)
             for year in unique(germ.flows.year)
                 agedat = @subset(germ.flows, :agegroup .== age, :year .== year)
                 geodat = @subset(germ.geog, :year .== year)
-                modl = usmodel(agedat.flows, sum(agedat.flows),
-                               levelcode.(agedat.fromdist), levelcode.(agedat.todist),
-                               median(geodat.pop), agedat.dist,
-                               geodat.xcoord, minimum(geodat.xcoord), maximum(geodat.xcoord),
-                               geodat.ycoord, minimum(geodat.ycoord), maximum(geodat.ycoord),
-                               geodat.logreldens, minimum(geodat.logreldens), maximum(geodat.logreldens),
-                               geodat.pop, nrow(geodat), 100.0, 36, 36, settings[:positive_only]) ## nothing == netactual, we're not using it anymore
+                mdl = germmodel(agedat, geodat, settings[:positive_only])
                 outpaths = createpaths(outpath, "germ", year, age)
-                germd = (flows = agedat, geog = geodat, model = modl)
+                germd = (flows = agedat, geog = geodat, model = mdl)
                 settings[:fit_germ] ? fitandwritefile(germd, settings, outpaths) : println("German data not fitted")
             end
         end
@@ -275,31 +271,6 @@ function mainfit(settings, outpath)
         write(f, outpath)
    end
 end
-
-
-settings = Dict(
-    :sample_rows => false, # if true 10% sample of rows is used
-    :positive_only => true,
-    :sampler => externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.))), #MH(.1^2*I(78)),
-    :sample_size => 100,
-    :nchains => 6,
-    :thinning => 250,
-    :run_optim => false,
-    :commit_hash => LibGit2.head("."),
-    :fit_us => false,
-    :fit_germ => true,
-    :distance_type => "pos", ## pos / centroid. pos uses
-                            ## sf::st_point_on_surface to calculate
-                            ## (xcoord, ycoord). centroid uses
-                            ## sf::st_centroid for that. distances
-                            ## reflect that
-    :topop_type => "all", ## agegroup for age specific population, all for total population
-    :year_min => 2017, ## for German data
-    :year_max => 2017,
-    :agegroups => ["30-50"],
-    :outpath => "slice1000"
-)
-
 # getUSflows()
 # getUSgeog()
 # getUScountypop()
@@ -310,17 +281,3 @@ function makeoutpath(outpath)
     println("Output saved into " * out)
     return out
 end
-
-function main(settings)
-    outpath = makeoutpath(settings[:outpath])
-    ## install helpeR only if newer version in repo, never upgrade dependencies
-    R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
-    R"helpeR::gen_data(year_min = $(settings[:year_min]),
-                       year_max = $(settings[:year_max]),
-                       dist_type = $(settings[:distance_type]),
-                       topop_type = $(settings[:topop_type]))"
-    mainfit(settings, outpath)
-    postprocess(outpath, true)
-end
-
-main(settings)

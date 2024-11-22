@@ -1,15 +1,18 @@
-function postprocess(path = nothing, render_doc = true)
+function postprocess(first = 50, path = nothing, render_plots = true, render_doc = true)
     file = "./writeup/juliaout_path.txt"
     if !isnothing(path); write(file, path); end
     if isnothing(path); path = readline(file); end
     mkpath(joinpath(path, "plots"))
 
-    saveparams(path, "germchain", kd)
-    saveparams(path, "germchain", gravity)
-    saveparams(path, "germchain", desire)
-    saveparams(path, "germchain", densitychains)
-    println("Plots generated")
-
+    if render_plots
+        saveparams(path, "germchain", kd)
+        saveparams(path, "germchain", gravity)
+        saveparams(path, "germchain", desire)
+        saveparams(path, "germchain", densitychains)
+        println("Plots generated")
+    else
+        println("Plots not generated")
+    end
     ### confusingly compilereport uses path as in writeup/juliaout_path.txt
     compilereport(render_doc)
 end
@@ -51,26 +54,26 @@ end
 
 function gravity(chain)
     ps = [:lp, :a, :c, :d0, :dscale, :e, :ktopop]
-    p = moreparams(chain, ps)
+    p = moreparams(chain, ps, first)
     return p
 end
 
 function kd(chain)
     ps = [Symbol("kd[$i]") for i in [1, 5, 10, 15, 20, 30]]
-    p = moreparams(chain, ps)
+    p = moreparams(chain, ps, first)
     return p
 end
 
 function desire(chain)
     ps = [Symbol("desirecoefs[$i]") for i in [1, 5, 10, 15, 20, 30]]
-    p = moreparams(chain, ps)
+    p = moreparams(chain, ps, first)
     return p
 end
 
-function moreparams(chain, ps)
+function moreparams(chain, ps, first)
     out = Dict{Symbol, Any}()
     for p in ps
-        out[p] = param(chain, p)
+        out[p] = param(chain, p, first)
     end
     p = Plots.plot([out[i] for i in ps]...)
     return p
@@ -89,7 +92,15 @@ function fileinout(path, pattern_in, fun)
     return fin, fout
 end
 
-function param(chain, symbol)
-    p = Plots.plot(chain[symbol], xlab = string(symbol), label = "")
+# function param(chain, symbol, first = 50)
+#     x = range(first, size(chain)[1], step = 1)
+#     p = Plots.plot(x, chain[symbol].data[first : end, :],
+#                    xlab = string(symbol), label = "")
+#     return p
+# end
+
+function param(chain, symbol, first)
+    p = Plots.plot(chain[symbol].data[50 : end, :],
+                   xlab = string(symbol), label = "")
     return p
 end
