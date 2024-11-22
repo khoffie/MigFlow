@@ -1,3 +1,4 @@
+using Revise
 includet("src/datafitting.jl")
 using RCall
 includet("postprocess.jl")
