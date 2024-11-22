@@ -55,7 +55,10 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
                            nsamples, nchains, thinning=thinning,
                            initial_params=fill(vals.optis, nchains),
                            verbose=true, progress=true)
-    if occursin("HitAndRun", string(sampler))
+    if occursin("TemperedModel", string(typeof(temp)))
+        mhsamp = make_chains(mhsamp, vals.pars)
+    end
+    if occursin("HitAndRun", string(sampler)) && !occursin("TemperedModel", string(typeof(temp)))
         ## lp values are wrong in slice
         mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)        
     end
