@@ -2,6 +2,8 @@ using Revise
 includet("main.jl")
 using KernelDensity
 
+write("./writeup/juliaout_path.txt", "./manuscript_input/slice25k")
+
 path = "./manuscript_input/30kMH"
 f = "germchain_2017_30-50.csv"
 
@@ -14,3 +16,4 @@ p = densitychains(chain, flows, districts, 1000, 0.01, "Density preferences, 30-
 
 fromdens, todens, densmin, densmax = densodensd(flows, districts, 10000)
 p, v = densheatmap(chain, fromdens, todens, densmin, densmax)
+postprocess()
