@@ -28,13 +28,9 @@ agedat = filter(:agegroup => ==("30-50"), agedat)
 vals = gen_inits()
 vals.optis = vals.inits
 
-modl = usmodel(agedat.flows, sum(agedat.flows),
-    levelcode.(agedat.fromdist), levelcode.(agedat.todist),
-    median(geodat.pop), agedat.dist,
-    geodat.xcoord, minimum(geodat.xcoord), maximum(geodat.xcoord),
-    geodat.ycoord, minimum(geodat.ycoord), maximum(geodat.ycoord),
-    geodat.logreldens, minimum(geodat.logreldens), maximum(geodat.logreldens),
-    geodat.pop, nrow(geodat), 100.0, 36, 36, true) ## nothing == neta
+mdl = germmodel(flows, districts, true)
+temp = TemperedModel(mdl, 10000.0)
+!occursin("TemperedModel", string(typeof(temp)))
 
 germd=(flows = agedat, geog = geodat, model = modl)
 
