@@ -15,8 +15,10 @@ chainout = joinpath(path, "germchain_2017_30-50.csv")
 germd, vals, chain = runsampling(TemperedModel(germd.model, 1000.0),
                                  germd, sampler, vals, chainout, 1, 10, 1, printvals = false)
 
-lastchain = runtempering(germd, vals, 1, 8000)
+results = runtempering(germd, vals, 1, 8000, 10)
+vals.optis = results[end].vals ## not necessary because runtempering changes them already
 
+results[end].chain
 plot(lastchain[Symbol.([:a,:c,:d0,:e,:dscale,:ktopop,"kd[1]","kd[2]","kd[3]","desirecoefs[1]","desirecoefs[2]","desirecoefs[3]",:lp])])
 
 
