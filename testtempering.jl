@@ -4,27 +4,27 @@ includet("main.jl")
 pos_only = true
 districts, flows = loadallGermData(sample = false, positive_only = pos_only)
 flows = filter(:agegroup => ==("30-50"), flows)
-mdl = germmodel(flows, districts, pos_only)
+turingmodel = germmodel(flows, districts, pos_only)
 
 ## germd = (flows = flows, geog = districts, model = model)
 mutable struct germ
     flows :: DataFrame
     districts :: DataFrame
-    model :: Any
+    model :: Any ## better DynamicPPL.Model or TemperedModel
 end
 
-germd = germ(flows, districts, mdl)
+germd = germ(flows, districts, turingmodel)
 vals = gen_inits()
-temp = TemperedModel(mdl, 10000.0)
-
-germd = germ(flows, districts, temp)
-path = "./manuscript_input/tempered/"
+vals.optis = vals.inits
+path = "./manuscript_input/temperedtest/"
 chainout = joinpath(path, "germchain_2017_30-50.csv")
 
-allresults=[]
+germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut(0.25)), vals,
+                                 chainout, 1, 10, 1, printvals = false)
 
+allresults=[]
 let temp = 10000.0,
-    inits = vals.optis,
+##    inits = vals.optis,
     germd = germd,
     vals = vals,
     chain = Chains([1]),
@@ -32,17 +32,18 @@ let temp = 10000.0,
 
     global allresults
 
-    while temp > 4500.0
+    while temp > 8000.0
             @label restartsample
-        try 
+        try
+            germd.model = TemperedModel(turingmodel, temp)
             germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut(0.25)), vals,
-                                 chainout, 4, 10, 1,fill(inits,4); temp = temp, printvals = false)
+                                 chainout, 1, 10, 1, printvals = false)
         catch e 
             println("Error occurred of type $(typeof(e)) potential restart")
             println(e)
             if typeof(e) != InterruptException && restartcount < 100
-                inits = inits .+ rand(Normal(0.0,0.05),length(inits))
-                println(inits[1 : 10])
+                vals.optis = vals.optis .+ rand(Normal(0.0,0.05),length(vals.optis))
+                println(vals.optis[1 : 10])
                 restartcount += 1
                 @goto restartsample
             else
@@ -53,8 +54,8 @@ let temp = 10000.0,
         plot(chain[:lp],title="Temperature $temp") |> display
         push!(allresults,(chain=chain,temp=temp))
         temp = temp * 0.9
-        inits = vals.optsam
-        inits = inits .+ rand(Normal(0.0,0.05),length(inits))
+        vals.optis = vals.optsam
+        vals.optis = vals.optis .+ rand(Normal(0.0,0.05),length(vals.optis))
     end
 end
 
