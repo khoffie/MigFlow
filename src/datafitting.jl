@@ -11,7 +11,6 @@ import PlotlyJS
 
 includet("models.jl")
 includet("samplerows.jl")
-includet("postprocess.jl")
 includet("fitandwrite.jl")
 includet("temperedmodel.jl")
 #using DuckDB

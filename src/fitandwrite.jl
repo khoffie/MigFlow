@@ -55,14 +55,17 @@ function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinni
                            nsamples, nchains, thinning=thinning,
                            initial_params=fill(vals.optis, nchains),
                            verbose=true, progress=true)
-    if occursin("HitAndRun", string(sampler))
+    if occursin("TemperedModel", string(typeof(temp)))
+        mhsamp = make_chains(mhsamp, vals.pars)
+    end
+    if occursin("HitAndRun", string(sampler)) && !occursin("TemperedModel", string(typeof(temp)))
         ## lp values are wrong in slice
         mhsamp[:, :lp, :] = logprob(alldata.model, mhsamp)        
     end
     Serialization.serialize(chainout, mhsamp)
     println("Sampling finished")
-    idx = findmax(mhsamp[:lp][end,])[2]
-    vals.optsam = mhsamp.value.data[end, 1:end-1, idx] # last sample, no LP, chain with max LP
+    maxlp = findmax(chain[:, :lp, :])
+    vals.optsam = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
     if printvals
         println(vals[[1:10; 43:47], :])
     end
