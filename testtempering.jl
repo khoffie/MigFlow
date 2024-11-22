@@ -1,11 +1,10 @@
 includet("src/datafitting.jl")
 
 function runsampling(alldata, sampler, vals, chainout, nchains, nsamples, thinning, inits; temp, printvals=false)
-
-    println("Sampling starts, temp = $temp")
     ## MH(.1^2*I(length(vals.optis)))
-    tem = TemperedModel(alldata.model, temp)
-    mhsamp = Turing.sample(tem, sampler, MCMCThreads(),
+    println("Sampling starts, temp = $temp")
+    mdl = isnothing(temp) ? alldata.model : TemperedModel(alldata.model, temp)
+    mhsamp = Turing.sample(mdl, sampler, MCMCThreads(),
                            nsamples, nchains, thinning=thinning,
                            initial_params=inits,
                            verbose=true, progress=true)
