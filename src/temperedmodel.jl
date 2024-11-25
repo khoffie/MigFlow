@@ -51,7 +51,7 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
     ## and allresults has the same vals for each iteration. But in
     ## fact these are different as can be seen fro, inspecting the
     ## chains.
-    allresults=[]
+    allresults = []
     temp = 10000.0
     vals_temp = vals
     restartcount = 0
@@ -61,9 +61,12 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
         try
             tempmodel = TemperedModel(data.model, temp)
             println("Sampling starts for temperature $temp")
+            addtemp(x) = replace(x, ".csv" => "_$(temp).csv")
+            temppaths = Dict([k => addtemp(v) for (k, v) in paths])
             data, vals_temp, chain = runsampling(tempmodel, data,
-                                            SliceSampling.HitAndRun(SliceSteppingOut(0.25)),
-                                            vals_temp, outpaths["chain"], 4, n_samples, thinning, printvals = false)
+                                                 SliceSampling.HitAndRun(SliceSteppingOut(0.25)),
+                                                 vals_temp, temppaths["chain"], 4, n_samples,
+                                                 thinning, printvals = false)
         catch e ## this catches all errors but it should only catch the domain error
             println("Error occurred of type $(typeof(e)) potential restart")
             println(e)
@@ -81,7 +84,7 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
         push!(allresults,(chain = chain, vals = vals_temp, temp = temp))
         temp = temp * 0.9
         vals_temp.optis = vals_temp.optsam
-        vals_temp.optis = vals_temp.optis .+ rand(Normal(0.0,0.05),length(vals_temp.optis))
+        vals_temp.optis = vals_temp.optis .+ rand(Normal(0.0, 0.05), length(vals_temp.optis))
     end
     return allresults[end]
 end
