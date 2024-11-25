@@ -1,15 +1,20 @@
 function fitandwritefile(alldata, settings, outpaths)    
     vals = gen_inits()
     vals = runoptim(vals; run = settings[:run_optim], printvals = false)
-    results = runtempering(alldata, vals, outpaths = outpaths,
-                           thinning = 1, temp_th = 8000, n_samples = 10)
-    vals.optis = results.vals.optsam
-    inits = fill(vals.optis, settings[:nchains])
+    results = runtempering(alldata, vals[!, "params"], vals[!, "inits"],
+                             outpaths = outpaths, thinning = 1, temp_th = 8500, n_samples = 10)
+    println("tempering finished")
+    inits = retparams(results[end].chain, "last") ## end = lowest temperature
+    inits = collect(eachcol(inits)) ## so runsampling accepts this as inits
+    println("params extracted")
     alldata, vals.optis, chain = runsampling(alldata.model, alldata, settings[:sampler],
-                                             vals.params,
-                                             inits, outpaths["chain"], settings[:nchains],
-                                             settings[:sample_size], settings[:thinning];
+                                             vals.params, inits; chainout = outpaths["chain"],
+                                             nchains = settings[:nchains],
+                                             nsamples = settings[:sample_size],
+                                             thinning = settings[:thinning],
+                                             paramtype = "best",
                                              printvals = false)
+    vals.optsam = vals.optis ## for compatibility to later functinos
     moreout(alldata, outpaths, vals)
 end
 
@@ -50,7 +55,7 @@ function runoptim(vals; run, printvals=false)
 end
 
 function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
-                     nsamples, thinning, printvals = false)
+                     nsamples, thinning, paramtype, printvals = false)
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
     chain = Turing.sample(model, sampler, MCMCThreads(),
@@ -70,22 +75,21 @@ function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
         chain[:, :lp, :] = logprob(model, chain)        
     end
     Serialization.serialize(chainout, chain)
-    maxlp = findmax(chain[:, :lp, :])
-    optis = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
+    optis = retparams(chain, paramtype)
     # if printvals # rewrite to print DataFrame(inits, optis) or so
     #     println(vals[[1:10; 43:47], :])
     # end
     alldata.flows.preds = generated_quantities(alldata.model, optis, params)
-    return alldata, optis.data, chain
+    return alldata, optis, chain
 end
 
 function retparams(chain, type)
     if type == "best"
         maxlp = findmax(chain[:, :lp, :])
-        optis = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
+        optis = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]].data ## best overall sample
     end
     if type == "last"
-        optis = chain.value[end, 1:end-1, :] 
+        optis = chain.value[end, 1:end-1, :].data
     end
     return optis
 end
@@ -105,7 +109,7 @@ function moreout(alldata, outpaths, vals)
     densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd, td)) for fd in densvals, td in densvals)
     CSV.write(outpaths["geog"], alldata.geog)
     CSV.write(outpaths["densfun"], densfundf)
-    CSV.write(outpaths["params"], DataFrame(paramval=vals.optsam, parname=vals.pars))
+    CSV.write(outpaths["params"], DataFrame(paramval=vals.optsam, parname=vals.params))
     CSV.write(outpaths["flows"], alldata.flows)
 end
 
