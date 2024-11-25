@@ -4,10 +4,12 @@ function fitandwritefile(alldata, settings, outpaths)
     results = runtempering(alldata, vals, outpaths = outpaths,
                            thinning = 1, temp_th = 8000, n_samples = 10)
     vals.optis = results.vals.optsam
-    alldata, vals, chain = runsampling(alldata.model, alldata, settings[:sampler],
-                                       vals, outpaths["chain"], settings[:nchains],
-                                       settings[:sample_size], settings[:thinning];
-                                       printvals = false)
+    inits = fill(vals.optis, settings[:nchains])
+    alldata, vals.optis, chain = runsampling(alldata.model, alldata, settings[:sampler],
+                                             vals.params,
+                                             inits, outpaths["chain"], settings[:nchains],
+                                             settings[:sample_size], settings[:thinning];
+                                             printvals = false)
     moreout(alldata, outpaths, vals)
 end
 
@@ -23,7 +25,7 @@ function gen_inits()
         fill(50.50, 36)]
     ini = rand(Normal(0.0, 0.10), length(ub))
     ini[1:7] .= [-7.6, 1.81, 1.5, 1.5, 5.0, 3.5, 0.0]
-    df = DataFrame(:pars => parnames, :lb => lb, :ub => ub, :inits => ini)
+    df = DataFrame(:params => parnames, :lb => lb, :ub => ub, :inits => ini)
     return (df)
 end
 
@@ -52,13 +54,13 @@ end
 #                 initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
 #                 verbose = true, progress = true)
 
-function runsampling(model, alldata, sampler, vals, chainout, nchains, nsamples, thinning; printvals=false)
+function runsampling(model, alldata, sampler, params, inits, chainout, nchains, nsamples, thinning; printvals=false)
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
     mhsamp = Turing.sample(model, sampler, MCMCThreads(),
-                           nsamples, nchains, thinning=thinning,
-                           initial_params=fill(vals.optis, nchains),
-                           verbose=true, progress=true)
+                           nsamples, nchains, thinning = thinning,
+                           initial_params = inits,
+                           verbose = true, progress = true)
     println("Sampling finished")
     tempered = occursin("TemperedModel", string(model))
     slice = occursin("HitAndRun", string(sampler))
@@ -73,12 +75,12 @@ function runsampling(model, alldata, sampler, vals, chainout, nchains, nsamples,
     end
     Serialization.serialize(chainout, mhsamp)
     maxlp = findmax(mhsamp[:, :lp, :])
-    vals.optsam = mhsamp.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
-    if printvals
-        println(vals[[1:10; 43:47], :])
-    end
-    alldata.flows.preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
-    return alldata, vals, mhsamp
+    optis = mhsamp.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
+    # if printvals # rewrite to print DataFrame(inits, optis) or so
+    #     println(vals[[1:10; 43:47], :])
+    # end
+    alldata.flows.preds = generated_quantities(alldata.model, optis, params)
+    return alldata, optis, mhsamp
 end
 
 function moreout(alldata, outpaths, vals)
