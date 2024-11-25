@@ -53,6 +53,7 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
     ## chains.
     allresults=[]
     temp = 10000.0
+    vals_temp = vals
     restartcount = 0
     chain = nothing
     while temp > temp_th
@@ -60,15 +61,15 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
         try
             tempmodel = TemperedModel(data.model, temp)
             println("Sampling starts for temperature $temp")
-            data, vals, chain = runsampling(tempmodel, data,
+            data, vals_temp, chain = runsampling(tempmodel, data,
                                             SliceSampling.HitAndRun(SliceSteppingOut(0.25)),
-                                            vals, outpaths["chain"], 4, n_samples, thinning, printvals = false)
+                                            vals_temp, outpaths["chain"], 4, n_samples, thinning, printvals = false)
         catch e ## this catches all errors but it should only catch the domain error
             println("Error occurred of type $(typeof(e)) potential restart")
             println(e)
             if typeof(e) != InterruptException && restartcount < 1
-                vals.optis = vals.optis .+ rand(Normal(0.0,0.05),length(vals.optis))
-                println(vals.optis[1 : 10])
+                vals_temp.optis = vals_temp.optis .+ rand(Normal(0.0,0.05),length(vals_temp.optis))
+                println(vals_temp.optis[1 : 10])
                 restartcount += 1
                 @goto restartsample
             else
@@ -77,10 +78,10 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
         end
         ##        plot(chain[50:100,:lp,:],title="Temperature $temp") |> display
         plot(chain[:lp],title="Temperature $temp") |> display
-        push!(allresults,(chain = chain, vals = vals, temp = temp))
+        push!(allresults,(chain = chain, vals = vals_temp, temp = temp))
         temp = temp * 0.9
-        vals.optis = vals.optsam
-        vals.optis = vals.optis .+ rand(Normal(0.0,0.05),length(vals.optis))
+        vals_temp.optis = vals_temp.optsam
+        vals_temp.optis = vals_temp.optis .+ rand(Normal(0.0,0.05),length(vals_temp.optis))
     end
     return allresults[end]
 end

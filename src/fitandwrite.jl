@@ -3,10 +3,11 @@ function fitandwritefile(alldata, settings, outpaths)
     vals = runoptim(vals; run = settings[:run_optim], printvals = false)
     results = runtempering(alldata, vals, outpaths = outpaths,
                            thinning = 1, temp_th = 8000, n_samples = 10)
-    vals.optis = results[end].vals ## not necessary because runtempering changes them already
-    alldata, vals = runsampling(alldata, settings[:sampler], vals, outpaths["chain"],
-                                settings[:nchains], settings[:sample_size], settings[:thinning];
-                                printvals = false)
+    vals.optis = results.vals.optsam
+    alldata, vals, chain = runsampling(alldata.model, alldata, settings[:sampler],
+                                       vals, outpaths["chain"], settings[:nchains],
+                                       settings[:sample_size], settings[:thinning];
+                                       printvals = false)
     moreout(alldata, outpaths, vals)
 end
 
@@ -90,7 +91,7 @@ function moreout(alldata, outpaths, vals)
         vals.optsam[kdindx] ./ 10)
     desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax),
         vals.optsam[desindx] ./ 10)
-    alldata.geog.desirability = [desirfun(x, y) for (x, y) in zip(alldata.geog.x, alldata.geog.y)]
+    alldata.geog.desirability = [desirfun(x, y) for (x, y) in zip(alldata.geog.xcoord, alldata.geog.ycoord)]
     densvals = range(minimum(alldata.geog.logreldens), maximum(alldata.geog.logreldens), 100)
     densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd, td)) for fd in densvals, td in densvals)
     CSV.write(outpaths["geog"], alldata.geog)
