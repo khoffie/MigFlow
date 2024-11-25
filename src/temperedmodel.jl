@@ -62,7 +62,7 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
             tempmodel = TemperedModel(data.model, temp)
             println("Sampling starts for temperature $temp")
             addtemp(x) = replace(x, ".csv" => "_$(temp).csv")
-            temppaths = Dict([k => addtemp(v) for (k, v) in paths])
+            temppaths = Dict([k => addtemp(v) for (k, v) in outpaths])
             data, vals_temp, chain = runsampling(tempmodel, data,
                                                  SliceSampling.HitAndRun(SliceSteppingOut(0.25)),
                                                  vals_temp, temppaths["chain"], 4, n_samples,
