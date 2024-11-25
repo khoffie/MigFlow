@@ -49,11 +49,6 @@ function runoptim(vals; run, printvals=false)
     return vals
 end
 
-# fit = Turing.sample(model3, NUTS(warmup,.8; init_ϵ = 1e-6, 
-#                 adtype=AutoReverseDiff(true)), MCMCThreads(), samples, 3,
-#                 initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
-#                 verbose = true, progress = true)
-
 function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
                      nsamples, thinning, printvals = false)
     println("Sampling starts")
@@ -67,7 +62,7 @@ function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
     slice = occursin("HitAndRun", string(sampler))
     if tempered
         println("Make chains from tempered model")
-        chain = make_chains(chain, vals.pars)
+        chain = make_chains(chain, vals.params)
     end
     if slice && !tempered
         ## lp values are wrong in slice
