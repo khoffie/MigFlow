@@ -54,6 +54,8 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
     allresults = []
     temp = 10000.0
     vals_temp = vals
+    vals_temp.optis = zeros(nrow(vals_temp))
+    inits = vals_temp[!, "inits"]
     restartcount = 0
     chain = nothing
     while temp > temp_th
@@ -63,16 +65,19 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
             println("Sampling starts for temperature $temp")
             addtemp(x) = replace(x, ".csv" => "_$(temp).csv")
             temppaths = Dict([k => addtemp(v) for (k, v) in outpaths])
-            data, vals_temp, chain = runsampling(tempmodel, data,
-                                                 SliceSampling.HitAndRun(SliceSteppingOut(0.25)),
-                                                 vals_temp, temppaths["chain"], 4, n_samples,
-                                                 thinning, printvals = false)
+
+            data, vals_temp.optis, chain = runsampling(tempmodel, data,
+                                                       SliceSampling.HitAndRun(SliceSteppingOut(0.25)),
+                                                       vals_temp[!, "params"], fill(inits, 4),
+                                                       chainout = temppaths["chain"], nchains = 4,
+                                                       nsamples = n_samples, thinning = thinning)
+            
         catch e ## this catches all errors but it should only catch the domain error
             println("Error occurred of type $(typeof(e)) potential restart")
             println(e)
             if typeof(e) != InterruptException && restartcount < 1
-                vals_temp.optis = vals_temp.optis .+ rand(Normal(0.0,0.05),length(vals_temp.optis))
-                println(vals_temp.optis[1 : 10])
+                inits = inits .+ rand(Normal(0.0,0.05), length(inits))
+                println(inits[1 : 10])
                 restartcount += 1
                 @goto restartsample
             else
@@ -83,8 +88,7 @@ function runtempering(data, vals; outpaths, thinning, temp_th, n_samples = 100)
         plot(chain[:lp],title="Temperature $temp") |> display
         push!(allresults,(chain = chain, vals = vals_temp, temp = temp))
         temp = temp * 0.9
-        vals_temp.optis = vals_temp.optsam
-        vals_temp.optis = vals_temp.optis .+ rand(Normal(0.0, 0.05), length(vals_temp.optis))
+        inits = vals_temp.optis .+ rand(Normal(0.0, 0.05), length(vals_temp.optis))
     end
-    return allresults[end]
+    return allresults
 end
