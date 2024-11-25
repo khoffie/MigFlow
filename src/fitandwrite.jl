@@ -1,7 +1,8 @@
 function fitandwritefile(alldata, settings, outpaths)    
     vals = gen_inits()
     vals = runoptim(vals; run = settings[:run_optim], printvals = false)
-    results = runtempering(alldata, vals, 1, 8000, 10)
+    results = runtempering(alldata, vals, outpaths = outpaths,
+                           thinning = 1, temp_th = 8000, n_samples = 10)
     vals.optis = results[end].vals ## not necessary because runtempering changes them already
     alldata, vals = runsampling(alldata, settings[:sampler], vals, outpaths["chain"],
                                 settings[:nchains], settings[:sample_size], settings[:thinning];
