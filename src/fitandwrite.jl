@@ -54,10 +54,11 @@ end
 #                 initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
 #                 verbose = true, progress = true)
 
-function runsampling(model, alldata, sampler, params, inits, chainout, nchains, nsamples, thinning; printvals=false)
+function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
+                     nsamples, thinning, printvals = false)
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
-    mhsamp = Turing.sample(model, sampler, MCMCThreads(),
+    chain = Turing.sample(model, sampler, MCMCThreads(),
                            nsamples, nchains, thinning = thinning,
                            initial_params = inits,
                            verbose = true, progress = true)
@@ -66,21 +67,21 @@ function runsampling(model, alldata, sampler, params, inits, chainout, nchains, 
     slice = occursin("HitAndRun", string(sampler))
     if tempered
         println("Make chains from tempered model")
-        mhsamp = make_chains(mhsamp, vals.pars)
+        chain = make_chains(chain, vals.pars)
     end
     if slice && !tempered
         ## lp values are wrong in slice
         println("Compute log probabilities")
-        mhsamp[:, :lp, :] = logprob(model, mhsamp)        
+        chain[:, :lp, :] = logprob(model, chain)        
     end
-    Serialization.serialize(chainout, mhsamp)
-    maxlp = findmax(mhsamp[:, :lp, :])
-    optis = mhsamp.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
+    Serialization.serialize(chainout, chain)
+    maxlp = findmax(chain[:, :lp, :])
+    optis = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
     # if printvals # rewrite to print DataFrame(inits, optis) or so
     #     println(vals[[1:10; 43:47], :])
     # end
     alldata.flows.preds = generated_quantities(alldata.model, optis, params)
-    return alldata, optis, mhsamp
+    return alldata, optis.data, chain
 end
 
 function moreout(alldata, outpaths, vals)
