@@ -79,6 +79,17 @@ function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
     return alldata, optis.data, chain
 end
 
+function retparams(chain, type)
+    if type == "best"
+        maxlp = findmax(chain[:, :lp, :])
+        optis = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
+    end
+    if type == "last"
+        optis = chain.value[end, 1:end-1, :] 
+    end
+    return optis
+end
+
 function moreout(alldata, outpaths, vals)
     (densmin, densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
     (xmin, xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
