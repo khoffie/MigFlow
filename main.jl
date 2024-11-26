@@ -27,7 +27,8 @@ settings = Dict(
     :outpath => "tempered",
     :rm_dir => true,
     :temp_samples => 10,
-    :min_temp => 8500
+    :min_temp => 8500,
+    :temp_decay => 0.2
 )
 
 function main(settings)
@@ -39,6 +40,6 @@ function main(settings)
                        dist_type = $(settings[:distance_type]),
                        topop_type = $(settings[:topop_type]))"
     mainfit(settings, outpath)
-    postprocess(outpath, true)
+    postprocess(path = outpath)
 end
 

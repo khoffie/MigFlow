@@ -4,7 +4,7 @@ function fitandwritefile(alldata, settings, outpaths)
     vals = runoptim(vals; run = s[:run_optim], printvals = false)
     results = runtempering(alldata, vals[!, "params"], vals[!, "inits"],
                            outpaths = outpaths, thinning = 1, temp_th = s[:min_temp],
-                           n_samples = s[:temp_samples])
+                           n_samples = s[:temp_samples], decay = s[:temp_decay])
     println("tempering finished")
     inits = retparams(results[end].chain, "last") ## end = lowest temperature
     inits = collect(eachcol(inits)) ## so runsampling accepts this as inits

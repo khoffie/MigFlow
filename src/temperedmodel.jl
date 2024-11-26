@@ -46,7 +46,7 @@ function testtempered()
     return chain, sam
 end
 
-function runtempering(data, params, inits; outpaths, thinning, temp_th, n_samples = 100)
+function runtempering(data, params, inits; outpaths, thinning, temp_th, decay = .1, n_samples = 100)
     ## runtempering is confusing, because vals is updated in each step
     ## and allresults has the same vals for each iteration. But in
     ## fact these are different as can be seen fro, inspecting the
@@ -73,7 +73,7 @@ function runtempering(data, params, inits; outpaths, thinning, temp_th, n_sample
         catch e ## this catches all errors but it should only catch the domain error
             println("Error occurred of type $(typeof(e)) potential restart")
             println(e)
-            if typeof(e) != InterruptException && restartcount < 1
+            if typeof(e) != InterruptException && restartcount < 100
                 inits = inits .+ rand(Normal(0.0,0.05), length(inits))
                 println(inits[1 : 10])
                 restartcount += 1
@@ -85,7 +85,7 @@ function runtempering(data, params, inits; outpaths, thinning, temp_th, n_sample
         ##        plot(chain[50:100,:lp,:],title="Temperature $temp") |> display
         plot(chain[:lp],title="Temperature $temp") |> display
         push!(allresults,(chain = chain, temp = temp))
-        temp = temp * 0.9
+        temp = temp * (1 - decay)
         # perturbance to avoid potential type issue
         inits = optis .+ rand(Normal(0.0, 0.05), length(optis)) 
     end
