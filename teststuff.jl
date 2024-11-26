@@ -16,3 +16,11 @@ postprocess(50, path, false, true)
 fromdens, todens, densmin, densmax = densodensd(flows, districts, 10000)
 p, v = densheatmap(chain, fromdens, todens, densmin, densmax)
 postprocess()
+
+r = 0.1
+λ = log(1 - r)
+yₜ = 10
+y₀ = 10000
+
+
+decaytime(10000, 1, .1, 10)

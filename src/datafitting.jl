@@ -13,6 +13,7 @@ includet("models.jl")
 includet("samplerows.jl")
 includet("fitandwrite.jl")
 includet("temperedmodel.jl")
+includet("utils.jl")
 #using DuckDB
 
 #=
