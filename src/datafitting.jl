@@ -233,6 +233,10 @@ function mainfit(settings, outpath)
         CSV.write(joinpath(path, "settings.csv"), settings)
     end
 
+    savesettings(settings, outpath)
+    file = "./writeup/juliaout_path.txt" ## report.Rmd reads the path from here
+    write(file, outpath)
+    
     mkpath(outpath)
     @sync begin
         Threads.@spawn begin
@@ -264,12 +268,6 @@ function mainfit(settings, outpath)
         end
     end
     println("Computation finished!")
-    savesettings(settings, outpath)
-
-    file = "./writeup/juliaout_path.txt" ## report.Rmd reads the path from here
-    open(file, "w") do f
-        write(f, outpath)
-   end
 end
 # getUSflows()
 # getUSgeog()
