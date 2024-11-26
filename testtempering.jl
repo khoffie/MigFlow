@@ -1,32 +1,36 @@
 using Revise
 includet("main.jl")
 
-pos_only = true
-districts, flows = loadallGermData(sample = false, positive_only = pos_only)
-flows = filter(:agegroup => ==("30-50"), flows)
-turingmodel = germmodel(flows, districts, pos_only)
-
-germd = germ(flows, districts, turingmodel)
+outpath = "./manuscript_input/temperedtest/"
+paths = createpaths(outpath, "germ", "2017", "30-50")
+pos_only= true
+#### works
 vals = gen_inits()
 vals.optis = vals.inits
-path = "./manuscript_input/temperedtest/"
-chainout = joinpath(path, "germchain_2017_30-50.csv")
+districts, flows = loadallGermData(sample = false, positive_only = true)
+flows = filter(:agegroup => ==("30-50"), flows)
+turingmodel = germmodel(flows, districts, true)
+germd = (flows = flows, geog = districts, model = turingmodel)
 
-germd, vals, chain = runsampling(TemperedModel(germd.model, 1000.0),
-                                 germd, sampler, vals, chainout, 1, 10, 1, printvals = false)
+s = settings
+inits = fill(vals[!, "inits"], settings[:nchains])
 
-results = runtempering(germd, vals, 1, 8000, 10)
-vals.optis = results[end].vals ## not necessary because runtempering changes them already
+germd, optis, chain = runsampling(turingmodel, germd, s[:sampler],
+                                  vals[!, "params"], inits;
+                                  chainout = paths["chain"], nchains = s[:nchains],
+                                  nsamples = s[:sample_size], thinning = s[:thinning],
+                                  paramtype = "best")
 
-results[end].chain
-plot(lastchain[Symbol.([:a,:c,:d0,:e,:dscale,:ktopop,"kd[1]","kd[2]","kd[3]","desirecoefs[1]","desirecoefs[2]","desirecoefs[3]",:lp])])
+## in runtempering I fill inits for chains inside
+results = runtempering(germd, vals[!, "params"], vals[!, "inits"];
+                       outpaths = paths, thinning = 1, temp_th = 8500, n_samples = 10)
+
+alldata, p, vals = fitandwritefile(germd, settings, paths)
 
 
-newinit = lastchain.value[100,1:end-1,1]
-newinit = newinit .+ rand(Normal(0,.001),length(newinit))
+p = "/home/donkon/Documents/GermanMigration/manuscript_input/temperedtest"
+chain = deserialize(joinpath(p, "germchain_2017_50-65.csv"))
 
-germd, vals, chain = runsampling(germd, SliceSampling.HitAndRun(SliceSteppingOut(0.25)), vals,
-                                    chainout, 4, 100, 10,fill(newinit,4); temp = 4500.0, printvals = false)
+plot(chain[:lp])
+postprocess(path = "./manuscript_input/temperedtest")
 
-serialize("manuscript_input/tempered/dan_temper_test.serial",chain)
-plot(chain[Symbol.([:a,:c,:d0,:e,:dscale,:ktopop,"kd[1]","kd[2]","kd[3]","desirecoefs[1]","desirecoefs[2]","desirecoefs[3]",:lp])])

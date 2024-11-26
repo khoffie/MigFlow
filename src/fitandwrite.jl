@@ -1,11 +1,20 @@
 function fitandwritefile(alldata, settings, outpaths)    
     vals = gen_inits()
     vals = runoptim(vals; run = settings[:run_optim], printvals = false)
-    results = runtempering(alldata, vals, 1, 8000, 10)
-    vals.optis = results[end].vals ## not necessary because runtempering changes them already
-    alldata, vals = runsampling(alldata, settings[:sampler], vals, outpaths["chain"],
-                                settings[:nchains], settings[:sample_size], settings[:thinning];
-                                printvals = false)
+    results = runtempering(alldata, vals[!, "params"], vals[!, "inits"],
+                             outpaths = outpaths, thinning = 1, temp_th = 8500, n_samples = 10)
+    println("tempering finished")
+    inits = retparams(results[end].chain, "last") ## end = lowest temperature
+    inits = collect(eachcol(inits)) ## so runsampling accepts this as inits
+    println("params extracted")
+    alldata, vals.optis, chain = runsampling(alldata.model, alldata, settings[:sampler],
+                                             vals.params, inits; chainout = outpaths["chain"],
+                                             nchains = settings[:nchains],
+                                             nsamples = settings[:sample_size],
+                                             thinning = settings[:thinning],
+                                             paramtype = "best",
+                                             printvals = false)
+    vals.optsam = vals.optis ## for compatibility to later functinos
     moreout(alldata, outpaths, vals)
 end
 
@@ -21,7 +30,7 @@ function gen_inits()
         fill(50.50, 36)]
     ini = rand(Normal(0.0, 0.10), length(ub))
     ini[1:7] .= [-7.6, 1.81, 1.5, 1.5, 5.0, 3.5, 0.0]
-    df = DataFrame(:pars => parnames, :lb => lb, :ub => ub, :inits => ini)
+    df = DataFrame(:params => parnames, :lb => lb, :ub => ub, :inits => ini)
     return (df)
 end
 
@@ -45,38 +54,44 @@ function runoptim(vals; run, printvals=false)
     return vals
 end
 
-# fit = Turing.sample(model3, NUTS(warmup,.8; init_ϵ = 1e-6, 
-#                 adtype=AutoReverseDiff(true)), MCMCThreads(), samples, 3,
-#                 initial_params = Iterators.repeated(inits), lower = lowers, upper = uppers,    
-#                 verbose = true, progress = true)
-
-function runsampling(model, alldata, sampler, vals, chainout, nchains, nsamples, thinning; printvals=false)
+function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
+                     nsamples, thinning, paramtype, printvals = false)
     println("Sampling starts")
     ## MH(.1^2*I(length(vals.optis)))
-    mhsamp = Turing.sample(model, sampler, MCMCThreads(),
-                           nsamples, nchains, thinning=thinning,
-                           initial_params=fill(vals.optis, nchains),
-                           verbose=true, progress=true)
+    chain = Turing.sample(model, sampler, MCMCThreads(),
+                           nsamples, nchains, thinning = thinning,
+                           initial_params = inits,
+                           verbose = true, progress = true)
     println("Sampling finished")
     tempered = occursin("TemperedModel", string(model))
     slice = occursin("HitAndRun", string(sampler))
     if tempered
         println("Make chains from tempered model")
-        mhsamp = make_chains(mhsamp, vals.pars)
+        chain = make_chains(chain, vals.params)
     end
     if slice && !tempered
         ## lp values are wrong in slice
         println("Compute log probabilities")
-        mhsamp[:, :lp, :] = logprob(model, mhsamp)        
+        chain[:, :lp, :] = logprob(model, chain)        
     end
-    Serialization.serialize(chainout, mhsamp)
-    maxlp = findmax(mhsamp[:, :lp, :])
-    vals.optsam = mhsamp.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
-    if printvals
-        println(vals[[1:10; 43:47], :])
+    Serialization.serialize(chainout, chain)
+    optis = retparams(chain, paramtype)
+    # if printvals # rewrite to print DataFrame(inits, optis) or so
+    #     println(vals[[1:10; 43:47], :])
+    # end
+    alldata.flows.preds = generated_quantities(alldata.model, optis, params)
+    return alldata, optis, chain
+end
+
+function retparams(chain, type)
+    if type == "best"
+        maxlp = findmax(chain[:, :lp, :])
+        optis = chain.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]].data ## best overall sample
     end
-    alldata.flows.preds = generated_quantities(alldata.model, vals.optsam, vals.pars)
-    return alldata, vals, mhsamp
+    if type == "last"
+        optis = chain.value[end, 1:end-1, :].data
+    end
+    return optis
 end
 
 function moreout(alldata, outpaths, vals)
@@ -89,12 +104,12 @@ function moreout(alldata, outpaths, vals)
         vals.optsam[kdindx] ./ 10)
     desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax),
         vals.optsam[desindx] ./ 10)
-    alldata.geog.desirability = [desirfun(x, y) for (x, y) in zip(alldata.geog.x, alldata.geog.y)]
+    alldata.geog.desirability = [desirfun(x, y) for (x, y) in zip(alldata.geog.xcoord, alldata.geog.ycoord)]
     densvals = range(minimum(alldata.geog.logreldens), maximum(alldata.geog.logreldens), 100)
     densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd, td)) for fd in densvals, td in densvals)
     CSV.write(outpaths["geog"], alldata.geog)
     CSV.write(outpaths["densfun"], densfundf)
-    CSV.write(outpaths["params"], DataFrame(paramval=vals.optsam, parname=vals.pars))
+    CSV.write(outpaths["params"], DataFrame(paramval=vals.optsam, parname=vals.params))
     CSV.write(outpaths["flows"], alldata.flows)
 end
 
