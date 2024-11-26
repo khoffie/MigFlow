@@ -237,7 +237,10 @@ function mainfit(settings, outpath)
     savesettings(settings, outpath)
     file = "./writeup/juliaout_path.txt" ## report.Rmd reads the path from here
     write(file, outpath)
-    
+
+    if settings[:rm_dir] && isdir(path)
+        rm(path, recursive = true)
+    end
     mkpath(outpath)
     @sync begin
         Threads.@spawn begin
