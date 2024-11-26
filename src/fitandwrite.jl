@@ -1,17 +1,19 @@
-function fitandwritefile(alldata, settings, outpaths)    
+function fitandwritefile(alldata, settings, outpaths)
+    s = settings
     vals = gen_inits()
-    vals = runoptim(vals; run = settings[:run_optim], printvals = false)
+    vals = runoptim(vals; run = s[:run_optim], printvals = false)
     results = runtempering(alldata, vals[!, "params"], vals[!, "inits"],
-                             outpaths = outpaths, thinning = 1, temp_th = 8500, n_samples = 10)
+                           outpaths = outpaths, thinning = 1, temp_th = s[:min_temp],
+                           n_samples = s[:temp_samples])
     println("tempering finished")
     inits = retparams(results[end].chain, "last") ## end = lowest temperature
     inits = collect(eachcol(inits)) ## so runsampling accepts this as inits
     println("params extracted")
-    alldata, vals.optis, chain = runsampling(alldata.model, alldata, settings[:sampler],
+    alldata, vals.optis, chain = runsampling(alldata.model, alldata, s[:sampler],
                                              vals.params, inits; chainout = outpaths["chain"],
-                                             nchains = settings[:nchains],
-                                             nsamples = settings[:sample_size],
-                                             thinning = settings[:thinning],
+                                             nchains = s[:nchains],
+                                             nsamples = s[:sample_size],
+                                             thinning = s[:thinning],
                                              paramtype = "best",
                                              printvals = false)
     vals.optsam = vals.optis ## for compatibility to later functinos
