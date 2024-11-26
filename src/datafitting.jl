@@ -234,14 +234,15 @@ function mainfit(settings, outpath)
         CSV.write(joinpath(path, "settings.csv"), settings)
     end
 
-    savesettings(settings, outpath)
-    file = "./writeup/juliaout_path.txt" ## report.Rmd reads the path from here
-    write(file, outpath)
-
     if settings[:rm_dir] && isdir(path)
         rm(path, recursive = true)
     end
     mkpath(outpath)
+
+    savesettings(settings, outpath)
+    file = "./writeup/juliaout_path.txt" ## report.Rmd reads the path from here
+    write(file, outpath)
+
     @sync begin
         Threads.@spawn begin
             usd = loadallUSdata(0; sample = settings[:sample_rows],
