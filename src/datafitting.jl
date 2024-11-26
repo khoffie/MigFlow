@@ -234,11 +234,10 @@ function mainfit(settings, outpath)
         CSV.write(joinpath(path, "settings.csv"), settings)
     end
 
-    if settings[:rm_dir] && isdir(path)
-        rm(path, recursive = true)
+    if settings[:rm_dir] && isdir(outpath)
+        rm(outpath, recursive = true)
     end
     mkpath(outpath)
-
     savesettings(settings, outpath)
     file = "./writeup/juliaout_path.txt" ## report.Rmd reads the path from here
     write(file, outpath)
