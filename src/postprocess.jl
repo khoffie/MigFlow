@@ -1,4 +1,4 @@
-function postprocess(first = 50, path = nothing, render_plots = true, render_doc = true)
+function postprocess(; first = 50, path = nothing, render_plots = true, render_doc = true)
     file = "./writeup/juliaout_path.txt"
     if !isnothing(path); write(file, path); end
     if isnothing(path); path = readline(file); end
