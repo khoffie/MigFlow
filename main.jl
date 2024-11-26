@@ -25,7 +25,9 @@ settings = Dict(
     :year_max => 2017,
     :agegroups => ["30-50"],
     :outpath => "tempered",
-    :rm_dir => true
+    :rm_dir => true,
+    :temp_samples => 10,
+    :min_temp => 8500
 )
 
 function main(settings)
