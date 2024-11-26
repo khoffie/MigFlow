@@ -1,7 +1,6 @@
 using Revise
 includet("main.jl")
 
-
 outpath = "./manuscript_input/temperedtest/"
 paths = createpaths(outpath, "germ", "2017", "30-50")
 pos_only= true
@@ -13,43 +12,25 @@ flows = filter(:agegroup => ==("30-50"), flows)
 turingmodel = germmodel(flows, districts, true)
 germd = (flows = flows, geog = districts, model = turingmodel)
 
-results = runtempering(germd, vals[!, "params"], vals[!, "inits"];
-                       outpaths = paths, thinning = 1, temp_th = 8500, n_samples = 10)
-
-fill(retparams(results[1].chain, "best"), 4)
-
-
-
-results[2].chain[:a]
-findmax(results[2].chain[:lp])
-
-results[3].chain[:a]
-
-results
-results.vals
-
-alldata, p, vals = fitandwritefile(germd, settings, paths)
-
 s = settings
-inits = fill(vals[!, "inits"], s[:nchains])
+inits = fill(vals[!, "inits"], settings[:nchains])
 
 germd, optis, chain = runsampling(turingmodel, germd, s[:sampler],
                                   vals[!, "params"], inits;
                                   chainout = paths["chain"], nchains = s[:nchains],
                                   nsamples = s[:sample_size], thinning = s[:thinning],
                                   paramtype = "best")
-chain[:lp]
 
-function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
-                     nsamples, thinning, printvals = false)
+## in runtempering I fill inits for chains inside
+results = runtempering(germd, vals[!, "params"], vals[!, "inits"];
+                       outpaths = paths, thinning = 1, temp_th = 8500, n_samples = 10)
 
-optis.data
-chain
-
-
-ch = results.chain
-maxlp = findmax(ch[:, :lp, :])
-vals.optsam = ch.value[maxlp[2].I[1], 1:end-1, maxlp[2].I[2]] ## best overall sample
+alldata, p, vals = fitandwritefile(germd, settings, paths)
 
 
-moreout(germd, paths, vals)
+p = "/home/donkon/Documents/GermanMigration/manuscript_input/temperedtest"
+chain = deserialize(joinpath(p, "germchain_2017_50-65.csv"))
+
+plot(chain[:lp])
+postprocess(path = "./manuscript_input/temperedtest")
+
