@@ -1,4 +1,5 @@
-function postprocess(; first = 50, path = nothing, render_plots = true, render_doc = true)
+function postprocess(; first = 50, path = nothing, render_plots = true, render_doc = true,
+                     denstype = "all")
     file = "./writeup/juliaout_path.txt"
     if !isnothing(path); write(file, path); end
     if isnothing(path); path = readline(file); end
@@ -8,7 +9,7 @@ function postprocess(; first = 50, path = nothing, render_plots = true, render_d
         saveparams(path, "germchain", kd)
         saveparams(path, "germchain", gravity)
         saveparams(path, "germchain", desire)
-        saveparams(path, "germchain", densitychains)
+        saveparams(path, "germchain", densitychains, type = denstype)
         println("Plots generated")
     else
         println("Plots not generated")
@@ -29,16 +30,16 @@ function compilereport(render_doc)
     end
 end
 
-function saveparams(path, pattern_in, fun)
+function saveparams(path, pattern_in, fun; kwargs...)
     fin, fout = fileinout(path, pattern_in, fun)
     for i in eachindex(fin)
         chain = deserialize(joinpath(path, fin[i]))
-        p = fun(chain)
+        p = fun(chain; kwargs...)
         savefig(joinpath(path, "plots", "$(fout[i]).pdf"))
     end
 end
 
-function densitychains(chain; densmin = 0, densmax = 5000, title = nothing)
+function densitychains(chain; type = "best", densmin = 0, densmax = 5000, title = nothing)
     function plotdensity(chain, densmin, densmax)
         pars = OrderedDict(zip(string.(chain.value.axes[2]), chain.value.data[end, :, 1]))
         kds = [k for k in keys(pars) if contains(k, "kd")]
@@ -47,8 +48,13 @@ function densitychains(chain; densmin = 0, densmax = 5000, title = nothing)
         p = Plots.heatmap(kdfun, colorbar = false, ticks = false)
         return p
     end
-    plts = [plotdensity(chain[:, :, i], densmin, densmax) for i in 1 : size(chain)[3]]
-    p = Plots.plot(plts..., plot_title = title == nothing ? "" : title)
+    if type == "all"
+        plts = [plotdensity(chain[:, :, i], densmin, densmax) for i in 1 : size(chain)[3]]
+        p = Plots.plot(plts..., plot_title = title == nothing ? "" : title)
+    elseif type == "best"
+        bestchain = chain[:, :, findmax(chain[end, :lp, :])[2]]
+        p = plotdensity(bestchain, densmin, densmax)
+    end
     return p
 end
 
