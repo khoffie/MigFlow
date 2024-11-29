@@ -4,20 +4,21 @@ function fitandwritefile(alldata, settings, outpaths)
     vals = runoptim(vals; run = s[:run_optim], printvals = false)
     results = runtempering(alldata, vals[!, "params"], vals[!, "inits"],
                            outpaths = outpaths, thinning = 1, temp_th = s[:min_temp],
-                           n_samples = s[:temp_samples], decay = s[:temp_decay])
+                           n_samples = s[:temp_samples], decay = s[:temp_decay],
+                           final_samples = s[:sample_size])
     println("tempering finished")
-    inits = retparams(results[end].chain, "last") ## end = lowest temperature
-    inits = collect(eachcol(inits)) ## so runsampling accepts this as inits
-    println("params extracted")
-    alldata, vals.optis, chain = runsampling(alldata.model, alldata, s[:sampler],
-                                             vals.params, inits; chainout = outpaths["chain"],
-                                             nchains = s[:nchains],
-                                             nsamples = s[:sample_size],
-                                             thinning = s[:thinning],
-                                             paramtype = "best",
-                                             printvals = false)
-    vals.optsam = vals.optis ## for compatibility to later functinos
-    moreout(alldata, outpaths, vals)
+    # inits = retparams(results[end].chain, "last") ## end = lowest temperature
+    # inits = collect(eachcol(inits)) ## so runsampling accepts this as inits
+    # println("params extracted")
+    # alldata, vals.optis, chain = runsampling(alldata.model, alldata, s[:sampler],
+    #                                          vals.params, inits; chainout = outpaths["chain"],
+    #                                          nchains = s[:nchains],
+    #                                          nsamples = s[:sample_size],
+    #                                          thinning = s[:thinning],
+    #                                          paramtype = "best",
+    #                                          printvals = false)
+    # vals.optsam = vals.optis ## for compatibility to later functinos
+    # moreout(alldata, outpaths, vals)
 end
 
 function gen_inits()

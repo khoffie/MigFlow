@@ -15,22 +15,7 @@ germd = (flows = flows, geog = districts, model = turingmodel)
 s = settings
 inits = fill(vals[!, "inits"], settings[:nchains])
 
-germd, optis, chain = runsampling(turingmodel, germd, s[:sampler],
-                                  vals[!, "params"], inits;
-                                  chainout = paths["chain"], nchains = s[:nchains],
-                                  nsamples = s[:sample_size], thinning = s[:thinning],
-                                  paramtype = "best")
-
-## in runtempering I fill inits for chains inside
 results = runtempering(germd, vals[!, "params"], vals[!, "inits"];
-                       outpaths = paths, thinning = 1, temp_th = 8500, n_samples = 10)
+                       outpaths = paths, thinning = 1, temp_th = 8500, n_samples = 10, final_samples = 100)
 
 alldata, p, vals = fitandwritefile(germd, settings, paths)
-
-
-p = "/home/donkon/Documents/GermanMigration/manuscript_input/temperedtest"
-chain = deserialize(joinpath(p, "germchain_2017_50-65.csv"))
-
-plot(chain[:lp])
-postprocess(path = "./manuscript_input/temperedtest")
-

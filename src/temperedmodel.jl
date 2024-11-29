@@ -46,7 +46,8 @@ function testtempered()
     return chain, sam
 end
 
-function runtempering(data, params, inits; outpaths, thinning, temp_th, decay = .1, n_samples = 100)
+function runtempering(data, params, inits; outpaths, thinning, temp_th, decay = .1, n_samples = 100,
+                      final_samples)
     ## runtempering is confusing, because vals is updated in each step
     ## and allresults has the same vals for each iteration. But in
     ## fact these are different as can be seen fro, inspecting the
@@ -61,9 +62,9 @@ function runtempering(data, params, inits; outpaths, thinning, temp_th, decay = 
         try
             tempmodel = TemperedModel(data.model, temp)
             println("Sampling starts for temperature $temp")
-            addtemp(x) = replace(x, ".csv" => "temp_$(temp).csv")
+            addtemp(x) = replace(x, ".csv" => "temp_$(round(temp, digits = 0)).csv")
             temppaths = Dict([k => addtemp(v) for (k, v) in outpaths])
-            if temp < 150; n_samples = 5000; end
+            if temp * (1 - decay) <= temp_th; n_samples = final_samples; end
             data, optis, chain = runsampling(tempmodel, data,
                                              SliceSampling.HitAndRun(SliceSteppingOut(0.25)),
                                              params, fill(inits, 4), chainout = temppaths["chain"],
