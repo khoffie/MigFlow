@@ -9,6 +9,6 @@ plot(chain[:lp])
 chains = chainnames("/home/donkon/koho/sampling")
 
 f = "./writeup/juliaout_path.txt"
-write(f, "./manuscript_input/30kMH")
+write(f, "./manuscript_input/completeMH")
 
 postprocess(render_plots = false)
