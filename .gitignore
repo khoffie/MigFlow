@@ -16,4 +16,5 @@ manuscript_input
 data
 writeup/.quarto/
 writeup/latextest_files/
+writeup/reporteR/man/
 *.el
