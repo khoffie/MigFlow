@@ -1,44 +1,35 @@
-# GermanMigration
-Study of German Migration patterns
+# MigFlow
+
 
 ## Getting Julia
 
-To get started download Julia from the julialang site and extract it in your home directory, and then link your home dir's bin/julia to the downloaded version. Assuming you have ~/bin/ in your path, you can then run julia easily.
+If you're on Linux, run
 
 ```
-$ wget https://julialang-s3.julialang.org/bin/linux/x64/1.10/julia-1.10.4-linux-x86_64.tar.gz
-$ tar zxf julia-1.10.4-linux-x86_64.tar.gz
-$ ln -s ~/julia-1.10.4/bin/julia bin/julia
-
+$ curl -fsSL https://install.julialang.org | sh
 ```
 
-## Cloning the Repo and linking to your data file
+For Windows and further advice please look
+[here](https://github.com/JuliaLang/juliaup). This repository uses
+Julia 1.10.4; to get it and make it the default, run
 
-replace <path_to_data_file> with a path to a data file set up like what's described in fitturing.jl in the 
-comments 
-
-```
-git clone https://github.com/dlakelan/GermanMigration.git
-cd GermanMigration
-ln -s <path_to_data_file> data/FlowData.csv
-```
-
-## Setting up the Julia environment
-
-To set up the environment after cloning the repo from inside the GermanMigration directory at the shell prompt do:
-
-`$ julia ./setupenv.jl`
-
-This will download all the packages
-
-## Now to explore the data:
 
 ```
-julia
-
-...
-julia> include("fitturing.jl")
+$ juliaup add 1.10.4
+$ juliaup default 1.10.4
 ```
 
-From here you can explore the two fit models or debug whatever bugs are in my script :-)
+Whenever you type `'julia'` into a terminal now, it will start Julia
+version 1.10.4.
 
+## Getting all needed libraries
+Once you have the correct Julia version, you can clone the repository
+and install all needed Julia libraries.
+
+```
+$ git clone https://github.com/khoffie/MigFlow.git
+$ cd MigFlow
+$ julia --project=. -e 'using Pkg; Pkg.instantiate()'
+```
+
+This will install all libraries needed in the correct version.
