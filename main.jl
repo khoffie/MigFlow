@@ -1,3 +1,5 @@
+# using Pkg
+# Pkg.activate(".")
 using Revise
 includet("src/datafitting.jl")
 using RCall
