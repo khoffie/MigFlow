@@ -45,3 +45,4 @@ function main(settings)
     postprocess(path = outpath)
 end
 
+main(settings)
