@@ -36,7 +36,7 @@ settings = Dict(
 function main(settings)
     outpath = makeoutpath(settings[:outpath])
     ## install helpeR only if newer version in repo, never upgrade dependencies
-    R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
+    ## R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
     R"helpeR::gen_data(year_min = $(settings[:year_min]),
                        year_max = $(settings[:year_max]),
                        dist_type = $(settings[:distance_type]),
@@ -46,3 +46,8 @@ function main(settings)
 end
 
 main(settings)
+
+# R"helpeR::gen_data(year_min = 2017,
+#                        year_max = 2017,
+#                        dist_type = 'pos',
+#                        topop_type = 'all')"
