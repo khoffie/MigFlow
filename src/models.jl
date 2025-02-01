@@ -64,6 +64,6 @@ function germmodel(flows, districts, positive_only)
                    districts.ycoord, minimum(districts.ycoord), maximum(districts.ycoord),
                    districts.logreldens, minimum(districts.logreldens), maximum(districts.logreldens),
                    districts.pop, nrow(districts),
-                    100.0, 36, 36, pos_only) ## nothing == netactual, we're not using it anymorec
+                    100.0, 36, 36, positive_only) ## nothing == netactual, we're not using it anymorec
     return model
 end
