@@ -37,10 +37,16 @@ function main(settings)
     outpath = makeoutpath(settings[:outpath])
     ## install helpeR only if newer version in repo, never upgrade dependencies
     ## R"devtools::install_local('./helpeR/', upgrade = 'never', force = FALSE)"
-    R"helpeR::gen_data(year_min = $(settings[:year_min]),
-                       year_max = $(settings[:year_max]),
-                       dist_type = $(settings[:distance_type]),
-                       topop_type = $(settings[:topop_type]))"
+    # R"helpeR::gen_data(year_min = $(settings[:year_min]),
+    #                    year_max = $(settings[:year_max]),
+    #                    dist_type = $(settings[:distance_type]),
+    #                    topop_type = $(settings[:topop_type]))"
+
+    run(`R -q -e 'helpeR::gen_data(year_min = 2017,
+                       year_max = 2017,
+                       dist_type = "pos",
+                       topop_type = "all")'`)
+
     mainfit(settings, outpath)
     postprocess(path = outpath)
 end
@@ -51,3 +57,6 @@ main(settings)
 #                        year_max = 2017,
 #                        dist_type = 'pos',
 #                        topop_type = 'all')"
+
+
+# R -q -e 'helpeR::gen_data(year_min = 2017, year_max = 2017, dist_type = "pos", topop_type = "all")'
