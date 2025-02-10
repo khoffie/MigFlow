@@ -17,3 +17,18 @@ function chainnames(path, temp = nothing)
     end
     return fchains
 end
+
+function get_params(mdl)
+    params = DynamicPPL.syms(DynamicPPL.VarInfo(mdl))
+    params = collect(string.(params))
+    if "kd" in params
+        all_kd = ["kd[$i]" for i in 1:36]
+        params = vcat(filter(x -> x != "kd", params), all_kd)
+    end
+    if "desirecoefs" in params
+        all_des = ["desirecoefs[$i]" for i in 1:36]
+        params = vcat(filter(x -> x != "desirecoefs", params), all_des)
+    end
+
+    return params
+end

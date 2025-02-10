@@ -254,7 +254,8 @@ function mainfit(settings, outpath)
             settings[:fit_us] ? fitandwritefile(usd, settings, outpaths) : println("US data not fitted")
         end
         
-        germ = loadallGermData(0; sample = settings[:sample_rows], positive_only = settings[:positive_only])
+        germ = loadallGermData(0; sample = settings[:sample_rows],
+                               positive_only = settings[:positive_only])
         germ.geog.x = germ.geog.xcoord
         germ.geog.y = germ.geog.ycoord
 
@@ -264,7 +265,9 @@ function mainfit(settings, outpath)
             for year in unique(germ.flows.year)
                 agedat = @subset(germ.flows, :agegroup .== age, :year .== year)
                 geodat = @subset(germ.geog, :year .== year)
-                mdl = germmodel(agedat, geodat, settings[:positive_only])
+                mdl = germmodel(agedat, geodat,
+                                settings[:model_type],
+                                settings[:positive_only])
                 outpaths = createpaths(outpath, "germ", year, age)
                 germd = (flows = agedat, geog = geodat, model = mdl)
                 settings[:fit_germ] ? fitandwritefile(germd, settings, outpaths) : println("German data not fitted")
@@ -278,8 +281,8 @@ end
 # getUScountypop()
 
 function makeoutpath(outpath)
-    datepath = joinpath("manuscript_input", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
-    out = isnothing(outpath) ? datepath : joinpath("manuscript_input", outpath)
+    datepath = joinpath("results", Dates.format(now(), "yyyy-mm-dd_HH-MM-SS"))
+    out = isnothing(outpath) ? datepath : joinpath("results", outpath)
     println("Output saved into " * out)
     return out
 end

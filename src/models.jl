@@ -56,14 +56,66 @@
     return (preds = preds)
 end
 
-function germmodel(flows, districts, positive_only)
-    model = usmodel(flows.flows, sum(flows.flows),
-                   levelcode.(flows.fromdist), levelcode.(flows.todist),
+@model function basemodel(flows, allmoves, fromdist, todist,
+                          medcpop, distance, distpop, Ndist, meddist,
+                          positive_only)
+    a ~ Normal(-14.0, 7)
+    c ~ Gamma(10.0, 1.5 / 9.0)
+    d0 ~ Gamma(5.0, 2.0 / 4.0)
+    e ~ Gamma(5.0, 2.0 / 4.0)
+    dscale ~ Gamma(20.0, 5.0 / 19.0)
+    ktopop ~ Normal(0.0, 5.0) # remove? model should be linear in topop
+
+    distscale = dscale .* meddist
+    preds = [distpop[fromdist[i]] *
+        logistic(a + (ktopop / 10.0) *
+        log(distpop[todist[i]] / medcpop + e / 100.0) +
+        log1p(1.0 / (distance[i] / distscale + d0 / 100.0) ^ c))
+             for i in eachindex(flows)]
+
+    sumpreds = sum(preds)
+    allmoves ~ Normal(sumpreds, 0.01 * sumpreds)
+    if any(isnan, preds)
+        println("NaN in predictions")
+    end
+    if positive_only
+        flows ~ arraydist([truncated(Poisson(p), 1, Inf) for p in preds])
+    else
+        flows ~ arraydist([Poisson(p) for p in preds])
+    end
+    return (preds = preds)
+end
+
+function germmodel(flows, districts, model_type, positive_only)
+    full = usmodel(flows.flows, sum(flows.flows),
+                   levelcode.(flows.fromdist),
+                   levelcode.(flows.todist),
                    median(districts.pop), flows.dist,
-                   districts.xcoord, minimum(districts.xcoord), maximum(districts.xcoord),
-                   districts.ycoord, minimum(districts.ycoord), maximum(districts.ycoord),
-                   districts.logreldens, minimum(districts.logreldens), maximum(districts.logreldens),
+                   districts.xcoord,
+                   minimum(districts.xcoord),
+                   maximum(districts.xcoord),
+                   districts.ycoord,
+                   minimum(districts.ycoord),
+                   maximum(districts.ycoord),
+                   districts.logreldens,
+                   minimum(districts.logreldens),
+                   maximum(districts.logreldens),
                    districts.pop, nrow(districts),
-                    100.0, 36, 36, positive_only) ## nothing == netactual, we're not using it anymorec
+                   100.0, 36, 36, positive_only) ## nothing == netactual, we're not using it anymorec
+
+    base = basemodel(flows.flows, sum(flows.flows),
+                     levelcode.(flows.fromdist),
+                     levelcode.(flows.todist),
+                     median(districts.pop),
+                     flows.dist,
+                     districts.pop,
+                     nrow(districts),
+                     100.0, ## median distance
+                     true)
+    if model_type == "full"
+        model = full
+    elseif model_type == "base"
+        model = base
+    end
     return model
 end

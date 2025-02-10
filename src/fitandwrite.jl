@@ -1,27 +1,42 @@
 function fitandwritefile(alldata, settings, outpaths)
     s = settings
-    vals = gen_inits()
-    vals = runoptim(vals; run = s[:run_optim], printvals = false)
-    results = runtempering(alldata, vals[!, "params"], vals[!, "inits"],
-                           outpaths = outpaths, thinning = 1, temp_th = s[:min_temp],
-                           n_samples = s[:temp_samples], decay = s[:temp_decay],
-                           final_samples = s[:sample_size])
-    println("tempering finished")
+    vals = gen_inits(alldata.model)
+    # vals = runoptim(vals; run = s[:run_optim], printvals = false)
+    # results = runtempering(alldata, vals[!, "params"], vals[!, "inits"],
+    #                        outpaths = outpaths, thinning = 1, temp_th = s[:min_temp],
+    #                        n_samples = s[:temp_samples], decay = s[:temp_decay],
+    #                        final_samples = s[:sample_size])
+    # println("tempering finished")
     # inits = retparams(results[end].chain, "last") ## end = lowest temperature
     # inits = collect(eachcol(inits)) ## so runsampling accepts this as inits
     # println("params extracted")
-    # alldata, vals.optis, chain = runsampling(alldata.model, alldata, s[:sampler],
-    #                                          vals.params, inits; chainout = outpaths["chain"],
-    #                                          nchains = s[:nchains],
-    #                                          nsamples = s[:sample_size],
-    #                                          thinning = s[:thinning],
-    #                                          paramtype = "best",
-    #                                          printvals = false)
-    # vals.optsam = vals.optis ## for compatibility to later functinos
-    # moreout(alldata, outpaths, vals)
+    alldata, vals.optis, chain = runsampling(alldata.model,
+                                             alldata,
+                                             gen_sampler(alldata.model, s[:sampler]),
+                                             vals.params,
+                                             fill(vals.inits, s[:nchains]);
+                                             chainout = outpaths["chain"],
+                                             nchains = s[:nchains],
+                                             nsamples = s[:sample_size],
+                                             thinning = s[:thinning],
+                                             paramtype = "best",
+                                             printvals = false)
+    vals.optsam = vals.optis ## for compatibility to later functinos
+    moreout(alldata, outpaths, vals)
 end
 
-function gen_inits()
+function gen_sampler(mdl, s)
+    if s == "MH"
+        n_params = length(get_params(mdl))
+        sam = MH(.1^2 * I(n_params))
+    end
+    if s == "Slice"
+        sam = externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
+    end
+    return sam
+end
+
+function gen_inits(mdl)
     parnames = [["a", "c", "d0", "e", "dscale", "ktopop"];
         ["kd[$i]" for i in 1:36];
         ["desirecoefs[$i]" for i in 1:36]]
@@ -34,28 +49,30 @@ function gen_inits()
     ini = rand(Normal(0.0, 0.10), length(ub))
     ini[1:7] .= [-7.6, 1.81, 1.5, 1.5, 5.0, 3.5, 0.0]
     df = DataFrame(:params => parnames, :lb => lb, :ub => ub, :inits => ini)
+    params = get_params(mdl)
+    df = filter(row -> row.params in params, df)
     return (df)
 end
 
-function runoptim(vals; run, printvals=false)
-    if run == true
-        algo = LBFGS()
-        println("Optimization starts")
-        mapest = maximum_a_posteriori(alldata.model, algo; adtype=AutoReverseDiff(false),
-            initial_params=vals.inits, lb=vals.lb, ub=vals.ub,
-            maxiters=50, maxtime=400,
-            reltol=1e-3, progress=true)
-        println("Optimization finished")
-        vals.optis = mapest.values.array
-    else
-        println("No optimization, using random inits for sampling")
-        vals.optis = vals.inits
-    end
-    if printvals
-        println(vals[[1:10; 43:47], :])
-    end
-    return vals
-end
+# function runoptim(vals; run, printvals=false)
+#     if run == true
+#         algo = LBFGS()
+#         println("Optimization starts")
+#         mapest = maximum_a_posteriori(alldata.model, algo; adtype=AutoReverseDiff(false),
+#             initial_params=vals.inits, lb=vals.lb, ub=vals.ub,
+#             maxiters=50, maxtime=400,
+#             reltol=1e-3, progress=true)
+#         println("Optimization finished")
+#         vals.optis = mapest.values.array
+#     else
+#         println("No optimization, using random inits for sampling")
+#         vals.optis = vals.inits
+#     end
+#     if printvals
+#         println(vals[[1:10; 43:47], :])
+#     end
+#     return vals
+# end
 
 function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
                      nsamples, thinning, paramtype, printvals = false)
@@ -98,20 +115,24 @@ function retparams(chain, type)
 end
 
 function moreout(alldata, outpaths, vals)
-    (densmin, densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
-    (xmin, xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
-    (ymin, ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)
-    kdindx = (1:36) .+ 6 #number of non kd or cheby inits/ priors
-    desindx = (1:36) .+ (6 + 36)
-    kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
-        vals.optsam[kdindx] ./ 10)
-    desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax),
-        vals.optsam[desindx] ./ 10)
-    alldata.geog.desirability = [desirfun(x, y) for (x, y) in zip(alldata.geog.xcoord, alldata.geog.ycoord)]
-    densvals = range(minimum(alldata.geog.logreldens), maximum(alldata.geog.logreldens), 100)
-    densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd, td)) for fd in densvals, td in densvals)
-    CSV.write(outpaths["geog"], alldata.geog)
-    CSV.write(outpaths["densfun"], densfundf)
+    if "kd[1]" in get_params(alldata.model)
+        (densmin, densmax) = (alldata.model.args.densmin, alldata.model.args.densmax)
+        (xmin, xmax) = (alldata.model.args.xmin, alldata.model.args.xmax)
+        (ymin, ymax) = (alldata.model.args.ymin, alldata.model.args.ymax)
+        kdindx = (1:36) .+ 6 #number of non kd or cheby inits/ priors
+        kdfun = Fun(ApproxFun.Chebyshev(densmin .. densmax) * ApproxFun.Chebyshev(densmin .. densmax),
+                    vals.optsam[kdindx] ./ 10)
+        densvals = range(minimum(alldata.geog.logreldens), maximum(alldata.geog.logreldens), 100)
+        densfundf = DataFrame((fromdens=fd, todens=td, funval=kdfun(fd, td)) for fd in densvals, td in densvals)
+        CSV.write(outpaths["densfun"], densfundf)
+    end
+    if "desirecoefs[1]" in get_params(alldata.model)
+        desindx = (1:36) .+ (6 + 36)
+        desirfun = Fun(ApproxFun.Chebyshev(xmin .. xmax) * ApproxFun.Chebyshev(ymin .. ymax),
+                       vals.optsam[desindx] ./ 10)
+        alldata.geog.desirability = [desirfun(x, y) for (x, y) in zip(alldata.geog.xcoord, alldata.geog.ycoord)]
+        CSV.write(outpaths["geog"], alldata.geog)
+    end
     CSV.write(outpaths["params"], DataFrame(paramval=vals.optsam, parname=vals.params))
     CSV.write(outpaths["flows"], alldata.flows)
 end

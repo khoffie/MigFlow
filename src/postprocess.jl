@@ -9,7 +9,7 @@ function postprocess(; first = 50, path = nothing, render_plots = true, render_d
         saveparams(path, "germchain", kd)
         saveparams(path, "germchain", gravity)
         saveparams(path, "germchain", desire)
-        saveparams(path, "germchain", densitychains, type = denstype)
+##        saveparams(path, "germchain", densitychains, type = denstype)
         println("Plots generated")
     else
         println("Plots not generated")
@@ -35,7 +35,9 @@ function saveparams(path, pattern_in, fun; kwargs...)
     for i in eachindex(fin)
         chain = deserialize(joinpath(path, fin[i]))
         p = fun(chain; kwargs...)
-        savefig(joinpath(path, "plots", "$(fout[i]).pdf"))
+        if  !isnothing(p)
+            savefig(p, joinpath(path, "plots", "$(fout[i]).pdf"))
+        end
     end
 end
 
@@ -65,14 +67,26 @@ function gravity(chain)
 end
 
 function kd(chain)
-    ps = [Symbol("kd[$i]") for i in [1, 5, 10, 15, 20, 30]]
-    p = moreparams(chain, ps, first)
+    params = chain.name_map.parameters
+    kds = params[startswith.(string.(params), "kd")]
+    if length(kds) > 0
+        ps = Random.shuffle(kds)[1 : min(length(kds), 6)]
+        p = moreparams(chain, ps, first)
+    else
+        p = nothing
+    end
     return p
 end
 
 function desire(chain)
-    ps = [Symbol("desirecoefs[$i]") for i in [1, 5, 10, 15, 20, 30]]
-    p = moreparams(chain, ps, first)
+    params = chain.name_map.parameters
+    des = params[startswith.(string.(params), "desire")]
+    if length(des) > 0
+        ps = Random.shuffle(des)[1 : min(length(des), 6)]
+        p = moreparams(chain, ps, first)
+    else
+        p = nothing
+    end
     return p
 end
 

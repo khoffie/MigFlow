@@ -6,14 +6,17 @@ using RCall
 includet("src/postprocess.jl")
 
 settings = Dict(
+    :model_type => "base", # base: Fundamentals model, full:
+                          # fundamentals + density + desirability
     :sample_rows => false, # if true 10% sample of rows is used
     :positive_only => true,
-    :sampler => externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.))),
-    ## MH(.1^2*I(78)),
+    :sampler => "MH", # "MH" or "Slice"
+    # MH(.1^2*I(6)),
+    ## externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.))),
     :sample_size => 10,
     :nchains => 4,
     :thinning => 1,
-    :run_optim => false,
+    ## :run_optim => false,
     :commit_hash => LibGit2.head("."),
     :fit_us => false,
     :fit_germ => true,
@@ -22,11 +25,11 @@ settings = Dict(
                             ## (xcoord, ycoord). centroid uses
                             ## sf::st_centroid for that. distances
                             ## reflect that
-    :topop_type => "agegroup", ## agegroup for age specific population, all for total population
+    :topop_type => "all", ## agegroup for age specific population, all for total population
     :year_min => 2017, ## for German data
     :year_max => 2017,
-    :agegroups => ["30-50"],
-    :outpath => "tempered",
+    :agegroups => nothing, # nothing: all age groups
+    :outpath => "fundamentals",
     :rm_dir => true,
     :temp_samples => 10,
     :min_temp => 8500,
@@ -42,13 +45,14 @@ function main(settings)
     #                    dist_type = $(settings[:distance_type]),
     #                    topop_type = $(settings[:topop_type]))"
 
-    run(`R -q -e 'helpeR::gen_data(year_min = 2017,
-                       year_max = 2017,
-                       dist_type = "pos",
-                       topop_type = "all")'`)
+    run(`R -q -e 'helpeR::gen_data(
+    year_min = 2017,
+    year_max = 2017,
+    dist_type = "pos",
+    topop_type = "all")'`)
 
     mainfit(settings, outpath)
-    postprocess(path = outpath)
+    postprocess(path = outpath, render_doc = false)
 end
 
 main(settings)
