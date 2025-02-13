@@ -1,0 +1,127 @@
+---
+title: Test Samplers
+authors:
+  - name: Konstantin Hoffie
+    affiliation: East-German
+    roles: writing
+    corresponding: true
+engine: julia
+julia:
+  exeflags: ["--project=/home/konstantin/code"]
+  env: ["JULIA_NUM_THREADS=5"]
+---
+
+# Testing Quarto
+This shows the environment 
+```{julia}
+#| label: show-env
+import Pkg
+Pkg.status()
+
+```
+
+```{julia}
+#| label: load-env
+# Pkg.status()
+using Revise, RCall, Turing
+
+include("../src/datafitting.jl")
+include("../src/models.jl")
+include("../src/postprocess.jl")
+include("../src/fitandwrite.jl")
+include("../src/temperedmodel.jl")
+include("../src/utils.jl")
+
+```
+
+```{julia}
+#| label: define-functions
+n_samples = 100
+
+function testsampler(mdl, sampler, n_samples, thinning)
+    chain = @time(Turing.sample(mdl, sampler, MCMCThreads(),
+                                n_samples, 4, thinning = thinning,
+                                initial_params = fill(vals.inits, 4),
+                                verbose = true, progress = true))    
+    return chain
+end
+
+maxlp(chain) = round(maximum(chain[end, :lp, :]))
+
+function gravity(chain)
+    ps = [:lp, :a, :c, :d0, :dscale, :e, :ktopop]
+    plot([plotparam(chain, p) for p in ps]...)
+end
+
+function plotparam(chain, symbol, first = 1)
+    p = Plots.plot(chain[symbol].data[first : end, :],
+                   xlab = string(symbol), label = "")
+    return p
+end
+
+```
+
+
+```{julia}
+#| label: load-data
+cd("/home/konstantin/code")
+germ = loadallGermData(0; sample = false, positive_only = true)
+fl = germ.flows[germ.flows.year .== 2017, :]
+fl = fl[fl.agegroup .== "30-50", :]
+mdl = germmodel(fl, germ.geog, "full", true)
+germd = (flows = fl, geog = germ.geog, model = mdl)
+outpaths = createpaths("./results/testing", "germ", 2017, "30-50")
+vals = gen_inits(mdl)
+nchains = 4
+
+```
+
+First we test `Metropolis Hastings` with a multivariate normal
+proposal distribution. Specifically we use independent normals with
+mean 0 and $0.1^2$ variance.
+
+```{julia}
+#| label: mh-normal
+chn_mhn = testsampler(mdl, MH(.1^2*I(nrow(vals))), n_samples, 5)
+gravity(chn_mhn)
+
+```
+
+```{julia}
+#| label: mh-prior
+chn_mhp = testsampler(mdl, MH(), n_samples, 5)
+gravity(chn_mhp)
+
+```
+
+Next we test the slice sampler. Previously slice needed about 5x as
+long to generate the same amount of samples. Thus, to compare it
+fairly to MH, we only generate 100 samples
+
+```{julia}
+#| label: slice-0.2
+sam = externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
+chn_slice20 = testsampler(mdl, sam, n_samples, 1)
+gravity(chn_slice20)
+
+```
+
+```{julia}
+#| label: slice-20
+sam = externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(.2)))
+chn_slice02 = testsampler(mdl, sam, n_samples, 1)
+gravity(chn_slice02)
+
+```
+
+Thus, the resulting best LPs are
+
+```{julia}
+#| label: maxlps
+
+samplers = ["MH-Normal", "MH-Prior", "Slice-2.0", "Slice-0.2"]
+maxlps = [maxlp(chn_mhn), maxlp(chn_mhp),
+          maxlp(chn_slice20), maxlp(chn_slice02)]
+DataFrame(samplers = samplers, maxLPs = maxlps)
+
+```

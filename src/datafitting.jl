@@ -1,5 +1,3 @@
-using Pkg
-Pkg.activate(".")
 using CSV, DataFrames, FixedWidthTables, DataFramesMeta, CategoricalArrays
 using LibGit2
 using StatsBase, StatsFuns, StatsPlots, Distributions, Random, LaTeXStrings, Plots

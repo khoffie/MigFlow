@@ -1,6 +1,6 @@
 *.csv
 # emacs backup
-*~ 
+*~
 *.tsv
 *.txt
 *.zip
@@ -18,3 +18,6 @@ writeup/.quarto/
 writeup/latextest_files/
 writeup/reporteR/man/
 *.el
+
+/.quarto/
+*/test_files/
