@@ -21,3 +21,8 @@ writeup/reporteR/man/
 
 /.quarto/
 */test_files/
+test_sampler/results/
+test_sampler/sampler_files/
+test_sampler/simplify_files/
+test_sampler/chains/
+results/

@@ -1,3 +1,10 @@
+function sample_rows(df::DataFrame, p::AbstractFloat)
+    nrows = nrow(df)
+    n = Int(floor(nrows * p))
+    df = df[Random.shuffle(1:nrows)[1 : n], : ]
+    return(df)
+end
+
 function decaytime(y₀, yₜ, r, steptime = 5)
     λ = log(1 - r)
     s = log(yₜ / y₀) / λ
@@ -18,7 +25,7 @@ function chainnames(path, temp = nothing)
     return fchains
 end
 
-function get_params(mdl)
+function get_params2(mdl)
     params = DynamicPPL.syms(DynamicPPL.VarInfo(mdl))
     params = collect(string.(params))
     if "kd" in params

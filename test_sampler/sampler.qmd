@@ -11,7 +11,7 @@ julia:
   env: ["JULIA_NUM_THREADS=5"]
 ---
 
-# Testing Quarto
+# Evaluating Sampler with fundamentals model
 This shows the environment 
 ```{julia}
 #| label: show-env
@@ -23,8 +23,8 @@ Pkg.status()
 ```{julia}
 #| label: load-env
 # Pkg.status()
-using Revise, RCall, Turing
-
+using Revise, RCall, Turing, Pigeons, InferenceReport
+## better load only libraries really needed, and load them here
 include("../src/datafitting.jl")
 include("../src/models.jl")
 include("../src/postprocess.jl")
@@ -38,40 +38,33 @@ include("../src/utils.jl")
 #| label: define-functions
 n_samples = 100
 
-function testsampler(mdl, sampler, n_samples, thinning)
-    chain = @time(Turing.sample(mdl, sampler, MCMCThreads(),
-                                n_samples, 4, thinning = thinning,
-                                initial_params = fill(vals.inits, 4),
-                                verbose = true, progress = true))    
-    return chain
+function testsampler(path, alldata, sampler, n_samples, thinning, name, fit = "auto")
+    f = joinpath(path, "chains/$(name)") 
+
+    if fit == "yes" || (fit == "auto" && !isfile(f))
+        println("Fitting model $name")
+        chn = fitmodel(path, alldata, sampler, n_samples, thinning, name)
+    elseif fit == "no" || (fit == "auto" && isfile(f))   
+        println("Model $name loaded from disk")
+        chn = Serialization.deserialize(f)
+    else
+        error("Invalid value for fit: $fit. Use \"yes\", \"no\", or \"auto\".")    
+    end
+    
+    return chn
 end
 
-maxlp(chain) = round(maximum(chain[end, :lp, :]))
-
-function gravity(chain)
-    ps = [:lp, :a, :c, :d0, :dscale, :e, :ktopop]
-    plot([plotparam(chain, p) for p in ps]...)
-end
-
-function plotparam(chain, symbol, first = 1)
-    p = Plots.plot(chain[symbol].data[first : end, :],
-                   xlab = string(symbol), label = "")
-    return p
-end
+# test = deserialize("./test_sampler/chains/mh-prior")
+# gravity(test)
 
 ```
 
 
 ```{julia}
 #| label: load-data
-cd("/home/konstantin/code")
-germ = loadallGermData(0; sample = false, positive_only = true)
-fl = germ.flows[germ.flows.year .== 2017, :]
-fl = fl[fl.agegroup .== "30-50", :]
-mdl = germmodel(fl, germ.geog, "full", true)
-germd = (flows = fl, geog = germ.geog, model = mdl)
-outpaths = createpaths("./results/testing", "germ", 2017, "30-50")
-vals = gen_inits(mdl)
+
+germd = load_data("../data/", false)    
+outpaths = createpaths("./results/testing", "germ", 2017, "30-50")    
 nchains = 4
 
 ```
@@ -82,14 +75,15 @@ mean 0 and $0.1^2$ variance.
 
 ```{julia}
 #| label: mh-normal
-chn_mhn = testsampler(mdl, MH(.1^2*I(nrow(vals))), n_samples, 5)
+chn_mhn = testsampler(".", germd, MH(.1^2*I(nrow(germd.vals))),
+                      n_samples, 5, "mh-normal", "yes")
 gravity(chn_mhn)
 
 ```
 
 ```{julia}
 #| label: mh-prior
-chn_mhp = testsampler(mdl, MH(), n_samples, 5)
+chn_mhp = testsampler(".", germd, MH(), n_samples, 5, "mh-prior", "yes")
 gravity(chn_mhp)
 
 ```
@@ -99,9 +93,9 @@ long to generate the same amount of samples. Thus, to compare it
 fairly to MH, we only generate 100 samples
 
 ```{julia}
-#| label: slice-0.2
+#| label: slice-2.0
 sam = externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(2.)))
-chn_slice20 = testsampler(mdl, sam, n_samples, 1)
+chn_slice20 = testsampler(".", germd, sam, n_samples, 1, "slice-2.0", "yes")
 gravity(chn_slice20)
 
 ```
@@ -109,8 +103,14 @@ gravity(chn_slice20)
 ```{julia}
 #| label: slice-20
 sam = externalsampler(SliceSampling.HitAndRun(SliceSteppingOut(.2)))
-chn_slice02 = testsampler(mdl, sam, n_samples, 1)
-gravity(chn_slice02)
+chn_slice02 = testsampler(".", germd, sam, n_samples, 5, "slice-0.2", "yes")
+gravity(chn_slice02, 50, 50)
+chn_slice02
+
+i = 4
+start = 20
+plot(chn_slice02[start : end, :ktopop, i],
+     chn_slice02[start : end, :a, i], seriestype = :scatter)
 
 ```
 
@@ -123,5 +123,55 @@ samplers = ["MH-Normal", "MH-Prior", "Slice-2.0", "Slice-0.2"]
 maxlps = [maxlp(chn_mhn), maxlp(chn_mhp),
           maxlp(chn_slice20), maxlp(chn_slice02)]
 DataFrame(samplers = samplers, maxLPs = maxlps)
+
+```
+
+```{julia}
+#| label: pigeon
+#| eval: false
+
+pt = @time(pigeons(target = TuringLogPotential(germd.model),
+                   multithreaded = true, n_rounds = 5, n_chains = 4,
+                   checkpoint = true,
+                   record = [traces],
+                   variational = GaussianReference(first_tuning_round = 1),
+                   n_chains_variational = 2))
+
+samples = Chains(pt)
+StatsPlots.plot(samples)
+plot(samples[:, :log_density, :])
+report(pt)
+
+```
+
+```{julia}
+#| label: tempering
+
+germd = load_data("../data/", false)
+outpaths = createpaths("./results/tempering", "germ", 2017, "30-50")    
+
+sampler = SliceSampling.HitAndRun(SliceSteppingOut(0.2))
+sampler = MH(.1^2*I(nrow(germd.vals)))
+chn_tmp = runtempering(germd, sampler, germd.vals.params, germd.vals.inits;
+                        outpaths = outpaths, thinning = 1,
+                        start_temp = 1000.0,
+                        last_temp = 800.0, decay = .1, n_samples = 100,
+                        final_samples = 100, plt_type = "gravity")
+
+
+
+germd.flows
+gravity(chn_temp[end].chain, 250, 800)
+savefig("~/Desktop/temp_800rows")
+
+
+chn_temp[1][1]
+gravity(chn_temp[10].chain, 50, 50)
+
+plt = gravity(chn_temp[10].chain, 50, 50, "jo")
+
+plot(plt, plot_title = "sadsd")
+
+
 
 ```

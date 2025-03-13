@@ -49,7 +49,7 @@ function gen_inits(mdl)
     ini = rand(Normal(0.0, 0.10), length(ub))
     ini[1:7] .= [-7.6, 1.81, 1.5, 1.5, 5.0, 3.5, 0.0]
     df = DataFrame(:params => parnames, :lb => lb, :ub => ub, :inits => ini)
-    params = get_params(mdl)
+    params = get_params2(mdl)
     df = filter(row -> row.params in params, df)
     return (df)
 end
@@ -87,7 +87,7 @@ function runsampling(model, alldata, sampler, params, inits; chainout, nchains,
     slice = occursin("HitAndRun", string(sampler))
     if tempered
         println("Make chains from tempered model")
-        chain = make_chains(chain, vals.params)
+        chain = make_chains(chain, params)
     end
     if slice && !tempered
         ## lp values are wrong in slice
