@@ -9,22 +9,26 @@ function estimate(model, model_args::NamedTuple, show_plt = true)
                                 fromdist = ma.fromdist,
                                 todist = ma.todist))
 
+    kds = out[["kd[$i]" for i in 1 : mdata.ndc]]
+    densdesir, pdens = evaldensitycheby(kds, mdata.dmin, mdata.dmax)
+
+    kgs = out[["kg[$i]" for i in 1 : mdata.ngc]]
+    geos, pgeo = evalgeocheby(kgs, unique(districts, :distcode), true)
+
     plt = [plotfit(ma.flows, preds),
            plotdist(ma.flows, preds, ma.dist),
            plotpop(ma.flows, preds, ma.frompop, ma.topop),
-           plotnet(net)
+           plotnet(net),
+           pdens,
+           pgeo
            ## plotdens(ma[:flows], preds, ma[:fd], ma[:td])
            ]
-    p = plot(plt..., plot_title = "LP $(round(out[end], digits = 0))",
+    p = plot(plt[1 : 4]..., plot_title = "LP $(round(out[end], digits = 0))",
              size = (1000, 600))
     if show_plt; display(p); end
-    res = (out = out, net = net, preds = preds, mles = mles, plt = plt)
+    res = (out = out, net = net, preds = preds,
+           dens = densdesir, geo = geo, mles = mles, plt = plt)
     return res
-end
-
-function instantiate(model, model_args)
-    m = model(model_args)
-    return m
 end
 
 function format_mles(mles)

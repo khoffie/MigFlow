@@ -26,7 +26,6 @@ insensitive people.
 st(x) = supertype(typeof(x))
 
 sr = true
-
 using Revise, Distributions, StatsPlots, CSV, DataFrames, Random
 using DataFramesMeta, Turing, SliceSampling, LogDensityProblems
 using Serialization, Printf, Plots, Optimization, LaTeXStrings
@@ -35,11 +34,12 @@ using CategoricalArrays, ApproxFun, NamedArrays, KernelDensity, StatsBase
 using Interpolations
 
 include("../src/loadgermdata.jl")
-include("estimate.jl")
-include("models.jl")
-include("models_utils.jl")
-include("diag.jl")
-include("diagplots.jl")
+include("src/estimation.jl")
+include("src/fullmodel.jl")
+## include("models.jl")
+include("src/models_utils.jl")
+include("src/diag.jl")
+include("src/diagplots.jl")
 
 ```
 
@@ -53,6 +53,11 @@ flows = flows[(flows.agegroup .== "30-50") .& (flows.year .== 2017), :]
 districts = CSV.read("../data/districts.csv", DataFrame)
 add_lrd(districts)
 flows = joinlrd(flows, districts)
+
+# dicoords = unique(districts, :distcode)[:, [:distcode, :xcoord, :ycoord]]
+# leftjoin!(flows, dicoords, on = [:fromdist => :distcode])
+
+
 
 ```
 
