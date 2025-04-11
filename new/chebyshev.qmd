@@ -1,0 +1,234 @@
+---
+title: Modeling assumptions and Chebyshev Polynomials
+authors:
+    name: Konstantin Hoffie
+    affiliation: East-German
+    roles: writing
+    corresponding: true
+engine: julia
+execute:
+  echo: false
+julia:
+  exeflags: ["--project=/home/konstantin/code"]
+  env: ["JULIA_NUM_THREADS=5"]
+---
+
+# Methods
+## Model Overview
+The model is a *descriptive* model of migration flows between German
+districts. Under certain assumptions, it allows to infer the following
+quantities^[It does not allow for a causal interpretation, simply because
+there are no variables that could be manipulated. An interpretation of
+a regression coefficient $\beta$ as reflecting the change in $Y$ if
+$x$ is incremented by one, is not appropriate for this model.]:
+
+- A population density based desirability, reflecting how
+  desirable districts are solely based on their population density.
+- A locational desirability, reflecting the desirability of the wider
+  region of a districts.
+- An estimate of the fraction of distance insensitive migrants, who do
+  not prefer closer destinations over destinations further away.
+  
+All those quantities are estimated for 6 age groups (below 18, 18 to
+25, 25 to 30, 30 to 50, 50 to 65 and above 655) and for years 2000
+to 2017. Thus, comparisons between age groups and years are presented
+as well. Conclusions require assumptions and these are stated below.
+
+## Assumptions
+
+# Interpolation and Chebyshev Polynomials
+## Introduction
+The model uses chebyshev polynomials to estimate the density
+transition function as well as $g(x, y)$ which describes the regional
+desirability $g$ as function of longitude and latitude. This section
+introduces the mathematical theory that allows us to estimate people's
+responses to density as well as locational desirability. Before we
+continue, let use review our goals and the overall modeling framework:
+
+For an origin-destination pair $(o, d)$, we observe $y_{od} = f((0,
+d))$, denoting the flows that belong to a given od-pair. The flows are
+assumed to follow a Poisson distribution with expectation
+$\mathbb{E}(Y_{od}) = \tilde{m}_{od} = P_om_{od}$. That is, the flows
+result from the population $P_o$ and the probability $m$ that an
+arbitrary person in $o$ moves to $d$. The function $m_{od} = m(o, d)$
+denotes the probability to move from origin to destination. We model
+the probability as a function of the following predictors: The
+population of destination, $P_d$, the distance between origin and
+destination $D_{od}$, the population density of origin $R_o$ and
+destination $R_d$ and the locational desirability $\omega_o$ and
+$\omega_d$. Specifically, we assume the following multiplicative form:
+
+$$
+m_{od} = \psi(P_d)\phi(D_{od})\varphi(R_o, R_d)\nu(\omega_o, \omega_d)
+$$
+
+$\varphi$ as well as $\omega_o$ and $\omega_d$ are approximated using
+Interpolation with Chebyshev polynomials. Let us first understand what
+that means, in general terms, and why this approach is chosen. The
+dependence of flows on population and distance is comparatively
+simple, meaning that $\psi$ and $\phi$ are functions which capture the
+dependence well and which are parameterized meaningfully: It's
+parameters are interpretable and have a counterpart in underlying
+empirical reality. With $\varphi$ this is different. The dependence on
+density is complex: Population density of destination, for example,
+seems to affect rural origins differently than city or town origins.
+Rather than specifying a particular function that is not able to
+capture the dependence in sufficient complexity, we opted for a
+different approach: A Chebyshev polynomial is fitted to the data, that
+approximates $\varphi(R_o, R_d)$. This allows the model to capture the
+complex dependence on density; there is, however, a price to pay: the
+parameters of the approximating polynomial can not be interpreted
+meaningfully. As the results section shows, this is a price worth to
+pay. The parameters may not be meaningful, but the surface $\varphi$
+is. But what about the locational desirability $\nu(\omega_o,
+\omega_d)$?^[Using one $\omega$ to denote desirability of origin and
+destination rather than $\omega_1(o)$ and $\omega_2(d)$ is no
+restriction since every origin is also a destination and assuming that
+the role of desirability changes, depending on whether a region is
+origin or destination is hard to interpret and not what we had in
+mind.] Whereas for density $\varphi$ is unknown but the densities *are
+known*, the situation here is different: *Both*, the dependence of
+flows on locational desirability $\nu$ *and* the locational
+desirabilities $\omega_o$ and $\omega_d$ are unknown. This raises a
+problem for estimation: With two arbitrary and composed functions that
+relate flows to locational desirability, it is not possible to
+estimate them separately. Assume, for instance, $y_{od} =
+\nu(\omega(o), \omega(d))$, then for an arbitrary invertable mapping
+$\tau$ it follows that $y_{od} = \varphi \circ \tau^{-1}(\tau \circ
+\omega(o, d))$. For this very reason we assume $\nu(\omega_o,
+\omega_d) = \omega_d / \omega_o$. In effect, we are saying that all
+that matters is the ratio between locational desirability in origin
+and in destination. This is an unrealistic assumption. Assume, for
+example, locational desirability is normally distributed with mean 50
+and standard deviation 15. For ratios to be interpretable we further
+assume that all values are greater zero.^[$\omega \sim Gamma(10, 5)$
+may be used.] Very desirable regions have values greater 70, very
+undesirable regions values smaller 20. Our model now implies that a
+move from a very undesirable region with $\omega_o = 1$ to an almost
+as undesirable region $\omega_d = 2$ is equally likely as a move from
+a region with average desirability $\omega_o = 50$ to a very desirable
+region with $\omega_d = 100$. That is unrealistic. With most values
+between 10 and 100 an improvement from 1 to 2 is negligible and likely
+not worth the effort. A move from a region with 50 to one of the very
+best on the other hand is a substantial and meaningful improvement and
+many will strive to make such a move. Our model implies further, that
+people coming from a region with $\omega = 1$ will make such a move 50
+times as often as people coming from an average region, all else being
+equal. Again, this is very unrealistic. People living in such desolate
+regions with desirabilities below 10 may lack the human capital to
+move to one of the best regions. So this is something to keep in mind:
+Estimated locational desirability needs to be interpreted conditional
+on the model $\nu(\omega_o, \omega_d) = \omega_d / \omega_o$ and it is
+likely a worthy future effort to try to relax constraints on $\nu$ and
+opt for a more realistic model.
+
+```{julia}
+#|label: cheby-libs
+using ApproxFun, Plots, DataFrames, Distributions, StatsPlots
+
+```
+
+## Interpolation and Chebyshev polynomials
+
+Consider the points
+
+$$
+\theta_k = cos(\frac{2k - 1}{2m}\pi) 
+$$
+
+for $k = 1, ..., m$. These are called Chebyshev nodes and they are the
+roots of the degree $m$ Chebyshev polynomial $T_m(\theta)$, meaning
+that the function $T_m$ evaluates to zero at the Chebyshev nodes. 
+
+The Chebyshev polynomial is the polynomial that satisfies $T_m(\theta)
+= \cos(m\theta)$ and it can be recursively defined: 
+$T_0(\theta) = 1$, $T_1(\theta) = \theta$ and for $k = 1, ..., m$
+
+$$
+T_{k+1}(\theta) = 2\theta(T_k(\theta) - T_{k-1}(\theta))
+$$
+
+Let us first develop some intuition. So why is $T_k(\theta)$ a
+polynomial? **missing**
+
+```{julia}
+#| eval: false
+
+function chebytaylor(n)
+    x = -1 : .01 : 1
+    f(x) = 1 / (1 + 25x^2)    
+    taylor = Fun(f, Taylor(-1..1), n + 1)
+    cheby = Fun(f, Chebyshev(-1..1), n + 1)
+    p1 = plot(x, f.(x), label = "Runges function")
+    plot!(x, real.(taylor.(x)), label = "taylor, degree $n",
+          color = "red")
+    plot!(x, real.(cheby.(x)), label = "cheby degree $n",
+          color = "green")
+    scatter!(points(taylor), zeros(n + 1), label = "Taylor points",
+             color = "red")
+    scatter!(points(cheby), zeros(n + 1), label = "Cheby points",
+             color = "green")
+    p2 = plot(x, f.(x) .- real.(taylor.(x)),
+              title = "Error f(x) - g(x)",
+              label = "Taylor degree $n error")
+    plot!(x, f.(x) .- real.(cheby.(x)), label = "Cheby degree $n error")
+    p3 = plot(x, (f.(x) .- real.(taylor.(x))) ./ f.(x),
+              title = "Relative Error (f(x) - g(x)) / f(x)",
+              label = "Taylor degree $n error")
+    plot!(x, (f.(x) .- real.(cheby.(x))) ./ f.(x),
+          label = "Cheby degree $n error")
+    return p1, p2, p3
+end
+
+p1, p2, p3 = chebytaylor(31)
+plot(p2, p3, size = (800, 600))
+p1
+
+```
+
+```{julia}
+#| label: poisson
+#| eval: false
+λ = vcat(1 : 1 : 100) 
+y = rand.(Poisson.(λ))
+
+scatter(λ, y)
+density(rand(Poisson(100), 20))
+
+plot(Gamma(10, 5), label = "Gamma")
+plot!(Normal(50, 15), label = "Normal")
+
+x = rand(Gamma(10, 5), 400)
+x = rand(Normal(50, 15), 400)
+?var
+sqrt(var(x))
+sort(x)
+
+```
+
+```{julia}
+
+using ApproxFun, Plots
+
+f(x) = 1 / (1 + 25x^2)
+
+x = -1:0.01:1
+
+taylor = Fun(f, Taylor())  # Full Taylor expansion
+taylor9 = Fun(Taylor(), coefficients(taylor)[1:9])  # Truncate manually
+taylor9_fixed = Fun(f, Taylor(), 9)  # Directly compute 9-term Taylor expansion
+
+cheby9 = Fun(f, Chebyshev(-1..1), 9)  # Chebyshev approximation with 9 terms
+
+# Check coefficients
+println("Taylor coefficients:", coefficients(taylor)[1:9])
+println("Chebyshev coefficients:", coefficients(cheby9))
+
+# Plot everything
+plot(x, f.(x), label="f(x)")
+plot!(x, real.(taylor9.(x)), label="Truncated Taylor (9 terms)", linestyle=:dash)
+plot!(x, real.(taylor9_fixed.(x)), label="Taylor (9 terms, direct)")
+plot!(x, cheby9.(x), label="Chebyshev (9 terms)")
+
+
+```

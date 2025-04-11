@@ -65,9 +65,9 @@ function resid(flows, f = mean)
     return r
 end
 
-function distance_kde(x::AbstractVector, w::AbstractVector, kernel, lbl = nothing, add = false)
-    weights = w ./ sum(w)
-    xs = StatsBase.wsample(x, weights, 10^4)
+function distance_kde(x::AbstractVector, w::AbstractVector,
+                      kernel, lbl = nothing, add = false)
+    xs = StatsBase.wsample(x, Weights(w), 10^4)
     observed = kde(xs, kernel)
     f = add == true ? plot! : plot
     p = f(observed, xlab = "Distance", ylab = "Density",

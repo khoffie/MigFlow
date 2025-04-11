@@ -48,7 +48,7 @@ function evaldensitycheby(coefs, densmin, densmax,
           todens = td,
           funval = densitycheby(fd, td)) for fd in vals, td in vals)
     df = DataFrame(df)
-    p = heatmap(reshape(df.funval, (100, 100)))
+    p = heatmap(vals, vals, reshape(df.funval, (100, 100)))
     display(p)
     return df, p
 end

@@ -33,8 +33,8 @@ function full(data::NamedTuple)
         kg[1] = 0.0
         di = di ./ ds
         tp = tp ./ 153000 # median pop
-        xmin, xmax = minmax(xcoord)
-        ymin, ymax = minmax(ycoord)
+        xmin, xmax = minmaxc(xcoord)
+        ymin, ymax = minmaxc(ycoord)
 
         pop = log.(tp)
         dist = log.(l .+ (1 - l) ./ (di .+ d0).^c)
@@ -56,7 +56,7 @@ function full(data::NamedTuple)
     return (; mdl, lb, ub)
 end
 
-minmax(v) = minimum(v), maximum(v)
+minmaxc(v) = minimum(v), maximum(v)
 
 logistic(x) = 1 / (1 + exp(-x))
 

@@ -1,0 +1,164 @@
+---
+title: Migration Distance How to model and why it matters
+authors:
+    name: Konstantin Hoffie
+    affiliation: East-German
+    roles: writing
+    corresponding: true
+engine: julia
+execute:
+  echo: false
+  enabled: false
+julia:
+  exeflags: ["--project=/home/konstantin/code"]
+  env: ["JULIA_NUM_THREADS=5"]
+---
+
+# Distance
+
+```{julia}
+#| label: libs-funs-distance
+
+using Plots, Distributions, StatsPlots, LaTeXStrings
+
+decay(x, γ, δ = 0.5) = 1 / (x + δ)^γ
+pd!(x, γ) = plot!(x, decay.(x, γ, 0.0), label = "γ = $(round(γ, digits = 2))")
+
+```
+
+Each migrant has some aversion to move across certain distances.
+Countless studies from numerous places and times suggest that most
+prefer locations nearby. The probability that a migrant $i$ moves is
+expressed as **actually we add d0**
+
+$$
+P(D(i) \leq d) = \int_0^d f_i(x) dx = \int_0^d \frac{1}{x^{\gamma_i}} dx, 
+\quad \gamma_i \geq 0 \text{ for all migrants } i = 1, \dots, N
+$$
+
+```{julia}
+#| label: decay-example
+#| fig-cap: "Different hypothetical decay functions."
+function plot_decays()
+    m = 50
+    x = range(1, 50, 100)
+    cs =  [0, 0.1, 0.5, 1, 3, 5]
+    p = plot()
+    p = [pd!(x, c) for c in cs][end]
+    plot(p, title = "Decays of $(length(cs)) hypothetical migrants",
+         xlab = "Distance in km",
+         ylab = "Density (unnormalized)")
+    plot!(x, mean([decay.(x, c) for c in cs]),
+          label = "Mixture", linewidth = 3)
+    plot!(x, decay.(x, mean(cs)),
+          label = L"\gamma = \mathbb{E}(\gamma)", linewidth = 3)
+end
+plot_decays()
+
+```
+
+For $\gamma > 0$ the functions $\frac{1}{x^\gamma}$ is monotonically
+decreasing, meaning that farther away regions get gradually more
+undesirable. $f(x) = \text{ const }$ for $\gamma = 0$, meaning that
+migrants do not have any distance preference whatsoever. Ruling out
+$\gamma < 0$ means that regions do not get more attractive simply
+because they are farther away.^[This may seem like a constraint.
+Imagine Tom, Tom is fed up with his rural home in East-Germany. He is
+politically left and he got into trouble for that. He wants to move
+away, far away. One may say that for Tom, far away regions are more
+desirable than nearby regions, and this is correct. However, Tom will
+still likely pick one of the closest cities where he is not threatened
+anymore. That is, he will move to Leipzig rather than Stuttgart. He
+wants to move far, but only because there is no closer region where he
+feels welcome: There is a correlation between Tom's desire to live in
+certain regions and the region's distance to his home. He does not
+prefer regions simply because they are farther away. Even for Tom it
+seems reasonable to assume $c \geq 0$.] Potentially, each migrant has
+his unique decay parameter $c_i$. Assume further there are groups $1,
+\dots, G$, with $G \leq N$ such that each migrant belongs to exactly
+one group $g$ and all migrants in $g$ have approximately the same
+decay parameter $c_g$ . For $G = N$ each group has only one member and
+the $\gamma_g$ equal the $\gamma_i$. This allows us to express the
+mixture distribution $P(D \leq d)$ that tells us how many migrants
+move across a certain distance as follows:
+
+\begin{align}
+P(D \leq d) &= \frac{1}{N}\sum_{i = 0}^N P(D(i) \leq d) \\
+&= \frac{1}{G} \sum_{j = 0}^G \frac{N_g}{N} P(D(i) \leq | i \in g) \\
+\end{align} {#eq-groups}
+
+The probability that a migrant moves at most $d$km, $P(D(i) \leq d) =
+\int_0^d f_i(x)dx$ is the integrgal over an individual specific
+density function $f_i(x)$ with $\int_0^d{max} f_i(x)dx = 1$ for $i =
+1, \dots, N$. These functions describe how likely it is that someone
+moves across a certain distance and they can be understood as follows:
+Conceptually, each migrant assigns a certain desirability to each
+possible destination. This desirability considers everything that is
+important to Sarah. The weather, the availability of jobs, if friends
+live there, food quality, internet speed and everything that can
+possibly matter. For each distance $d$ the function $f(d)$ is the
+average desirability of all destinations that are exactly $d$ km away.
+Imagine Sarah wants to move from rural to city and she draws a circle
+around her home with radius 10km. Each possible destination is rural
+as well so $f_{sarah}(10)$ will be very low. In 50km however, there is
+one city, so $f_{sarah}(50)$ will be considerably higher. Or consider
+Tom, Tom works from remote and he wants to buy a house. For him all
+that matters is availability of houses and closeness to his friends,
+who currently are all close nearby. His distance function will
+decrease with distance and it will be higher where housing is
+available. We assume that the population can be stratified into $G$
+groups, such that within each group all individuals show approximately
+the same distance preference *Avoid preferences, technical term*.
+Formally, $f_i(x) \approx f_j(x)$ for all $i, j \in g$ and all $g = 1,
+\dots, G$. Each group represents migrants that share many
+characteristics. For example one group consists of all migrants in a
+given origin who want to move into a suburb. For those, in certain
+radii around city centers desirability is high and it is likely that
+they move there. There are very many subgroups and in the aggregate we
+assume that the mixture of all those $G$ subgroups can be described
+well as a mixture of only two groups. We assume distance preferences
+of the first group can be described as $f_1(x) = B_1 1 / x^\gamma$
+where $\gamma > 0$ and unknown. The second group we model as
+insensitive to distance, $f_2(x) = B_2 1 / x^0 = B_2$. These are
+assumed to not have preferances for any distance. This is of course an
+idealization. Nobody will be oblivious to distance, simply because
+what somebody desires is not distributed uniformly across space.
+Consider Amy. Amy just finished university and wants to move to a new
+city to find good work and explore a new home. It doesn't have to be
+close to her current home, since she only moved there to study. She
+thinks of 10 cities she likes, each at a different distance from her.
+Her desirability around these cities will be high, but outside a
+certain radius it will be low. After sufficient smoothing we can
+assume that she is largely oblivious to distance (see chart
+@fig-insensitive).
+
+```{julia}
+#| label: fig-insensitive
+#| fig-cap: "Hypothetical preferences as function of distance for someone who wants to live in one of five cities."
+
+function hypo()
+    function f(x)
+        σ = .5  # Standard deviation, adjust to control spread
+        centers = [20i for i in 1:10]
+        sum(pdf(Normal(μ, σ), x) for μ in centers)
+    end
+    x = range(1, 100, 100)
+    y = f(x)
+    plot(x, y, xlab = "Distance in km", ylab = "Likelihood to move",
+         label = "Actual", title = "Hypothetical preferences")
+    plot!([0, x[end]], [mean(y), mean(y)], label = "Smoothed")
+end
+
+hypo()
+
+```
+
+Thus, we approximate the true mixture density $f$ as follows: 
+
+$$
+\hat{f}(x) = B(1 - \phi) \frac{1}{x^\gamma} + \phi
+$$
+
+with $\gamma$ and $\phi$ unknown and estimated from the data. $B$ is a
+normalization constant that ensures the integral over the density sums
+to one.

@@ -15,15 +15,22 @@ julia:
 ---
 
 # Introduction
-This document explains how to model the distance dependence of
-migration flows; and how to estimate the fraction of distance
-insensitive people.
+This document explains the model. The functional form, choice of
+predictors, the underlying assumptions as well as insights to be
+gained are laid out. First, the model is presented in its entirety,
+then the individual components are introduced.
+
+## The Model
+**Model equation + tables of parameters and predictors**
+
+## Overall functional form
+Explain here why the model is multiplicative. Maybe also why pop and
+dist state what can be expected and that density cheby and geo cheby
+induce asymmetries.
 
 ```{julia}
 #| label: libraries-functions
 #| output: false
-
-st(x) = supertype(typeof(x))
 
 sr = true
 using Revise, Distributions, StatsPlots, CSV, DataFrames, Random
@@ -36,8 +43,8 @@ using Interpolations
 include("../src/loadgermdata.jl")
 include("src/estimation.jl")
 include("src/fullmodel.jl")
-## include("models.jl")
-include("src/models_utils.jl")
+include("src/othermodels.jl")
+include("src/utils.jl")
 include("src/diag.jl")
 include("src/diagplots.jl")
 
@@ -53,11 +60,6 @@ flows = flows[(flows.agegroup .== "30-50") .& (flows.year .== 2017), :]
 districts = CSV.read("../data/districts.csv", DataFrame)
 add_lrd(districts)
 flows = joinlrd(flows, districts)
-
-# dicoords = unique(districts, :distcode)[:, [:distcode, :xcoord, :ycoord]]
-# leftjoin!(flows, dicoords, on = [:fromdist => :distcode])
-
-
 
 ```
 
@@ -87,73 +89,33 @@ plot_totalflux(flows)
 
 ```
 
-Intuitively distance matters because a greated distance brings with it
+## Distance
+Intuitively distance matters because a greater distance brings with it
 certain inconveniences. The further I move the further I am away from
 my friends and family, the more I have to adept to a new city, new
 culture etc. Empirically it is also clear that distance is a very
-important factor, inhibiting migrations.
-
-A well established model to account for distance dependence is the
-gravity model, which assumes that flows $Y$ from origin to destination
-$Y_{od}$ are proportional to $1 / D^c$ where $D$ is the distance
-between origin and destination and c is a parameter to be estimated.
+important factor, inhibiting migrations (see @fig-distance).
 
 ```{julia}
-#| label: distance-kde
-
+#| label: fig-distance
 #| fig.cap: caption
-
 caption = "Observed distribution of migration distances and expected distribution if migrants would not respond to distance (expected). Both curves were obtained by a kernel density estimation. For the expected curve we assumed that people pick a destination randomly, with a probability proportional to it's population. The other three curves model the dependence on distance but differ in their assumptions. Gravity assumes a power law decay, linear assumes a linear decay and mixture assumes there are two populations: Distance sensitive, modeled as power law decay and distance insensitive, who do not respond to distance at all."
 
-function fitdistance(flows)
-    outgravity = estimate(gravity, flows, 100, [-20, 10], [0, 100]);
-    flows.gravity = outgravity[3];
-
-    # outlinear = estimate(linear, flows, 100, [-20, 0, 1], [0, 100, 1000]);
-    # flows.linear = outlinear[3];
-
-    outmixture = estimate(distonly, flows, 100);
-    flows.mixture = outmixture[3];
-    return flows
-end
-    
-function plot_distances(flows::DataFrame, kernel::UnivariateDistribution)    
-    p = distance_kde(flows.dist, flows.flows, kernel, "Observed", false)
-    # distance_kde(flows.dist, flows.frompop .* flows.topop, kernel,
-    #              "Expected", true)
-    distance_kde(flows.dist, flows.gravity, kernel, "Gravity", true)
-    # distance_kde(flows.dist, flows.linear, kernel, "Linear", true)
-    distance_kde(flows.dist, flows.mixture, kernel, "Mixture", true)
-    age = unique(flows.agegroup)[1]
-    year = unique(flows.year)[1]
-    plot!(title = "$age")
-    return p
+function plotdistances(mdat, out)
+    kernel = Normal(0, 20)
+    age = unique(mdat.agegroup)[1]
+    year = unique(mdat.year)[1]
+    main = "Distribution of distances, $age in $year"
+    plot(distance_kde(mdat.dist, mdat.flows, kernel, "Observed", false),
+         title = main)
+    distance_kde(mdat.dist, out.preds, kernel, "Predicted", true)
+    distance_kde(mdat.dist, mdat.frompop .* mdat.topop, kernel,
+                 "Expected", true)
 end
 
-function plot_distances(flows, year)
-    p = plot()
-    for g in groupby(flows[flows.year .== year, :], :agegroup)
-        age = unique(g.agegroup)[1]
-        p = distance_kde(g.dist, g.flows,
-                         Normal(0, 20), "$age", true)
-        display(p)
-    end
-    p = plot(p, title = "$year")
-    return p
-end
-
-distplots = [plot_distances(flows, y) for y in 2000:2017]
-
-p = plot(distplots[[1, 5, 10, 12, 15, 18]]...,
-         plot_title = "Observed Migration Distances",
-         size = (1200, 800),
-         layout = (2, 3))
-
-df = flows[flows.year .== 2017 && flows.agegroup .== "18-25"]
-args = Dict(
-    :fp => 
-) 
-
+mdat = gen_mdat(flows, districts; ndc = 1, ngc = 1)
+out = estimate(full, mdat)
+plotdistances(mdat, out)
 
 ```
 
@@ -168,28 +130,19 @@ same time relatively many migrate across distances of 300km and more.
 #| output: false
 #| fig.cap: Fraction of distance insensitive moves as function of distance, in percent.
 
-function estimate_l(model, flows)
-    ## below 1 causes problems, probably because l then is very close
-    ## to 0
-    dscales = [1 : 1 : 10; 11 : 10 : 201; 202 : 50 : 803]
-    ## All these models should lead to the same fit, since only the
-    ## scaling of distance is changed. Parameter estimates correspond
-    ## to dist / distscale = 1. Due to numerical issues the fit may be
-    ## very poor and thus the estimates may not be trusted. It is
-    ## probably a good idea to disregard those fits.
-    l = [estimate(model, flows, ds)[1]["l"] for ds in dscales]
-    res = DataFrame(dist = dscales, l = l)
-    p = plot(res.dist, res.l, label = "",
-             xlab = "Distance in km",
-             ylab = "Fraction",
-             title = "Fraction of distance insensitive moves")
-    display(p)
-    return res, p
+function estiml(flows, districts, ds)
+    mdat = gen_mdat(flows, districts; distscale = ds,
+                    ndc = 1, ngc = 1)
+    l = estimate(distonly, mdat).out["l"]
+    return l
 end
 
-flows, geog = load_data("../data", 0.2);
-res, p = estimate_l(distonly, flows);
-display(p)
+dscales = Float64.([1 : 1 : 10; 11 : 10 : 201; 202 : 50 : 803])
+ls = [estiml(flows, districts, ds) for ds in dscales]
+plot(dscales, ls, label = "",
+     xlab = "Distance in km",
+     ylab = "Fraction",
+     title = "Fraction of distance insensitive moves")
 
 ```
 

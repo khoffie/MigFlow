@@ -1,4 +1,16 @@
-logistic(x) = 1 / (1 + exp(-x))
+age(df, age) = filter(:agegroup => n -> n == age, df)
+year(df, y) = filter(:year => n -> n == y, df)
+
+lrd(x) = log.(x ./ median(x))
+addlrd(df) = (df.lrd = combine(groupby(df, :year), :density => lrd)[!, 2])
+
+function joinlrd(df, districts)
+    di = select(districts, :distcode, :year, :lrd => :fromdens)
+    leftjoin!(df, di, on = [:fromdist => :distcode, :year])
+    di = select(districts, :distcode, :year, :lrd => :todens)
+    leftjoin!(df, di, on = [:todist => :distcode, :year])
+    return df
+end
 
 function sample_rows(df::DataFrame, p::AbstractFloat)
     nrows = nrow(df)
@@ -16,6 +28,8 @@ function gen_mdat(df::DataFrame, districts::DataFrame;
         flows = df.flows,
         fromdist = levelcode.(categorical(df.fromdist)),
         todist = levelcode.(categorical(df.todist)),
+        agegroup = df.agegroup,
+        year = df.year,
         frompop = df.frompop,
         topop = df.topop,
         dist = df.dist,
