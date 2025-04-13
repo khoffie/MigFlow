@@ -23,6 +23,7 @@ function plotdist(flows, preds, dist)
     plot(x, y, seriestype = :scatter,
          xlab = L"km",
          ylab = L"\log(y / \hat{y})", label = "")
+    hline!([0], color = :darkred, linewidth = 2, label = "")
 end
 
 function plotpop(flows, preds, frompop, topop)

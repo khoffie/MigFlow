@@ -1,6 +1,7 @@
 mm(v) = minimum(v), maximum(v)
 logistic(x) = 1 / (1 + exp(-x))
 
+pos(df) = df[df.flows .> 0.0]
 age(df, age) = filter(:agegroup => n -> n == age, df)
 year(df, y) = filter(:year => n -> n == y, df)
 
