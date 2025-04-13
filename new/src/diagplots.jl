@@ -12,7 +12,7 @@ function plotfit(flows, preds)
          label = "")
 end
 
-function plotdist(flows, preds, dist)
+function _plotdist(f, flows, preds, dist)
     flows = DataFrame(flows = flows, preds = preds, dist = dist)
     ## prevent overplotting
     nrow(flows) > 1e3 ? p = 1000 / nrow(flows) : p = 1
@@ -20,10 +20,18 @@ function plotdist(flows, preds, dist)
 
     y = log.(flows.flows ./ flows.preds)
     x = flows.dist
-    plot(x, y, seriestype = :scatter,
+    f(x, y, seriestype = :scatter,
          xlab = L"km",
          ylab = L"\log(y / \hat{y})", label = "")
     hline!([0], color = :darkred, linewidth = 2, label = "")
+end
+
+function plotdist(flows, preds, dist)
+    _plotdist(plot, flows, preds, dist)
+end
+
+function plotdist!(flows, preds, dist)
+    _plotdist(plot!, flows, preds, dist)
 end
 
 function plotpop(flows, preds, frompop, topop)
@@ -37,6 +45,7 @@ function plotpop(flows, preds, frompop, topop)
          log.(flows.flows ./ flows.preds), seriestype = :scatter,
          xlab = L"\log(Pop_d \cdot Pop_o)", label = "",
          ylab = L"\log(y / \hat{y})")
+    hline!([0], color = :darkred, linewidth = 2, label = "")
 end
 
 function plotdens(flows, preds, fromdens, todens)
