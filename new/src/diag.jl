@@ -23,8 +23,8 @@ end
 
 function evalgeocheby(coefs, districts,
                       show_plt = false)
-    xmin, xmax = minmax(districts.xcoord)
-    ymin, ymax = minmax(districts.ycoord)
+    xmin, xmax = mm(districts.xcoord)
+    ymin, ymax = mm(districts.ycoord)
     geocheby = defgeocheby(coefs, xmin, xmax, ymin, ymax)
     geo = geocheby.(districts.xcoord, districts.ycoord)
     ##geo = ForwardDiff.value.(geo)

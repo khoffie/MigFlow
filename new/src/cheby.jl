@@ -7,8 +7,8 @@ function chebynodes(n, a = -1, b = 1)
 end
 
 function plotgermancheby(pshp, n, districts)
-    xmin, xmax = minmax(districts.xcoord)
-    ymin, ymax = minmax(districts.ycoord)
+    xmin, xmax = mm(districts.xcoord)
+    ymin, ymax = mm(districts.ycoord)
     xnodes = chebynodes(sqrt(n), xmin, xmax)
     ynodes = chebynodes(sqrt(n), ymin, ymax)
     m = collect(Iterators.product(xnodes.x, ynodes.x))

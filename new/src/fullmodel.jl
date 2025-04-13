@@ -33,8 +33,8 @@ function full(data::NamedTuple)
         kg[1] = 0.0
         di = di ./ ds
         tp = tp ./ 153000 # median pop
-        xmin, xmax = minmaxc(xcoord)
-        ymin, ymax = minmaxc(ycoord)
+        xmin, xmax = mm(xcoord)
+        ymin, ymax = mm(ycoord)
 
         pop = log.(tp)
         dist = log.(l .+ (1 - l) ./ (di .+ d0).^c)
@@ -55,10 +55,6 @@ function full(data::NamedTuple)
     ub = [0, 100, 99, 100, fill(100, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub)
 end
-
-minmaxc(v) = minimum(v), maximum(v)
-
-logistic(x) = 1 / (1 + exp(-x))
 
 function defdensitycheby(coefs, densmin, densmax)
     cheby = ApproxFun.Chebyshev(densmin .. densmax)

@@ -1,3 +1,6 @@
+mm(v) = minimum(v), maximum(v)
+logistic(x) = 1 / (1 + exp(-x))
+
 age(df, age) = filter(:agegroup => n -> n == age, df)
 year(df, y) = filter(:year => n -> n == y, df)
 
