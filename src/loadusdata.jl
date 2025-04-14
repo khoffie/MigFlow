@@ -1,3 +1,21 @@
+#=
+## Try fitting migration models to US data. First we need some US data:
+## County migration data is available at:
+
+## https://www.census.gov/data/tables/2020/demo/geographic-mobility/county-to-county-migration-2016-2020.html
+
+## County and state geography (Centroids and areas) are available at:
+
+## https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.2020.html#list-tab-264479560
+
+## County population measures are available at:
+
+## https://www.census.gov/data/tables/time-series/demo/popest/2020s-counties-total.html
+
+=#
+
+#const non48fips = (2,11,15,72) #fips for AK, HI, DC, PR
+
 function getUSflows()
     wd = pwd()
     cd("data")
@@ -135,4 +153,25 @@ function sample_us(geog, flows; p = .1)
     flows = filter(row -> row.fromcounty in countycodes, flows)
     flows = filter(row -> row.tocounty in countycodes, flows)
     return (geog, flows)
+end
+
+function usnetmig(from,to,count)
+    nets = zeros(typeof(count[1]),length(unique([from;to])))
+    for (f,t,c) in zip(from,to,count)
+        nets[f] -= c
+        nets[t] += c
+    end
+    nets
+end
+
+
+function totalflow(fromc, toc, flow, counties)
+    fromcindx = levelcode.(fromc)
+    tocindx = levelcode.(toc)
+    totflow = zeros(length(counties))
+    for (fr,to,fl) in zip(fromcindx,tocindx,flow)
+        totflow[fr] += fl
+        totflow[to] += fl
+    end
+    totflow
 end

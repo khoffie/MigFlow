@@ -1,3 +1,21 @@
+mm(v) = minimum(v), maximum(v)
+logistic(x) = 1 / (1 + exp(-x))
+
+pos(df) = df[df.flows .> 0.0, :]
+age(df, age) = filter(:agegroup => n -> n == age, df)
+year(df, y) = filter(:year => n -> n == y, df)
+
+lrd(x) = log.(x ./ median(x))
+addlrd(df) = (df.lrd = combine(groupby(df, :year), :density => lrd)[!, 2])
+
+function joinlrd(df, districts)
+    di = select(districts, :distcode, :year, :lrd => :fromdens)
+    leftjoin!(df, di, on = [:fromdist => :distcode, :year])
+    di = select(districts, :distcode, :year, :lrd => :todens)
+    leftjoin!(df, di, on = [:todist => :distcode, :year])
+    return df
+end
+
 function sample_rows(df::DataFrame, p::AbstractFloat)
     nrows = nrow(df)
     n = Int(floor(nrows * p))
@@ -5,37 +23,36 @@ function sample_rows(df::DataFrame, p::AbstractFloat)
     return(df)
 end
 
-function decaytime(y₀, yₜ, r, steptime = 5)
-    λ = log(1 - r)
-    s = log(yₜ / y₀) / λ
-    t = s * steptime / 60
-    out = (steps = round(s, digits = 2), time = round(t, digits = 2))
-    return out
+function gen_mdat(df::DataFrame, districts::DataFrame;
+                  distscale::AbstractFloat = 100.0,
+                  ndc::Signed, ngc::Signed)
+    districts = unique(districts, :distcode)
+    check_distcodes(df.fromdist, df.todist, districts.distcode)
+    data = (
+        flows = df.flows,
+        fromdist = levelcode.(categorical(df.fromdist)),
+        todist = levelcode.(categorical(df.todist)),
+        agegroup = df.agegroup,
+        year = df.year,
+        frompop = df.frompop,
+        topop = df.topop,
+        dist = df.dist,
+        fromdens = df.fromdens,
+        todens = df.todens,
+        distcode = districts.distcode,
+        xcoord = districts.xcoord,
+        ycoord = districts.ycoord,
+        dmin = minimum(districts.lrd),
+        dmax = maximum(districts.lrd),
+        distscale = distscale,
+        ndc = ndc,
+        ngc = ngc
+    )
+    return data
 end
 
-function chainnames(path, temp = nothing)
-    fchains = [f for f in readdir(path) if contains(f, "germchain")]
-    if temp == nothing
-        fchains = fchains[.!contains.(fchains, ".0.csv")]
-    elseif temp == "all"
-        fchains
-    else
-        fchains = fchains[contains.(fchains, "$(temp).0.csv")]
-    end
-    return fchains
-end
-
-function get_params2(mdl)
-    params = DynamicPPL.syms(DynamicPPL.VarInfo(mdl))
-    params = collect(string.(params))
-    if "kd" in params
-        all_kd = ["kd[$i]" for i in 1:36]
-        params = vcat(filter(x -> x != "kd", params), all_kd)
-    end
-    if "desirecoefs" in params
-        all_des = ["desirecoefs[$i]" for i in 1:36]
-        params = vcat(filter(x -> x != "desirecoefs", params), all_des)
-    end
-
-    return params
+function check_distcodes(x, y, z)
+    su(x) = sort(unique(x))
+    @assert su(x) == su(y) "x and y are not equal"
+    @assert su(y) == su(z) "y and z are not equal"
 end
