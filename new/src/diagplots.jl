@@ -12,7 +12,7 @@ function plotfit(flows, preds)
          label = "")
 end
 
-function _plotdist(f, flows, preds, dist)
+function _plotdist(f, flows, preds, dist, lbl)
     flows = DataFrame(flows = flows, preds = preds, dist = dist)
     ## prevent overplotting
     nrow(flows) > 1e3 ? p = 1000 / nrow(flows) : p = 1
@@ -21,17 +21,17 @@ function _plotdist(f, flows, preds, dist)
     y = log.(flows.flows ./ flows.preds)
     x = flows.dist
     f(x, y, seriestype = :scatter,
-         xlab = L"km",
-         ylab = L"\log(y / \hat{y})", label = "")
+      xlab = "Distance in km",
+      ylab = L"\log(y / \hat{y})", label = lbl)
     hline!([0], color = :darkred, linewidth = 2, label = "")
 end
 
-function plotdist(flows, preds, dist)
-    _plotdist(plot, flows, preds, dist)
+function plotdist(flows, preds, dist, lbl = "")
+    _plotdist(plot, flows, preds, dist, lbl)
 end
 
-function plotdist!(flows, preds, dist)
-    _plotdist(plot!, flows, preds, dist)
+function plotdist!(flows, preds, dist, lbl = "")
+    _plotdist(plot!, flows, preds, dist, lbl)
 end
 
 function plotpop(flows, preds, frompop, topop)
