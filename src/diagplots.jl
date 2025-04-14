@@ -12,26 +12,27 @@ function plotfit(flows, preds)
          label = "")
 end
 
-function _plotdist(f, flows, preds, dist, lbl)
-    flows = DataFrame(flows = flows, preds = preds, dist = dist)
+function _plotdist(f, flows, preds, dist, w, lbl)
+    df = DataFrame(flows = flows, preds = preds, dist = dist)
     ## prevent overplotting
-    nrow(flows) > 1e3 ? p = 1000 / nrow(flows) : p = 1
-    flows = sample_rows(flows, p)
-
-    y = log.(flows.flows ./ flows.preds)
-    x = flows.dist
+    nrow(df) > 1e3 ? p = 1000 / nrow(df) : p = 1
+    df = sort(sample_rows(df, p), :dist)
+    y = log.(df.flows ./ df.preds)
+    x = df.dist
     f(x, y, seriestype = :scatter,
       xlab = "Distance in km",
-      ylab = L"\log(y / \hat{y})", label = lbl)
+      ylab = L"\log(y / \hat{y})", label = lbl, alpha = .5)
     hline!([0], color = :darkred, linewidth = 2, label = "")
+    plot!(x, moving_average(y, w), linewidth = 5,
+      colour = :blue, label = "")
 end
 
-function plotdist(flows, preds, dist, lbl = "")
-    _plotdist(plot, flows, preds, dist, lbl)
+function plotdist(df, preds, w = 250, lbl = "")
+    _plotdist(plot, df.flows, df[!, preds], df.dist, w, lbl)
 end
 
-function plotdist!(flows, preds, dist, lbl = "")
-    _plotdist(plot!, flows, preds, dist, lbl)
+function plotdist!(df, preds, w = 250, lbl = "")
+    _plotdist(plot!, df.flows, df[!, preds], df.dist, w, lbl)
 end
 
 function plotpop(flows, preds, frompop, topop)

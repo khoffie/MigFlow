@@ -11,14 +11,15 @@ function estimate(model, model_args::NamedTuple, show_plt = true)
 
     densdesir, pdens = evaldens(out, ma)
     geo, pgeo = evalgeo(out, ma)
-
-    plt = [plotfit(ma.flows, preds),
-           plotdist(ma.flows, preds, ma.dist),
-           plotpop(ma.flows, preds, ma.frompop, ma.topop),
-           plotnet(net),
-           pdens,
-           pgeo
-           ## plotdens(ma[:flows], preds, ma[:fd], ma[:td])
+    df = DataFrame(flows = ma.flows, preds = preds, dist = ma.dist)
+    plt = [
+        plotfit(ma.flows, preds),
+        plotdist(df, :preds, 100),
+        plotpop(ma.flows, preds, ma.frompop, ma.topop),
+        plotnet(net),
+        pdens,
+        pgeo
+#           plotdens(ma[:flows], preds, ma[:fd], ma[:td])
            ]
     p = plot(plt[1 : 4]..., plot_title = "LP $(round(out[end], digits = 0))",
              size = (1000, 600))
