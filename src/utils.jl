@@ -23,15 +23,19 @@ function sample_rows(df::DataFrame, p::AbstractFloat)
     return(df)
 end
 
-function gen_mdat(df::DataFrame, districts::DataFrame;
+function gen_mdat(data::Tuple{DataFrame, DataFrame};
                   distscale::AbstractFloat = 100.0,
                   ndc::Signed, ngc::Signed)
+    df = data.df
+    districts = data.districts
     districts = unique(districts, :distcode)
     check_distcodes(df.fromdist, df.todist, districts.distcode)
-    data = (
+    dat = (
         flows = df.flows,
         fromdist = levelcode.(categorical(df.fromdist)),
         todist = levelcode.(categorical(df.todist)),
+        fromdist_orig = df.fromdist,
+        todist_orig = df.todist,
         agegroup = df.agegroup,
         year = df.year,
         frompop = df.frompop,
@@ -48,7 +52,7 @@ function gen_mdat(df::DataFrame, districts::DataFrame;
         ndc = ndc,
         ngc = ngc
     )
-    return data
+    return dat
 end
 
 function check_distcodes(x, y, z)
