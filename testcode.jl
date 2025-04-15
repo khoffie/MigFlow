@@ -1,26 +1,61 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings
+using BenchmarkTools
 
 include("src/utils.jl")
 include("src/othermodels.jl")
 include("src/estimation.jl")
 include("src/loadgermdata.jl")
-include("src/diag.jl") ## for calc_net_df
+include("src/diag.jl")
 include("src/diagplots.jl")
 include("src/fullmodel.jl")
 
-districts = CSV.read("data/districts.csv", DataFrame)
-addlrd(districts)
-df = CSV.read("data/FlowDataGermans.csv", DataFrame)
-df = year(age(pos(df), "30-50"), 2017)
-df = sample_flows(df, 0.2)
-df = joinlrd(df, districts)
 
-mdat = gen_mdat(df, districts; distscale = 100.0, ndc = 1, ngc = 1)
-out = estimate(distonly, mdat)
-out2 = estimate(gravity, mdat)
+function load_data(a, y, p)
+    di = CSV.read("data/districts.csv", DataFrame)
+    di = add_lrd(di)
+    df = CSV.read("data/FlowDataGermans.csv", DataFrame)
+    df = year(age(pos(df), a), y)
+    df = sample_flows(df, p)
+    df = joinlrd(df, districts)
+    return (df = df, districts = di[di.year .== y, :])
+end
 
-df2 = DataFrame(flows = mdat.flows, our = out.preds, gravity = out2.preds,
-               dist = mdat.dist)
-plotdist(df2, :gravity, 100)
-plotdist(df2, :our, 100)
+function benchmark_model(df, districts, ncoefs)
+    b = Dict{Int, BenchmarkTools.Trial}()
+    for n in ncoefs
+        mdat = gen_mdat(df, districts; distscale = 100.0, ndc = n, ngc = 1)
+        println("Starting benchmark for $n coefs")
+        b[n] = @benchmark(estimate(full, mdat), samples = 1)
+    end
+    return b
+end
+
+function _plot_time(f, ncoefs, b)
+    p = f(ncoefs, [mean(b[n]).time for n in ncoefs])
+    scatter!(ncoefs, [mean(b[n]).time for n in ncoefs])
+    return p
+end
+
+plot_time(ncoefs, b) = _plot_time(plot, ncoefs, b)
+plot_time!(ncoefs, b) = _plot_time(plot!, ncoefs, b)
+
+ncoefs = [1, 4, 8, 16, 25, 36]
+
+df, districts = load_data("30-50", 2017, 0.1)
+b01 = benchmark_model(df, districts, ncoefs)
+
+# df, districts = load_data("30-50", 2017, 0.2)
+# b02 = benchmark_model(df, districts, ncoefs)
+
+# plot_benchmark(ncoefs, b01)
+
+df, districts = load_data("30-50", 2017, 0.1)
+mdat = gen_mdat(load_data("30-50", 2017, 0.1);
+                distscale = 100.0, ndc = 16, ngc = 1)
+out = @btime estimate(full, mdat);
+out.plt[5]
+
+tp = load_data("30-50", 2017, 0.1)
+names(tp.districts)
+typeof(tp)
