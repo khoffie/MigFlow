@@ -17,16 +17,17 @@ function load_data(a, y, p)
     df = CSV.read("data/FlowDataGermans.csv", DataFrame)
     df = year(age(pos(df), a), y)
     df = sample_flows(df, p)
-    df = joinlrd(df, districts)
+    df = joinlrd(df, di)
     return (df = df, districts = di[di.year .== y, :])
 end
 
-function benchmark_model(df, districts, ncoefs)
+function benchmark_model(data, ncoefs)
     b = Dict{Int, BenchmarkTools.Trial}()
     for n in ncoefs
-        mdat = gen_mdat(df, districts; distscale = 100.0, ndc = n, ngc = 1)
+        mdat = gen_mdat(data; distscale = 100.0, ndc = n, ngc = 1)
         println("Starting benchmark for $n coefs")
-        b[n] = @benchmark(estimate(full, mdat), samples = 1)
+        b[n] = @benchmark(estimate(full, $mdat), samples = 1)
+        println("Time elabsed $(mean(b[n]))")
     end
     return b
 end
@@ -40,22 +41,6 @@ end
 plot_time(ncoefs, b) = _plot_time(plot, ncoefs, b)
 plot_time!(ncoefs, b) = _plot_time(plot!, ncoefs, b)
 
-ncoefs = [1, 4, 8, 16, 25, 36]
-
-df, districts = load_data("30-50", 2017, 0.1)
-b01 = benchmark_model(df, districts, ncoefs)
-
-# df, districts = load_data("30-50", 2017, 0.2)
-# b02 = benchmark_model(df, districts, ncoefs)
-
-# plot_benchmark(ncoefs, b01)
-
-df, districts = load_data("30-50", 2017, 0.1)
-mdat = gen_mdat(load_data("30-50", 2017, 0.1);
-                distscale = 100.0, ndc = 16, ngc = 1)
-out = @btime estimate(full, mdat);
-out.plt[5]
-
-tp = load_data("30-50", 2017, 0.1)
-names(tp.districts)
-typeof(tp)
+ncoefs = [1, 4, 8, 16, 25]
+b01 = benchmark_model(load_data("30-50", 2017, 0.1), ncoefs)
+plot_time(ncoefs, b01)

@@ -23,7 +23,7 @@ function sample_rows(df::DataFrame, p::AbstractFloat)
     return(df)
 end
 
-function gen_mdat(data::Tuple{DataFrame, DataFrame};
+function gen_mdat(data::NamedTuple;
                   distscale::AbstractFloat = 100.0,
                   ndc::Signed, ngc::Signed)
     df = data.df
