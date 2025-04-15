@@ -1,7 +1,8 @@
-function estimate(model, model_args::NamedTuple, show_plt = true)
+function estimate(model, model_args::NamedTuple,
+                  ad = ADTypes.AutoForwardDiff(), show_plt = true)
     ma = model_args
     mdl = model(ma)
-    mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub)
+    mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub, ad)
     out = format_mles(mles)
 
     net = calc_net_df(DataFrame(flows = ma.flows,
@@ -54,11 +55,12 @@ function format_mles(mles)
     return out
 end
 
-function runoptim(mdl, lb, ub)
+function runoptim(mdl, lb, ub, ad)
     attempt = 0
     while attempt < 5
         try
-            mles = Turing.maximum_likelihood(mdl; lb = lb, ub = ub)
+            mles = Turing.maximum_likelihood(mdl; lb = lb, ub = ub,
+                                             adtype = ad)
 ##            mles = @time(Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub))
             return mles, predict(mdl, mles)
         catch e
