@@ -29,18 +29,19 @@ function estimate(model, model_args::NamedTuple, show_plt = true)
     return res
 end
 
-function evaldens(out, mdata)
+function evaldens(out, d)
     if any(occursin.("kd", names(out)[1]))
-        kds = out[["kd[$i]" for i in 1 : mdata.ndc]]
-        return evaldensitycheby(kds, mdata.dmin, mdata.dmax)
+        kds = out[["kd[$i]" for i in 1 : d.ndc]]
+        return evaldensitycheby(kds, d.dmin, d.dmax)
     else
         return nothing, nothing
     end
 end
-function evalgeo(out, mdata)
+
+function evalgeo(out, d)
     if any(occursin.("kg", names(out)[1]))
-        kgs = out[["kg[$i]" for i in 1 : mdata.ngc]]
-        return evalgeocheby(kgs, unique(districts, :distcode), true)
+        kgs = out[["kg[$i]" for i in 1 : d.ngc]]
+        return evalgeocheby(kgs, d.distcode, d.xcoord, d.ycoord, true)
     else
         return nothing, nothing
     end

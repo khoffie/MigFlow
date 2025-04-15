@@ -21,16 +21,14 @@ function calc_net_df(flows)
     return net
 end
 
-function evalgeocheby(coefs, districts,
+function evalgeocheby(coefs, distcode, xcoord, ycoord,
                       show_plt = false)
-    xmin, xmax = mm(districts.xcoord)
-    ymin, ymax = mm(districts.ycoord)
+    xmin, xmax = mm(xcoord)
+    ymin, ymax = mm(ycoord)
     geocheby = defgeocheby(coefs, xmin, xmax, ymin, ymax)
-    geo = geocheby.(districts.xcoord, districts.ycoord)
+    geo = geocheby.(xcoord, ycoord)
     ##geo = ForwardDiff.value.(geo)
-    df = DataFrame(; districts.distcode,
-                   districts.xcoord,
-                   districts.ycoord, geo)
+    df = DataFrame(; distcode, xcoord, ycoord, geo)
 
     ratio = (ymax - ymin) / (xmax - xmin)
     width = 600
