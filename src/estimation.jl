@@ -57,7 +57,7 @@ function runoptim(mdl, lb, ub)
     attempt = 0
     while attempt < 5
         try
-            mles = @time(Turing.maximum_likelihood(mdl; lb = lb, ub = ub))
+            mles = Turing.maximum_likelihood(mdl; lb = lb, ub = ub)
 ##            mles = @time(Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub))
             return mles, predict(mdl, mles)
         catch e
