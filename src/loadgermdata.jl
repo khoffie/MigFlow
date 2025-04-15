@@ -1,14 +1,14 @@
-function read_flows(file::String, p::AbstractFloat,
-                    ages, years, pos_only = true)
-    df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
-    df = sample_flows(df, p)
-    check_age(age) = age in ages
-    check_year(year) = year in years
-    df = filter(:agegroup => check_age, df)
-    df = filter(:year => check_year, df)
-    if pos_only; df = df[df.flows .> 0, :]; end
-    return df
-end
+# function read_flows(file::String, p::AbstractFloat,
+#                     ages, years, pos_only = true)
+#     df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
+#     df = sample_flows(df, p)
+#     check_age(age) = age in ages
+#     check_year(year) = year in years
+#     df = filter(:agegroup => check_age, df)
+#     df = filter(:year => check_year, df)
+#     if pos_only; df = df[df.flows .> 0, :]; end
+#     return df
+# end
 
 function sample_flows(flows::DataFrame, p::AbstractFloat)
     ods = unique(flows, [:fromdist, :todist])[:, [:fromdist, :todist]]
