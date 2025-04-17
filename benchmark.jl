@@ -48,13 +48,17 @@ plot_time!(ncoefs, b) = _plot_time(plot!, ncoefs, b)
 # plot_time(ncoefs, b01)
 
 mdat = gen_mdat(load_data("30-50", 2017, 0.1);
-                distscale = 100.0, ndc = 1, ngc = 36)
+                distscale = 100.0, ndc = 28, ngc = 28)
 out = @time estimate(full, mdat);
+
 out2 = @time estimate(distonly, mdat);
 out2.out
 out.out[1:5]
 out.plt[3]
+out.plt[4]
+out.plt[5]
 out.plt[6]
+
 
 plot(1:36, out.out[6 : end-1], title = "Geocheby coefs, scaled as coef / 100")
 scatter!(1:36, out.out[6 : end-1])
