@@ -12,16 +12,6 @@ include("src/fullmodel.jl")
 
 sizemb(x) =  Base.summarysize(x) / 1024^2
 
-function load_data(a, y, p)
-    di = CSV.read("data/districts.csv", DataFrame)
-    di = add_lrd(di)
-    df = CSV.read("data/FlowDataGermans.csv", DataFrame)
-    df = year(age(pos(df), a), y)
-    df = sample_flows(df, p)
-    df = joinlrd(df, di)
-    return (df = df, districts = di[di.year .== y, :])
-end
-
 function benchmark_model(data, ndc, ngc)
     b = Dict{Tuple{Int, Int}, BenchmarkTools.Trial}()
     for (i, j) in zip(ndc, ngc)
