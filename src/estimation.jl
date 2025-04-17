@@ -1,4 +1,4 @@
-function estimate(model, model_args::NamedTuple,
+function estimate(model, model_args::NamedTuple;
                   ad = ADTypes.AutoForwardDiff(), show_plt = true)
     ma = model_args
     mdl = model(ma)
@@ -28,24 +28,6 @@ function estimate(model, model_args::NamedTuple,
     res = (out = out, net = net, preds = preds,
            dens = densdesir, geo = geo, mles = mles, plt = plt)
     return res
-end
-
-function evaldens(out, d)
-    if any(occursin.("kd", names(out)[1]))
-        kds = out[["kd[$i]" for i in 1 : d.ndc]]
-        return evaldensitycheby(kds, d.dmin, d.dmax)
-    else
-        return nothing, nothing
-    end
-end
-
-function evalgeo(out, d)
-    if any(occursin.("kg", names(out)[1]))
-        kgs = out[["kg[$i]" for i in 1 : d.ngc]]
-        return evalgeocheby(kgs, d.distcode, d.xcoord, d.ycoord, true)
-    else
-        return nothing, nothing
-    end
 end
 
 function format_mles(mles)

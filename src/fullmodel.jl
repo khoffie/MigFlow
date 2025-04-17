@@ -55,14 +55,3 @@ function full(data::NamedTuple)
     ub = [0, 100, 99, 100, fill(100, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub)
 end
-
-function defdensitycheby(coefs, densmin, densmax)
-    cheby = ApproxFun.Chebyshev(densmin .. densmax)
-    return Fun(cheby * cheby, coefs)
-end
-
-function defgeocheby(coefs, xmin, xmax, ymin, ymax)
-    chebyx = ApproxFun.Chebyshev(xmin .. xmax)
-    chebyy = ApproxFun.Chebyshev(ymin .. ymax)
-    return Fun(chebyx * chebyy, coefs)
-end

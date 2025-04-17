@@ -10,6 +10,16 @@
 #     return df
 # end
 
+function load_data(a, y, p, path)
+    di = CSV.read(joinpath(path, "districts.csv"), DataFrame)
+    di = add_lrd(di)
+    df = CSV.read(joinpath(path, "FlowDataGermans.csv"), DataFrame)
+    df = year(age(pos(df), a), y)
+    df = sample_flows(df, p)
+    df = joinlrd(df, di)
+    return (df = df, districts = di[di.year .== y, :])
+end
+
 function sample_flows(flows::DataFrame, p::AbstractFloat)
     ods = unique(flows, [:fromdist, :todist])[:, [:fromdist, :todist]]
     ## / 2 bc every pair is duplicated to make sure for o -> d the

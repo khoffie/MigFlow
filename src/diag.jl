@@ -21,36 +21,6 @@ function calc_net_df(flows)
     return net
 end
 
-function evalgeocheby(coefs, distcode, xcoord, ycoord,
-                      show_plt = false)
-    xmin, xmax = mm(xcoord)
-    ymin, ymax = mm(ycoord)
-    geocheby = defgeocheby(coefs, xmin, xmax, ymin, ymax)
-    geo = geocheby.(xcoord, ycoord)
-    ##geo = ForwardDiff.value.(geo)
-    df = DataFrame(; distcode, xcoord, ycoord, geo)
-
-    ratio = (ymax - ymin) / (xmax - xmin)
-    width = 600
-    p = scatter(df.xcoord, df.ycoord,
-                marker_z = df.geo,
-                markersize = 10, size = (600, width * ratio))
-    if show_plt; display(p); end
-    return df, p
-end
-
-function evaldensitycheby(coefs, densmin, densmax,
-                          vals = range(densmin, densmax, 100))
-    densitycheby = defdensitycheby(coefs, densmin, densmax)
-    df = ((fromdens = fd,
-          todens = td,
-          funval = densitycheby(fd, td)) for fd in vals, td in vals)
-    df = DataFrame(df)
-    p = heatmap(vals, vals, reshape(df.funval, (100, 100)))
-    display(p)
-    return df, p
-end
-
 function moving_average(A::AbstractArray, m::Int)
     ## https://discourse.julialang.org/t/smoothing-noisy-data-using-moving-mean/65329/6
     out = similar(A)
