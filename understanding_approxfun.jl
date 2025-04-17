@@ -20,10 +20,6 @@ g(x, y) =
 
 g(.1, .2)
 
-coeforder(m) = [(j, d - j) for d in 0:m for j in 0:d]
-coefindicesx(order, m = 5) = findall(t -> t[1] == order, coeforder(m))
-coefindicesy(order, m = 5) = findall(t -> t[2] == order, coeforder(m))
-
 
 
 binomial(9, 7)

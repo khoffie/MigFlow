@@ -1,6 +1,6 @@
 using CSV, Plots, DataFrames, StatsBase, StatsPlots, Random
 using Distributions, LazySets, Turing
-include("src/utils.jl")
+include("utils.jl")
 
 function fraction_within(rs, N, coords, hull)
     res = []
