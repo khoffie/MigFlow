@@ -10,7 +10,7 @@
 #     return df
 # end
 
-function load_data(a, y, p, path)
+function load_data(a::String, y::Int, p::Float64, path::String)
     di = CSV.read(joinpath(path, "districts.csv"), DataFrame)
     di = add_lrd(di)
     df = CSV.read(joinpath(path, "FlowDataGermans.csv"), DataFrame)

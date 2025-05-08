@@ -1,22 +1,22 @@
-function estimate(model, model_args::NamedTuple;
-                  ad = ADTypes.AutoForwardDiff(), show_plt = true)
-    ma = model_args
-    mdl = model(ma)
+function estimate(model, data::NamedTuple;
+                  ad = ADTypes.AutoForwardDiff(), show_plt = true,
+                  kwargs...)
+    mdl = model(data; kwargs...)
     mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub, ad)
     out = format_mles(mles)
 
-    net = calc_net_df(DataFrame(flows = ma.flows,
+    net = calc_net_df(DataFrame(flows = data.flows,
                                 preds = preds,
-                                fromdist = ma.fromdist,
-                                todist = ma.todist))
+                                fromdist = data.fromdist,
+                                todist = data.todist))
 
-    densdesir, pdens = evaldens(out, ma)
-    geo, pgeo = evalgeo(out, ma)
-    df = DataFrame(flows = ma.flows, preds = preds, dist = ma.dist)
+    densdesir, pdens = evaldens(out, data)
+    geo, pgeo = evalgeo(out, data)
+    df = DataFrame(flows = data.flows, preds = preds, dist = data.dist)
     plt = [
-        plotfit(ma.flows, preds),
+        plotfit(data.flows, preds),
         plotdist(df, :preds, 100),
-        plotpop(ma.flows, preds, ma.frompop, ma.topop),
+        plotpop(data.flows, preds, data.frompop, data.topop),
         plotnet(net),
         pdens,
         pgeo

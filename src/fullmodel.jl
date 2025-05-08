@@ -19,7 +19,7 @@ function full(data::NamedTuple)
     @model function model(flows, fromdist, todist, fp, tp, di, fd, td,
                           ds, ndc, ngc, dmin, dmax, xcoord, ycoord, distcode)
         a ~ Normal(-8, 1)
-        c ~ Gamma(15, .2) ## we want mean ~ 3 but with less variance than Gamma(3, 1)
+        c ~ Gamma(15, .2) ## mean 3 but less variance than Gamma(3, 1)
         l ~ Gamma(10, 1)
         d0 ~ Gamma(10, 1)
         kd ~ MvNormal(zeros(ndc), fill(10.0, ndc))
