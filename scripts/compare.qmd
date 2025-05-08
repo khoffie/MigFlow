@@ -1,0 +1,121 @@
+---
+engine: julia
+format: pdf
+echo: false
+---
+
+# Model Comparison
+
+```{julia}
+#| label: compare-load
+using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
+using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings
+using BenchmarkTools, ADTypes, ReverseDiff, PrettyTables
+
+include("../src/utils.jl")
+include("../src/othermodels.jl")
+include("../src/estimation.jl")
+include("../src/loadgermdata.jl")
+include("../src/diag.jl")
+include("../src/diagplots.jl")
+include("../src/fullmodel.jl")
+include("../src/chebies.jl");
+include("../src/choiceset.jl")
+
+mdat = gen_mdat(load_data("30-50", 2017, 0.2, "../data/"),
+                distscale = 100.0, ndc = 28, ngc = 28);
+
+```
+
+This document compares two different specifications of our model. Both
+specifications model the overall attractiveness or desirability $A$ of
+a region $d$ for people in $o$ as
+
+$$
+A_o(d) = P_d(l + \frac{1-l}{(D_{od} + \delta)^\gamma})
+$$
+
+Where $P_d$ is the population of $d$ and $D_{od}$ is the distance
+between origin and destination. $l, \delta$ and $\gamma$ are
+parameters to be estimated. So essentially the models I am comparing
+here are our model without the chebies. Both model flows $Y_{od} \sim
+\text{Pois}(\lambda_{od})$ and differ only in their specification of
+$\lambda_{od}$.
+
+For **Model 1** we have 
+
+$$\lambda_{1, od} = \alpha P_o A_o(d)$$ 
+
+for **Model 2** we have 
+
+$$\lambda_{2, od} = \alpha P_o \frac{A_o(d)}{\sum_d A_o(d)}$$
+
+So honestly I don't fully understand how these models differ. The
+second model seems to imply that the destinations compete with each
+other. If one is more attractive other destinations will necessarily
+receive less flows. Also it implies that $\sum_d \lambda_{2, od} =
+\alpha P_o$.
+
+## Why does all of this matter? Why not just stick with our specification (which is model 1 + chebies)?
+
+Because I couldn't derive our aggregate equation from individual
+desirability functions. Broadly, all individuals assign a certain
+desirability to all possible destinations. But how do we get from
+there to our model for flows? It seems we need to convert individual
+desirabilites to individual probabilities to actually make the move.
+Which is precisely what model 2 does.
+
+My other worry is this: By ignoring the *choice set denominator*
+$B_o := \sum_d A_o(d)$ we change the interpretation of our parameters in an
+arbitrary way. Consider for example your origin is Pasadena,
+California and in 100km there is a town with 300k population, call
+this town Valis. Based on distance and population this presents you
+with certain opportunities to move there. Now consider a Daniel from a
+parallel universe who likes frequentist stats and lives in Alaska. He
+happens to live 100km away from Anchorage, which also happens to have
+a population of 300k people. You are very unlikely to move 100km to a
+city of 300k people, because you have much much more opportunities
+around you, because essentially everywhere you go there are populous
+regions. But for your parallel universe Daniel, everything around him
+is empty, he is almost guaranteed to move to Anchorage. For him
+"opportunities in Anchorage" / "all opportunities" is very large,
+whereas for you "opportunities in Valis" / "all other opportunities"
+is very small. Shouldn't we consider this? Or am I misunderstanding
+something?
+
+
+## Empirical differences between both models
+They differ, which makes sense, because they are different models.
+Interestingly the second model gets the dependence on frompop and
+topop much less biased. 
+
+```{julia}
+#| label: fit1
+#| fig-cap: "Model 1"
+out = estimate(choice, mdat; normalize = false);
+
+```
+
+```{julia}
+#| label: fit2
+#| fig-cap: "Model 2"
+out2 = estimate(choice, mdat; normalize = true);
+
+```
+
+```{julia}
+#| label: coef-table
+#| output: asis
+params = DataFrame(params = names(out.out)[1],
+                   model1 = out.out,
+                   model2 = out2.out)
+pretty_table(params; backend = Val(:latex), alignment = :c)
+
+```
+
+## Model Code
+```{julia}
+#| label: choice-model
+println(read("../src/choiceset.jl", String))
+
+```
