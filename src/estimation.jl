@@ -15,7 +15,7 @@ function estimate(model, data::NamedTuple;
     df = DataFrame(flows = data.flows, preds = preds, dist = data.dist)
     plt = [
         plotfit(data.flows, preds),
-        plotdist(df, :preds, 100),
+        plotdist(df, :preds),
         plotpop(data.flows, preds, data.frompop, data.topop),
         plotnet(net),
         pdens,

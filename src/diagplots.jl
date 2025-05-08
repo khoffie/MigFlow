@@ -1,52 +1,44 @@
 function plotfit(flows, preds)
-    flows = DataFrame(flows = flows, preds = preds)
-    ## prevent overplotting
-    nrow(flows) > 1e3 ? p = 1000 / nrow(flows) : p = 1
-    flows = sample_rows(flows, p)
-
-    r = resid(flows, mean)
-
-    Plots.plot(log.(flows.preds), log.(flows.flows),
-         seriestype = :scatter,
-         xlab = L"\log(\hat{y})", ylab = L"\log(y)",
-         label = "")
+    idx = subset(flows, 10^3)
+    x = log.(preds)[idx]
+    y = log.(flows)[idx]
+    df = sort(DataFrame(; x, y), :x)
+    scatter(df.x, df.y, xlab = L"\log(\hat{y})", ylab = L"\log(y)",
+            label = "", alpha = 0.5, smooth = true)
+    diagonal!(df.x, df.y)
+    pma!(df.x, df.y, 49)
 end
 
-function _plotdist(f, flows, preds, dist, w, lbl)
-    df = DataFrame(flows = flows, preds = preds, dist = dist)
-    ## prevent overplotting
-    nrow(df) > 1e3 ? p = 1000 / nrow(df) : p = 1
-    df = sort(sample_rows(df, p), :dist)
-    y = log.(df.flows ./ df.preds)
-    x = df.dist
-    f(x, y, seriestype = :scatter,
+function _plotdist(f, flows, preds, dist, lbl)
+    idx = subset(flows, 10^3)
+    y = log.(flows ./ preds)[idx]
+    x = dist[idx]
+    df = sort(DataFrame(; x, y), :x)
+    f(df.x, df.y,
       xlab = "Distance in km",
-      ylab = L"\log(y / \hat{y})", label = lbl, alpha = .5)
+      ylab = L"\log(y / \hat{y})", label = lbl, alpha = .5, smooth = true)
     hline!([0], color = :darkred, linewidth = 2, label = "")
-    plot!(x, moving_average(y, w), linewidth = 5,
-      colour = :blue, label = "")
+    pma!(df.x, df.y, 49)
 end
 
-function plotdist(df, preds, w = 250, lbl = "")
-    _plotdist(plot, df.flows, df[!, preds], df.dist, w, lbl)
+function plotdist(df, preds, lbl = "")
+    _plotdist(scatter, df.flows, df[!, preds], df.dist, lbl)
 end
 
-function plotdist!(df, preds, w = 250, lbl = "")
-    _plotdist(plot!, df.flows, df[!, preds], df.dist, w, lbl)
+function plotdist!(df, preds, lbl = "")
+    _plotdist(scatter!, df.flows, df[!, preds], df.dist, lbl)
 end
 
 function plotpop(flows, preds, frompop, topop)
-    flows = DataFrame(flows = flows, preds = preds,
-                      frompop = frompop, topop = topop)
-    ## prevent overplotting
-    nrow(flows) > 1e3 ? p = 1000 / nrow(flows) : p = 1
-    flows = sample_rows(flows, p)
-
-    plot(log.(flows.frompop) .+ log.(flows.topop),
-         log.(flows.flows ./ flows.preds), seriestype = :scatter,
+    idx = subset(flows, 10^3)
+    x = (log.(frompop) .+ log.(topop))[idx]
+    y = (log.(flows ./ preds))[idx]
+    df = sort(DataFrame(; x, y), :x)
+    scatter(df.x, df.y,
          xlab = L"\log(Pop_d \cdot Pop_o)", label = "",
-         ylab = L"\log(y / \hat{y})")
+         ylab = L"\log(y / \hat{y})", alpha = .5, smooth = true)
     hline!([0], color = :darkred, linewidth = 2, label = "")
+    pma!(df.x, df.y, 49)
 end
 
 function plotdens(flows, preds, fromdens, todens)
@@ -63,11 +55,15 @@ function plotdens(flows, preds, fromdens, todens)
 end
 
 function plotnet(net)
-    scatter(net.nmrp, net.nmr,
+    df = sort(DataFrame(nmrp = net.nmrp, nmr = net.nmr), :nmrp)
+    scatter(df.nmrp, df.nmr,
             xlab = "netpred / (influxpred + outfluxpred)",
             ylab = "net / (influx + outflux)",
             xlim = (-1, 1),
-            ylim = (-1, 1))
+            ylim = (-1, 1),
+            alpha = .5, label = "", smooth = true)
+    diagonal!(df.nmrp, df.nmr)
+    pma!(df.nmrp, df.nmr, 49)
 end
 
 function resid(flows, f = mean)
@@ -86,4 +82,23 @@ function distance_kde(x::AbstractVector, w::AbstractVector,
              lw = 2, label = lbl,
           xrange = (minimum(x) - 10, maximum(x) + 10))
     return p
+end
+
+subset(x, n) = StatsBase.sample(1:length(x), n)
+
+function pma!(x, y, w)
+    plot!(x, moving_average(y, w), linewidth = 5,
+      colour = :blue, label = "SMA, m = $w")
+end
+
+function diagonal!(x, y)
+    xmin, xmax = mm(x)
+    ymin, ymax = mm(y)
+    low = min(xmin, ymin)
+    high = max(xmax, ymax)
+
+    plot!([low, high], [low, high],
+          color = :darkred,
+          linewidth = 2,
+          label = "")
 end
