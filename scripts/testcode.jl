@@ -1,26 +1,29 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings
-using BenchmarkTools, ADTypes, ReverseDiff, PrettyTables, GLM
+using ADTypes, ReverseDiff
 
 include("../src/utils.jl")
-include("../src/othermodels.jl")
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
 include("../src/diag.jl")
 include("../src/diagplots.jl")
+include("../src/chebies.jl")
+include("../src/gen_mdat.jl")
+## available models
+include("../src/choiceset.jl")
+include("../src/norm.jl")
 include("../src/fullmodel.jl")
 include("../src/fullmodel2.jl")
-include("../src/chebies.jl")
-include("../src/choiceset.jl")
-include("../src/gen_mdat.jl")
+include("../src/othermodels.jl")
 
-data = load_data("30-50", 2017, 0.1, "../data/");
+data = load_data("30-50", 2017, 0.1, "../data/"; only_positive = true);
+mdat = gen_mdat(data; type = "joint", distscale = 100.0, ndc = 28, ngc = 1);
+out1 = @time estimate(norm, mdat);
 
 df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
 di = addlrd!(CSV.read("../data/districts.csv", DataFrame))
 df = joinlrd(df, di)
 data = (df = age(year(df, 2017), "30-50"), districts = year(di, 2017))
-
 
 mdat = gen_mdat(data; type = "joint", distscale = 100.0, ndc = 28, ngc = 1);
 out1 = @time estimate(norm, mdat);
