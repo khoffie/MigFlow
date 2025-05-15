@@ -4,9 +4,9 @@ function plotfit(flows, preds)
     y = log.(flows)[idx]
     df = sort(DataFrame(; x, y), :x)
     scatter(df.x, df.y, xlab = L"\log(\hat{y})", ylab = L"\log(y)",
-            label = "", alpha = 0.5, smooth = true)
+            label = "", alpha = 0.5)
     diagonal!(df.x, df.y)
-    pma!(df.x, df.y, 49)
+    smoother!(x, y)
 end
 
 function _plotdist(f, flows, preds, dist, lbl)
@@ -16,9 +16,9 @@ function _plotdist(f, flows, preds, dist, lbl)
     df = sort(DataFrame(; x, y), :x)
     f(df.x, df.y,
       xlab = "Distance in km",
-      ylab = L"\log(y / \hat{y})", label = lbl, alpha = .5, smooth = true)
+      ylab = L"\log(y / \hat{y})", label = lbl, alpha = .5)
     hline!([0], color = :darkred, linewidth = 2, label = "")
-    pma!(df.x, df.y, 49)
+    smoother!(x, y)
 end
 
 function plotdist(df, preds, lbl = "")
@@ -36,9 +36,9 @@ function plotpop(flows, preds, frompop, topop)
     df = sort(DataFrame(; x, y), :x)
     scatter(df.x, df.y,
          xlab = L"\log(Pop_d \cdot Pop_o)", label = "",
-         ylab = L"\log(y / \hat{y})", alpha = .5, smooth = true)
+         ylab = L"\log(y / \hat{y})", alpha = .5)
     hline!([0], color = :darkred, linewidth = 2, label = "")
-    pma!(df.x, df.y, 49)
+    smoother!(x, y)
 end
 
 function plotdens(flows, preds, fromdens, todens)
@@ -61,9 +61,9 @@ function plotnet(net)
             ylab = "net / (influx + outflux)",
             xlim = (-1, 1),
             ylim = (-1, 1),
-            alpha = .5, label = "", smooth = true)
+            alpha = .5, label = "")
     diagonal!(df.nmrp, df.nmr)
-    pma!(df.nmrp, df.nmr, 49)
+    smoother!(df.nmrp, df.nmr)
 end
 
 function resid(flows, f = mean)
@@ -101,4 +101,10 @@ function diagonal!(x, y)
           color = :darkred,
           linewidth = 2,
           label = "")
+end
+
+function smoother!(x, y, span = .5)
+    us = range(extrema(x)...; step = .1)
+    vs = Loess.predict(loess(x, y; span = span), us)
+    return plot!(us, vs, legend = false, color = "red", linewidth = 4)
 end
