@@ -10,11 +10,12 @@
 #     return df
 # end
 
-function load_data(a::String, y::Int, p::Float64, path::String)
+function load_data(a::String, y::Int, p::Float64, path::String; only_positive)
     di = CSV.read(joinpath(path, "districts.csv"), DataFrame)
     di = addlrd!(di)
     df = CSV.read(joinpath(path, "FlowDataGermans.csv"), DataFrame)
-    df = year(age(pos(df), a), y)
+    df = year(age(df, a), y)
+    if only_positive; df = pos(df); end
     df = sample_flows(df, p)
     df = joinlrd(df, di)
     return (df = df, districts = year(di, y))
@@ -25,7 +26,7 @@ function sample_flows(flows::DataFrame, p::AbstractFloat)
     ## / 2 bc every pair is duplicated to make sure for o -> d the
     ## other direction is included as well
     nrows = Int(floor(nrow(ods) * p / 2))
-    ods = ods[StatsBase.sample(1 : nrow(ods), nrows), :]
+    ods = ods[StatsBase.sample(1 : nrow(ods), nrows, replace = false), :]
     fromdist = vcat(ods.fromdist, ods.todist)
     todist = vcat(ods.todist, ods.fromdist)
     ods = DataFrame(; fromdist, todist)
