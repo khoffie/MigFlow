@@ -12,12 +12,12 @@
 
 function load_data(a::String, y::Int, p::Float64, path::String)
     di = CSV.read(joinpath(path, "districts.csv"), DataFrame)
-    di = add_lrd(di)
+    di = addlrd!(di)
     df = CSV.read(joinpath(path, "FlowDataGermans.csv"), DataFrame)
     df = year(age(pos(df), a), y)
     df = sample_flows(df, p)
     df = joinlrd(df, di)
-    return (df = df, districts = di[di.year .== y, :])
+    return (df = df, districts = year(di, y))
 end
 
 function sample_flows(flows::DataFrame, p::AbstractFloat)
@@ -32,7 +32,7 @@ function sample_flows(flows::DataFrame, p::AbstractFloat)
     return innerjoin(flows, ods, on = [:fromdist, :todist])
 end
 
-function add_lrd(districts::DataFrame)
+function addlrd!(districts::DataFrame)
     calc_lrd(x) = log.(x ./ median(x))
     districts.lrd = calc_lrd(districts.density)
     DataFrames.transform!(groupby(districts, :year),

@@ -4,7 +4,51 @@ format: pdf
 echo: false
 ---
 
-# Model Comparison
+\providecommand{\bo}{\sum_{d' \in R} \mu_i(d')}
+\providecommand{\boo}{\sum_{d' \in R \setminus \{o\}} \mu_i(d')}
+
+# What are we actually modeling?
+
+First, some notation:
+\begin{align*}
+Y_{od} &: \text{Flows from origin to destination} \\
+P_o &: \text{Population in origin $o$}\\
+l_o &: \text{Probability to leave origin}\\
+m_{od} &: \text{Probability to move to destination, given origin is left}\\
+P(o \rightarrow d) = m_{od}l_o &: \text{Probability to move from origin to destination}\\
+\mu_i(d) &: \text{Overall desirability that individual $i$ assigns to destination $d$}\\
+\mu_o(d) = 1 / P_o \sum_{i \in o} \mu_i(d) &: \text{desirability random person in $o$ assigns to $d$. For now $\mu_i(d) = \mu_j(d)$ for all $d$ and $i, $j in $o$}\\
+R &: \text{All available destinations + origin}\\
+R\setminus \{o\} &: \text{All available destinations without origin $o$}\\
+\end{align*}
+
+**We model this: $P(o \rightarrow d) = m_{od}l_o$** 
+
+Now we can write the expected flows from $o$ to $d$ as
+
+$$
+\mathbb{E}(Y_{od}) = P_o l_o m_{od} = P_o P(o \rightarrow d)
+$$
+
+But how can we relate the probability to move from $o$ to $d$ to
+individual desirabilities $\mu_i$? We have
+
+$$
+P(o \rightarrow d) = m_{od}l_o = \frac{\mu_i(d)}{\boo} 
+\frac{\boo}{\bo} = \frac{\mu_i(d)}{\bo}
+$$
+
+Now define $B_o := \bo$. This measures the overall opportunities
+people in $o$ have. It does not depend on any specific destination and
+we **wrongly ignore $B_o$**. Why wrongly? If we model flows only from
+one origin $o_1$, we are all good. We simply define $\alpha := 1/\bo$
+and the expectation becomes $\mathbb{E}(Y_{od}) = P_o l_o m_{od} =
+\alpha P_o P(o \rightarrow d)$. However, we have many origins and
+$B_o$ differs greatly between origins. Just consider Alaska and
+California as origin. The opportunities differ greatly between the two
+and I think we should not ignore this.
+
+## Model Comparison
 
 ```{julia}
 #| label: compare-load

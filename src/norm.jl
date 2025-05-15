@@ -1,4 +1,4 @@
-function choice(data::NamedTuple; normalize = true)
+function norm(data::NamedTuple; normalize = true)
     flows    = data.flows
     fromdist = data.fromdist
     fp       = data.frompop
@@ -6,13 +6,16 @@ function choice(data::NamedTuple; normalize = true)
     di       = data.dist  ./ data.distscale
     nfrom    = length(unique(fromdist))
     N        = length(flows)
-
-    @model function model(flows, fromdist, fp, tp, di, nfrom, N, normalize)
+    fpt      = data.fpt
+    radius   = data.radius
+    @model function model(flows, fromdist, fp, tp, di, nfrom, N,
+                          fpt, radius, normalize)
         # Priors
-        a ~ Normal(-5, 1)
-        c_raw ~ Gamma(15, 0.2);  c  = c_raw / 10
-        l_raw ~ Gamma(10, 1.0);  l  = l_raw / 100
-        d0_raw~ Gamma(10, 1.0);  d0 = d0_raw / 100
+        a      ~ Normal(-5, 1)
+        b  ~ Gamma(1, 1);     ## b  = b_raw / 100
+        c_raw  ~ Gamma(15, 0.2);  c  = c_raw / 10
+        l_raw  ~ Gamma(10, 1.0);  l  = l_raw / 100
+        d0_raw ~ Gamma(10, 1.0);  d0 = d0_raw / 100
 
         T = eltype(c)  # to get dual data type for AD
         att   = Vector{T}(undef, N)
@@ -23,6 +26,8 @@ function choice(data::NamedTuple; normalize = true)
             att[i] = tp[i] * (l + (1-l)/((di[i] + d0)^c))
             if normalize
                 denom[fromdist[i]] += att[i]
+                denom[fromdist[i]] += exp(b) * (fpt[fromdist[i]] * (l + (1 - l) /
+                    ((radius[fromdist[i]] + d0)^c)))
             end
         end
 
@@ -38,8 +43,9 @@ function choice(data::NamedTuple; normalize = true)
         return preds
     end
 
-    mdl = model(flows, fromdist, fp, tp, di, nfrom, N, normalize)
-    lb = [-20.0, 10.0, 0.0, 1.0]
-    ub = [20.0, 100.0, 99.0, 100.0]
+    mdl = model(flows, fromdist, fp, tp, di, nfrom, N,
+                fpt, radius, normalize)
+    lb = [-20.0, -100.0, 10.0, 0.0, 1.0]
+    ub = [20.0, 10.0, 100.0, 99.0, 100.0]
     return (; mdl, lb, ub)
 end
