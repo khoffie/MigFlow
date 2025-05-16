@@ -36,7 +36,7 @@ function distnorm(data::NamedTuple)
         denom = [sum(desmat[i,j] for i in 1:Ndist) for j in 1:Ndist]
 
         @inbounds for i in 1:N
-            ps[i] = AP[from[i]] * exp(α) * desmat[from[i],to[j]] / denom[from[i]]
+            ps[i] = AP[from[i]] * exp(α) * desmat[to[i],from[i]] / denom[from[i]]
         end
         Y .~ Poisson.(ps)
         return ps
