@@ -2,6 +2,7 @@ function distnorm(data::NamedTuple)
     df        = data.df
     districts = data.districts
     Ndist = length(districts)
+    dist = data.distances
     dffull    = data.dffull
     Y       = df.flows
     from    = levelcode.(categorical(df.fromdist))
@@ -28,7 +29,6 @@ function distnorm(data::NamedTuple)
         δ_raw ~ Gamma(10, 1); δ = δ_raw / 100
 
         T = eltype(γ)  # to get dual data type for AD
-        att   = Vector{T}(undef, N)
         denom = zeros(T, nfrom)
         ps = Vector{T}(undef, N)
 
