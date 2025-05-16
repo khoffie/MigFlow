@@ -33,7 +33,7 @@ function distnorm(data::NamedTuple)
         ps = Vector{T}(undef, N)
 
         desmat = [exp(desirability(Popto[i],dist[i,j],ϕ,δ,γ)) for i in 1:Ndist, j in 1:Ndist]
-        norms = [sum(desmat[i,j] for i in 1:Ndist) for j in 1:Ndist]
+        denom = [sum(desmat[i,j] for i in 1:Ndist) for j in 1:Ndist]
 
         @inbounds for i in 1:N
             ps[i] = AP[from[i]] * exp(α) * desmat[from[i],to[j]] / denom[from[i]]
