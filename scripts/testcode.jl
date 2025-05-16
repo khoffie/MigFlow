@@ -1,6 +1,6 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings
-using ADTypes, ReverseDiff
+using ADTypes, ReverseDiff, Loess
 
 include("../src/utils.jl")
 include("../src/estimation.jl")
@@ -19,6 +19,7 @@ include("../src/othermodels.jl")
 data = load_data("30-50", 2017, 0.1, "../data/"; only_positive = true);
 mdat = gen_mdat(data; type = "joint", distscale = 100.0, ndc = 28, ngc = 1);
 out1 = @time estimate(norm, mdat);
+out1.out
 
 df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
 di = addlrd!(CSV.read("../data/districts.csv", DataFrame))
