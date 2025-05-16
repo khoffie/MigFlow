@@ -1,6 +1,7 @@
 function distnorm(data::NamedTuple)
     df        = data.df
     districts = data.districts
+    Ndist = length(districts)
     dffull    = data.dffull
     Y       = df.flows
     from    = levelcode.(categorical(df.fromdist))
@@ -31,19 +32,11 @@ function distnorm(data::NamedTuple)
         denom = zeros(T, nfrom)
         ps = Vector{T}(undef, N)
 
-        @inbounds for i in 1:N
-            att[i] = exp(desirability(P[to[i]], D[i], ϕ, δ, γ))
-        end
-
-        @inbounds for i in 1:Nfull
-            denom[fromfull[i]] += exp(
-                desirability(P[tofull[i]], Dfull[i], ϕ, δ, γ))
-            denom[fromfull[i]] += exp(β) *
-                desirability(AP[fromfull[i]], radius[fromfull[i]], ϕ, δ, γ)
-        end
+        desmat = [exp(desirability(Popto[i],dist[i,j],ϕ,δ,γ)) for i in 1:Ndist, j in 1:Ndist]
+        norms = [sum(desmat[i,j] for i in 1:Ndist) for j in 1:Ndist]
 
         @inbounds for i in 1:N
-            ps[i] = AP[from[i]] * exp(α) * att[i] / denom[from[i]]
+            ps[i] = AP[from[i]] * exp(α) * desmat[from[i],to[j]] / denom[from[i]]
         end
         Y .~ Poisson.(ps)
         return ps
