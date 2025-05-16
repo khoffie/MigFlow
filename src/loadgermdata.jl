@@ -1,24 +1,22 @@
-# function read_flows(file::String, p::AbstractFloat,
-#                     ages, years, pos_only = true)
-#     df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
-#     df = sample_flows(df, p)
-#     check_age(age) = age in ages
-#     check_year(year) = year in years
-#     df = filter(:agegroup => check_age, df)
-#     df = filter(:year => check_year, df)
-#     if pos_only; df = df[df.flows .> 0, :]; end
-#     return df
-# end
-
-function load_data(a::String, y::Int, p::Float64, path::String; only_positive)
+function load_data(a::String, y::Int, p::Float64, path::String;
+                   positive::Bool, full::Bool)
     di = CSV.read(joinpath(path, "districts.csv"), DataFrame)
     di = addlrd!(di)
-    df = CSV.read(joinpath(path, "FlowDataGermans.csv"), DataFrame)
-    df = year(age(df, a), y)
-    if only_positive; df = pos(df); end
-    df = sample_flows(df, p)
-    df = joinlrd(df, di)
-    return (df = df, districts = year(di, y))
+    dffull = CSV.read(joinpath(path, "FlowDataGermans.csv"), DataFrame)
+    dffull = year(age(dffull, a), y)
+    if positive; dffull = pos(dffull); end
+    if p < 1.0
+        df = sample_flows(dffull, p)
+    elseif p == 1.0
+        df = dffull
+    end
+    if !full
+        out = (df = df, districts = year(di, y))
+    elseif full
+        dffull = dffull[!, [:fromdist, :todist, :dist]]
+        out = (df = df, districts = year(di, y), dffull)
+    end
+    return out
 end
 
 function sample_flows(flows::DataFrame, p::AbstractFloat)
@@ -41,12 +39,10 @@ function addlrd!(districts::DataFrame)
     return districts
 end
 
-function joinlrd(flows, districts)
-    flows = innerjoin(flows, districts[:, [:distcode, :lrd, :year]],
-                      on = [:fromdist => :distcode, :year])
-    rename!(flows, :lrd => :fromdens)
-    flows = innerjoin(flows, districts[:, [:distcode, :lrd, :year]],
-                      on = [:todist => :distcode, :year])
-    rename!(flows, :lrd => :todens)
-    return flows
+function joinlrd(df, districts)
+    di = select(districts, :distcode, :year, :lrd => :fromdens)
+    leftjoin!(df, di, on = [:fromdist => :distcode, :year])
+    di = select(districts, :distcode, :year, :lrd => :todens)
+    leftjoin!(df, di, on = [:todist => :distcode, :year])
+    return df
 end

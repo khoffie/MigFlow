@@ -1,6 +1,6 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings
-using ADTypes, ReverseDiff
+using ADTypes, ReverseDiff, Loess
 
 include("../src/utils.jl")
 include("../src/estimation.jl")
@@ -16,24 +16,29 @@ include("../src/fullmodel.jl")
 include("../src/fullmodel2.jl")
 include("../src/othermodels.jl")
 
-data = load_data("30-50", 2017, 0.1, "../data/"; only_positive = true);
-mdat = gen_mdat(data; type = "joint", distscale = 100.0, ndc = 28, ngc = 1);
-out1 = @time estimate(norm, mdat);
+data = load_data("30-50", 2017, 1.0, "../data/"; positive =  true, full = true);
 
-df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
-di = addlrd!(CSV.read("../data/districts.csv", DataFrame))
-df = joinlrd(df, di)
-data = (df = age(year(df, 2017), "30-50"), districts = year(di, 2017))
-
-mdat = gen_mdat(data; type = "joint", distscale = 100.0, ndc = 28, ngc = 1);
-out1 = @time estimate(norm, mdat);
-out2 = @time estimate(choice, mdat);
-out3 = @time estimate(distonly, mdat);
-out4 = @time estimate(choice, mdat; normalize = false);
+out1 = @time estimate(distonly, data);
 out1.out
+out2 = @time estimate(distnorm, data);
 out2.out
-out3.out
+
+sum(logpdf.(Poisson.(out1.preds), data.df.flows))
+sum(logpdf.(Poisson.(out2.preds), data.df.flows))
+
+
+mdat = gen_mdat("30-50", 2017, 0.1, "../data"; type = "joint",
+                distscale = 100.0, ndc = 28, ngc = 1, only_positive = true);
+out1 = @time estimate(distonly, mdat);
+out1.out
+
+
+
+out1 = @time estimate(norm, mdat);
+out1.out
+out4 = @time estimate(choice, mdat; normalize = false);
 out4.out
+
 
 mdat = gen_mdat(data; type = "conditional", distscale = 100.0, ndc = 28, ngc = 1);
 out1 = @time estimate(norm, mdat);
@@ -45,22 +50,20 @@ out2.out
 out3.out
 out4.out
 
-out.plt[5]
-
-df = out.dens
-df = df[df.fromdens .< 2.7 .&& df.todens .< 2.7, :]
-heatmap(reshape(df.funval, (90, 90)))
-
-?heatmap
-
-plot(Gamma(1, 1))
-names(out1.net)
+plotfit(mdat.flows, out1.preds)
+mdat.flows
+smoother!(log.(out1.preds), log.(mdat.flows))
 
 
+x = log.(out1.preds)
+y = log.(mdat.flows)
+mod = loess(x, y)
+us = range(extrema(x)..., step = .01)
+Loess.predict(mod, us)
 
-lcds = unique(sort(DataFrame(; mdat.fromdist, mdat.fromdist_orig), :fromdist))
-leftjoin!(out1.net, lcds, on = :fromdist)
-rename!(out1.net, :fromdist_orig => :distcode)
+plot(out1.plt[1], out3.plt[1])
 
-sort(out1.net, :nmrp)[!, [:distcode, :influx, :influxp, :outflux, :outfluxp, :nmr, :nmrp]]
-scatter(out1.net.nmrp, out1.net.nmr)
+sum(logpdf.(Poisson.(preds), flows))
+out1.out
+sum(logpdf.(Poisson.(out3.preds), mdat.flows))
+out3.out

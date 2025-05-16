@@ -1,10 +1,14 @@
-function gen_mdat(data::NamedTuple; type::String,
-                  distscale::AbstractFloat = 100.0,
-                  ndc::Signed, ngc::Signed)
+function gen_mdat(age::String, year::Int, p::AbstractFloat, path::String;
+                  type::String, distscale::AbstractFloat = 100.0,
+                  ndc::Signed, ngc::Signed, only_positive::Bool)
+
+    data = load_data(age, year, p, path, only_positive);
     df = data.df
     districts = data.districts
-    ## districts = unique(districts, :distcode)
     check_distcodes(df.fromdist, df.todist, districts.distcode)
+
+    datafull = load_data(age, year, 1.0, path, only_positive);
+    dffull = datafull.df
 
     if type == "joint"
         frompop = df.frompop
@@ -37,7 +41,10 @@ function gen_mdat(data::NamedTuple; type::String,
         ndc = ndc,
         ngc = ngc,
         radius = radius(districts.pop, districts.density),
-        fpt = districts.pop
+        fpt = districts.pop,
+        fromdistfull = levelcode.(categorical(dffull.fromdist)),
+        topopfull = dffull.topop,
+        distfull = dffull.dist
     )
     return dat
 end
