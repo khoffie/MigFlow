@@ -19,9 +19,9 @@ include("../src/othermodels.jl")
 
 data = load_data("30-50", 2017, 1.0, "../data/"; positive =  false, full = true);
 
-out1 = @time estimate(distonly, data);
+out1 = @time estimate(dan, data);
 out1.out
-out2 = @time estimate(distnorm, data);
+out2 = @time estimate(kon, data);
 out2.out
 
 sum(logpdf.(Poisson.(out1.preds), data.df.flows))
