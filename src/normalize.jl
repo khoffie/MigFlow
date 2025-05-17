@@ -32,11 +32,12 @@ function distnorm(data::NamedTuple)
         denom = zeros(T, nfrom)
         ps = Vector{T}(undef, N)
 
-        desmat = [exp(desirability(Popto[i],dist[i,j],ϕ,δ,γ)) for i in 1:Ndist, j in 1:Ndist]
+        desmat = [exp(desirability(P[to[i]], dist[i,j], ϕ, δ, γ))
+                  for i in 1:Ndist, j in 1:Ndist]
         denom = [sum(desmat[i,j] for i in 1:Ndist) for j in 1:Ndist]
 
         @inbounds for i in 1:N
-            ps[i] = AP[from[i]] * exp(α) * desmat[to[i],from[i]] / denom[from[i]]
+            ps[i] = AP[from[i]] * exp(α) * desmat[to[i], from[i]] / denom[from[i]]
         end
         Y .~ Poisson.(ps)
         return ps
