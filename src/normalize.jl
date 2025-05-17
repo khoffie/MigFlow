@@ -1,6 +1,6 @@
  function dan(data::NamedTuple; scaleo)
     df        = data.df
-    districts = data.districts
+    districts = sort(data.districts, :distcode)
     dffull    = data.dffull
     Ndist   = length(districts.distcode)
     Y       = df.flows
@@ -73,7 +73,7 @@ end
 
 function kon(data::NamedTuple; scaleo)
     df        = data.df
-    districts = data.districts
+    districts = sort(data.districts, :distcode)
     dffull    = data.dffull
     Y       = df.flows
     from    = levelcode.(categorical(df.fromdist))
