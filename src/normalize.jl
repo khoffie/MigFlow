@@ -1,4 +1,4 @@
-function dan(data::NamedTuple)
+ function dan(data::NamedTuple; scaleo)
     df        = data.df
     districts = data.districts
     dffull    = data.dffull
@@ -21,7 +21,7 @@ function dan(data::NamedTuple)
     data = (; Y, D, from, to, AP, P, poporig)
 
     @model function model(Y, from, to, D, AP, P, DM, N, Nfull, fromfull, tofull,
-                          Dfull, nfrom, radius)
+                          Dfull, nfrom, radius, scaleo)
         α ~ Normal(-8, 1)
         β ~ Gamma(1, 1)
         γ_raw ~ Gamma(15, .2); γ = γ_raw / 10
@@ -32,7 +32,13 @@ function dan(data::NamedTuple)
         denom = zeros(T, nfrom)
         ps = Vector{T}(undef, N)
 
-        desmat = [exp(desirability(P[i], DM[i, j], ϕ, δ, γ)) for i in 1:Ndist, j in 1:Ndist]
+        if scaleo == 1
+            desmat = [exp(desirability(P[i], DM[i, j], ϕ, δ, γ))
+                      for i in 1:Ndist, j in 1:Ndist]
+        elseif scaleo == "β"
+            desmat = [exp(desir(i, j, P[i], DM[i, j], ϕ, δ, γ, β))
+                      for i in 1:Ndist, j in 1:Ndist]
+        end
         denom = [sum(desmat[i,j] for j in 1:Ndist) for i in 1:Ndist]
 
         @inbounds for i in 1:N
@@ -43,7 +49,7 @@ function dan(data::NamedTuple)
     end
 
     mdl = model(Y, from, to, D, AP, P, DM, N, Nfull, fromfull,
-                tofull, Dfull, nfrom, radius)
+                tofull, Dfull, nfrom, radius, scaleo)
     lb = [-20, -100, 10, 0, 1]
     ub = [0, 10, 100, 99, 100]
 
@@ -51,6 +57,7 @@ function dan(data::NamedTuple)
 end
 
 desirability(P, D, ϕ, δ, γ) = P + log((ϕ + (1 - ϕ) / (D + δ)^γ))
+desir(i, j, P, D, ϕ, δ, γ, β) = i == j ? exp(β) * desirability(P, D, ϕ, δ, γ) : desirability(P, D, ϕ, δ, γ)
 
 function make_distmat(from, to, dffull, radius, Ndist)
     df = DataFrame(from = repeat(from, inner = Ndist),
@@ -64,7 +71,7 @@ function make_distmat(from, to, dffull, radius, Ndist)
     return reshape(df.dist, Ndist, Ndist)' ./ 100.0
 end
 
-function kon(data::NamedTuple)
+function kon(data::NamedTuple; scaleo)
     df        = data.df
     districts = data.districts
     dffull    = data.dffull
@@ -85,7 +92,7 @@ function kon(data::NamedTuple)
     data = (; Y, D, from, to, AP, P, poporig)
 
     @model function model(Y, from, to, D, AP, P, N, Nfull, fromfull, tofull,
-                          Dfull, nfrom, radius)
+                          Dfull, nfrom, radius, scaleo)
         α ~ Normal(-8, 1)
         β ~ Gamma(1, 1)
         γ_raw ~ Gamma(15, .2); γ = γ_raw / 10
@@ -97,6 +104,12 @@ function kon(data::NamedTuple)
         denom = zeros(T, nfrom)
         ps = Vector{T}(undef, N)
 
+        if scaleo == "β"
+            c = exp(β)
+        elseif scaleo == 1
+            c = 1
+        end
+
         @inbounds for i in 1:N
             att[i] = exp(desirability(P[to[i]], D[i], ϕ, δ, γ))
         end
@@ -107,7 +120,7 @@ function kon(data::NamedTuple)
         end
 
         @inbounds for i in 1:nfrom
-            denom[i] += desirability(AP[i], radius[i], ϕ, δ, γ)
+            denom[i] += c * desirability(AP[i], radius[i], ϕ, δ, γ)
         end
 
         @inbounds for i in 1:N
@@ -118,7 +131,7 @@ function kon(data::NamedTuple)
     end
 
     mdl = model(Y, from, to, D, AP, P, N, Nfull, fromfull,
-                tofull, Dfull, nfrom, radius)
+                tofull, Dfull, nfrom, radius, scaleo)
     lb = [-20, -100, 10, 0, 1]
     ub = [0, 10, 100, 99, 100]
 
