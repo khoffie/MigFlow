@@ -19,10 +19,14 @@ include("../src/othermodels.jl")
 
 data = load_data("30-50", 2017, 1.0, "../data/"; positive =  false, full = true);
 
-out1 = @time estimate(dan, data);
+out1 = @time estimate(dan, data; scaleo = 1);
 out1.out
-out2 = @time estimate(kon, data);
+out2 = @time estimate(dan, data; scaleo = "β");
 out2.out
+out3 = @time estimate(kon, data; scaleo = 1);
+out3.out
+out4 = @time estimate(kon, data; scaleo = "β");
+out4.out
 
 sum(logpdf.(Poisson.(out1.preds), data.df.flows))
 sum(logpdf.(Poisson.(out2.preds), data.df.flows))
