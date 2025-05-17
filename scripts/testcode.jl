@@ -17,7 +17,7 @@ include("../src/fullmodel.jl")
 include("../src/fullmodel2.jl")
 include("../src/othermodels.jl")
 
-data = load_data("30-50", 2017, 0.1, "../data/"; positive =  false, full = true);
+data = load_data("30-50", 2017, 1.0, "../data/"; positive =  false, full = true);
 
 out1 = @time estimate(distonly, data);
 out1.out
