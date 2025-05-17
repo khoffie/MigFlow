@@ -104,8 +104,10 @@ function kon(data::NamedTuple)
         @inbounds for i in 1:Nfull
             denom[fromfull[i]] += exp(
                 desirability(P[tofull[i]], Dfull[i], ϕ, δ, γ))
-            denom[fromfull[i]] += exp(β) *
-                desirability(AP[fromfull[i]], radius[fromfull[i]], ϕ, δ, γ)
+        end
+
+        @inbounds for i in 1:nfrom
+            denom[i] += desirability(AP[i], radius[i], ϕ, δ, γ)
         end
 
         @inbounds for i in 1:N
