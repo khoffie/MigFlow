@@ -1,9 +1,8 @@
 function distnorm(data::NamedTuple)
     df        = data.df
     districts = data.districts
-    Ndist = length(districts)
-    dist = data.distances
     dffull    = data.dffull
+    Ndist   = length(districts.distcode)
     Y       = df.flows
     from    = levelcode.(categorical(df.fromdist))
     to      = levelcode.(categorical(df.todist))
@@ -18,9 +17,10 @@ function distnorm(data::NamedTuple)
     Dfull    = dffull.dist
     nfrom    = length(unique(from))
     radius   = sqrt.(districts.pop ./ districts.density ./ 2π)
+    DM      = make_distmat(districts.distcode, districts.distcode, dffull, radius, Ndist)
     data = (; Y, D, from, to, AP, P, poporig)
 
-    @model function model(Y, from, to, D, AP, P, N, Nfull, fromfull, tofull,
+    @model function model(Y, from, to, D, AP, P, DM, N, Nfull, fromfull, tofull,
                           Dfull, nfrom, radius)
         α ~ Normal(-8, 1)
         β ~ Gamma(1, 1)
@@ -32,18 +32,17 @@ function distnorm(data::NamedTuple)
         denom = zeros(T, nfrom)
         ps = Vector{T}(undef, N)
 
-        desmat = [exp(desirability(P[to[i]], dist[i,j], ϕ, δ, γ))
-                  for i in 1:Ndist, j in 1:Ndist]
-        denom = [sum(desmat[i,j] for i in 1:Ndist) for j in 1:Ndist]
+        desmat = [exp(desirability(P[i], DM[i, j], ϕ, δ, γ)) for i in 1:Ndist, j in 1:Ndist]
+        denom = [sum(desmat[i,j] for j in 1:Ndist) for i in 1:Ndist]
 
         @inbounds for i in 1:N
-            ps[i] = AP[from[i]] * exp(α) * desmat[to[i], from[i]] / denom[from[i]]
+            ps[i] = AP[from[i]] * exp(α) * desmat[from[i], to[i]] / denom[from[i]]
         end
         Y .~ Poisson.(ps)
         return ps
     end
 
-    mdl = model(Y, from, to, D, AP, P, N, Nfull, fromfull,
+    mdl = model(Y, from, to, D, AP, P, DM, N, Nfull, fromfull,
                 tofull, Dfull, nfrom, radius)
     lb = [-20, -100, 10, 0, 1]
     ub = [0, 10, 100, 99, 100]
@@ -52,3 +51,15 @@ function distnorm(data::NamedTuple)
 end
 
 desirability(P, D, ϕ, δ, γ) = P + log((ϕ + (1 - ϕ) / (D + δ)^γ))
+
+function make_distmat(from, to, dffull, radius, Ndist)
+    df = DataFrame(from = repeat(from, inner = Ndist),
+                   to = repeat(to, outer = Ndist))
+    df2 = DataFrame(from = dffull.fromdist, to = dffull.todist,
+                    dist = dffull.dist)
+    leftjoin!(df, df2, on = [:from, :to])
+    df3 = DataFrame(from = from, to = from, radius = radius)
+    leftjoin!(df, df3, on = [:from, :to])
+    df.dist = coalesce.(df.dist, df.radius)
+    return reshape(df.dist, Ndist, Ndist)' ./ 100.0
+end
