@@ -33,16 +33,16 @@
         ps = Vector{T}(undef, N)
 
         if scaleo == 1
-            desmat = [exp(desirability(P[i], DM[i, j], ϕ, δ, γ))
+            desmat = [exp(desirability(P[j], DM[i, j], ϕ, δ, γ))
                       for i in 1:Ndist, j in 1:Ndist]
         elseif scaleo == "β"
-            desmat = [exp(desir(i, j, P[i], DM[i, j], ϕ, δ, γ, β))
+            desmat = [exp(desir(i, j, P[j], DM[i, j], ϕ, δ, γ, β))
                       for i in 1:Ndist, j in 1:Ndist]
         end
         denom = [sum(desmat[i,j] for j in 1:Ndist) for i in 1:Ndist]
 
         @inbounds for i in 1:N
-            ps[i] = AP[from[i]] * exp(α) * desmat[from[i], to[i]] / denom[from[i]]
+            ps[i] = AP[from[i]] * exp(α) * desmat[from[i], to[i]] ## / denom[from[i]]
         end
         Y .~ Poisson.(ps)
         return ps
@@ -124,7 +124,7 @@ function kon(data::NamedTuple; scaleo)
         end
 
         @inbounds for i in 1:N
-            ps[i] = AP[from[i]] * exp(α) * att[i] / denom[from[i]]
+            ps[i] = AP[from[i]] * exp(α) * att[i] ## / denom[from[i]]
         end
         Y .~ Poisson.(ps)
         return ps
