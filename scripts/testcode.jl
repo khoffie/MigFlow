@@ -16,7 +16,31 @@ include("../src/fullmodel.jl")
 include("../src/fullmodel2.jl")
 include("../src/othermodels.jl")
 
-data = load_data("30-50", 2017, 1.0, "../data/"; positive =  true, full = true);
+data = load_data("30-50", 2017, 1.0, "../data/"; positive =  false, full = true);
+
+from = sort(unique(data.dffull.fromdist))
+to = sort(unique(data.dffull.todist))
+df = DataFrame(; data.dffull.fromdist, data.dffull.todist, data.dffull.dist)
+distmat = reshape(df.dist, 400, 401)' ./ 100.0
+P = log.(data.districts.pop ./ 153000)
+to = levelcode.(categorical(data.dffull.todist))
+
+desmat = [exp(desirability(P[i], distmat[i, j], 0.15, 0.14, 4)) for i in 1:401, j in 1:400]
+denom = [sum(desmat[i,j] for j in 1:400) for i in 1:401]
+
+
+
+
+[P[i] + log(distmat[i, j]^-4) for i in 1:401, j in 1:400]
+
+
+distmat[1, :]
+distmat[1, :] .== df[df.fromdist .== 1001, :].dist
+
+
+desirability(P, D, ϕ, δ, γ) = P + log((ϕ + (1 - ϕ) / (D + δ)^γ))
+
+
 
 out1 = @time estimate(distonly, data);
 out1.out
