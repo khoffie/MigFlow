@@ -1,23 +1,34 @@
-function norm(data::NamedTuple; norm::String, type::String)
-    @assert type ∈ ["joint", "conditional"] "Invalid type $type. Must be 'joint' or 'conditional'."
-    @assert norm ∈ ["none", "both", "origin", "destination"] "Invalid norm $norm. Must be 'none', 'both', 'origin' or 'destination'."
+function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
+    m1 = "Invalid type $type. Must be 'joint' or 'conditional'."
+    m2 = "Invalid norm $norm. Must be 'none', 'both', 'origin' or 'destination'."
+    m3 = "Invalid norm_type $norm_type. Must be 'sample' or 'full'"
+    @assert type ∈ ["joint", "conditional"] m1
+    @assert norm ∈ ["none", "both", "origin", "destination"] m2
+    @assert norm_type ∈ ["sample", full] m3
+
     df        = sort(data.df, :fromdist)
     districts = sort(data.districts, :distcode)
+    dffull    = sort(data.dffull, :fromdist)
     ds        = 100
 
-    Y       = df.flows
-    from    = lc(df.fromdist)
-    to      = lc(df.todist)
-    A       = genfrompop(df, type)
-    P       = districts.pop ./ 153000 # median topop
-    poporig = districts.pop
-    D       = df.dist  ./ ds
-    Ndist   = length(districts.distcode)
-    N       = length(Y)
-    radius  = fradius.(districts.pop, districts.density)
-    data    = (; Y, D, from, to, A,  P, poporig)
+    Y        = df.flows
+    from     = lc(df.fromdist)
+    to       = lc(df.todist)
+    A        = genfrompop(df, type)
+    P        = districts.pop ./ 153000 # median topop
+    poporig  = districts.pop
+    D        = df.dist  ./ ds
+    Ndist    = length(districts.distcode)
+    N        = length(Y)
+    radius   = fradius.(districts.pop, districts.density)
+    fromfull = lc(dffull.fromdist)
+    tofull   = lc(dffull.todist)
+    Dfull    = dffull.dist
+    Nfull    = length(fromfull)
+    data     = (; Y, D, from, to, A,  P, poporig)
 
-    @model function model(Y, from, to, A, P, D, Ndist, N, radius, norm)
+    @model function model(Y, from, to, A, P, D, Ndist, N, radius, norm,
+                          fromfull, tofull, Dfull, Nfull, norm_type)
         α      ~ Normal(-5, 1)
         β      ~ Gamma(1, 1);     ## b  = b_raw / 100
         γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
@@ -33,9 +44,13 @@ function norm(data::NamedTuple; norm::String, type::String)
             att[i] = desirability(P[to[i]], D[i], γ, δ, ϕ)
         end
 
-        denom = normalize(norm, denom, N, from, att, Ndist, β,
-                          desirability, P, radius, γ, δ, ϕ)
-
+        if norm_type == "sample"
+            denom = normalize(norm, denom, N, from, att, Ndist, β,
+                              desirability, P, radius, γ, δ, ϕ)
+        else
+            denom = normalize(norm, denom, Nfull, fromfull, att, Ndist, β,
+                              desirability, P, radius, γ, δ, ϕ)
+        end
         @inbounds for i in 1:N
                ps[i] = A[i] * exp(α) * (att[i] / denom[from[i]])
         end
@@ -44,8 +59,8 @@ function norm(data::NamedTuple; norm::String, type::String)
         return ps
     end
 
-    mdl = model(Y, from, to, A, P, D, Ndist, N,
-                radius, norm)
+    mdl = model(Y, from, to, A, P, D, Ndist, N, radius, norm,
+                fromfull, tofull, Dfull, Nfull, norm_type)
     lb = [-20.0, -100.0, 10.0, 0.0, 1.0]
     ub = [20.0, 10.0, 100.0, 99.0, 100.0]
     return (; mdl, lb, ub, data)
