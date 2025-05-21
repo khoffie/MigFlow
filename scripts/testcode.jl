@@ -18,4 +18,6 @@ include("../src/othermodels.jl")
 
 data = load_data("30-50", 2017, 0.1, "../data/"; only_positive = true);
 out1 = @time estimate(norm, data; normalize = true, type = "conditional");
-out1.out
+out1 = @time estimate(norm, data; normalize = false, type = "conditional");
+out1 = @time estimate(norm, data; normalize = true, type = "joint");
+out1 = @time estimate(norm, data; normalize = false, type = "joint");
