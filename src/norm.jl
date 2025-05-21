@@ -41,11 +41,13 @@ function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
         ps = Vector{T}(undef, N)
 
         if norm_type == "sample"
-            denom = normalize(norm, denom, to, P, D, N, from, Ndist, β,
+            denom = normalize(norm, denom, T, to, P, D, N, from, Ndist, β,
                               desirability, radius, γ, δ, ϕ)
         elseif norm_type == "full"
-            denom = normalize(norm, denom, tofull, P, Dfull, Nfull, fromfull, Ndist, β,
+            denom = normalize(norm, denom, T, tofull, P, Dfull, Nfull, fromfull, Ndist, β,
                               desirability, radius, γ, δ, ϕ)
+        elseif norm_type == "none"
+            denom = ones(T, Ndist)
         end
 
         @inbounds for i in 1:N
@@ -74,8 +76,8 @@ function genfrompop(df, type)
     return leftjoin(df, df2, on = :fromdist).flows_sum
 end
 
-function normalize(norm, denom, to, P, D, N, from, Ndist, β, desf, radius, γ, δ, ϕ)
-    norm == "none" && return ones(N)
+function normalize(norm, denom, T, to, P, D, N, from, Ndist, β, desf, radius, γ, δ, ϕ)
+    norm == "none" && return ones(T, Ndist)
     if norm in ("destination", "both")
         @inbounds for i in 1:N
             denom[from[i]] += desf(P[to[i]], D[i], γ, δ, ϕ)
