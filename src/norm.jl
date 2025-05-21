@@ -30,8 +30,8 @@ function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
 
     @model function model(Y, from, to, A, P, D, Ndist, N, radius, norm,
                           fromfull, tofull, Dfull, Nfull, norm_type)
-        α      ~ Normal(-5, 1)
-        β      ~ Gamma(1, 1);     ## b  = b_raw / 100
+        α_raw  ~ Normal(-5, 1);   α = exp(α_raw)
+        β_raw  ~ Gamma(1, 1);     β = exp(β_raw)
         γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
@@ -51,7 +51,7 @@ function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
         end
 
         @inbounds for i in 1:N
-               ps[i] = A[i] * exp(α) *
+               ps[i] = A[i] * α *
                    (desirability(P[to[i]], D[i], γ, δ, ϕ) / denom[from[i]])
         end
 
@@ -62,12 +62,12 @@ function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
     mdl = model(Y, from, to, A, P, D, Ndist, N, radius, norm,
                 fromfull, tofull, Dfull, Nfull, norm_type)
     lb = [-20.0, -100.0, 10.0, 0.0, 1.0]
-    ub = [20.0, 10.0, 100.0, 99.0, 100.0]
+    ub = [20.0, 100.0, 100.0, 99.0, 100.0]
     return (; mdl, lb, ub, data)
 end
 
 desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
-fradius(P, ρ) = sqrt((P / ρ) / 2π)
+fradius(P, ρ, ds) = sqrt((P / ρ) / 2π) / ds
 lc(x) = levelcode.(categorical(x))
 
 function genfrompop(df, type)
@@ -85,7 +85,7 @@ function normalize(norm, denom, T, to, P, D, N, from, Ndist, β, desf, radius, �
     end
     if norm in ("origin", "both")
         @inbounds for i in 1:Ndist
-            denom[i] += exp(β) * desf(P[i], radius[i], γ, δ, ϕ)
+            denom[i] += desf(P[i], β * radius[i], γ, δ, ϕ)
         end
     end
     return denom
