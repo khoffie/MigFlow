@@ -13,11 +13,12 @@ function norm(data::NamedTuple; normalize = true, type)
         A = leftjoin(df, df2, on = :fromdist).flows_sum
     end
     P       = districts.pop ./ 153000 # median topop
+    poporig = districts.pop
     D       = df.dist  ./ ds
     Ndist    = length(districts.distcode)
-    N        = length(flows)
+    N        = length(Y)
     radius   = fradius.(districts.pop, districts.density)
-    data = (; Y, df.fromdist, df.todist, D, , df.topop)
+    data = (; Y, D, from, to, A,  P, poporig)
 
     @model function model(Y, from, to, A, P, D, Ndist, N,
                           radius, normalize)
@@ -29,7 +30,7 @@ function norm(data::NamedTuple; normalize = true, type)
 
         T = eltype(c)  # to get dual data type for AD
         att   = Vector{T}(undef, N)
-        denom = zeros(T, nfrom)
+        denom = zeros(T, Ndist)
         preds = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
@@ -49,7 +50,7 @@ function norm(data::NamedTuple; normalize = true, type)
             end
         end
 
-        flows .~ Poisson.(preds)
+        Y .~ Poisson.(preds)
         return preds
     end
 

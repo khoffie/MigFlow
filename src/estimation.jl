@@ -5,18 +5,18 @@ function estimate(model, data::NamedTuple;
     mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub, ad)
     out = format_mles(mles)
     data = mdl.data
-    net = calc_net_df(DataFrame(flows = data.flows,
+    net = calc_net_df(DataFrame(flows = data.Y,
                                 preds = preds,
-                                fromdist = data.fromdist,
-                                todist = data.todist))
+                                fromdist = data.from,
+                                todist = data.to))
 
     densdesir, pdens = evaldens(out, data)
     geo, pgeo = evalgeo(out, data)
-    df = DataFrame(flows = data.flows, preds = preds, dist = data.dist)
+    df = DataFrame(flows = data.Y, preds = preds, dist = data.D)
     plt = [
-        plotfit(data.flows, preds),
+        plotfit(data.Y, preds),
         plotdist(df, :preds),
-        plotpop(data.flows, preds, data.frompop, data.topop),
+        plotpop(data.Y, preds, data.A[data.from], data.P[data.to]),
         plotnet(net),
         pdens,
         pgeo
