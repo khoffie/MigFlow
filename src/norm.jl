@@ -1,10 +1,11 @@
 function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
     m1 = "Invalid type $type. Must be 'joint' or 'conditional'."
     m2 = "Invalid norm $norm. Must be 'none', 'both', 'origin' or 'destination'."
-    m3 = "Invalid norm_type $norm_type. Must be 'sample' or 'full'"
+    m3 = "Invalid norm_type $norm_type. Must be 'sample', 'full' or 'none'"
+
     @assert type ∈ ["joint", "conditional"] m1
     @assert norm ∈ ["none", "both", "origin", "destination"] m2
-    @assert norm_type ∈ ["sample", full] m3
+    @assert norm_type ∈ ["sample", "full", "none"] m3
 
     df        = sort(data.df, :fromdist)
     districts = sort(data.districts, :distcode)
@@ -36,23 +37,20 @@ function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
 
         T = eltype(γ)  # to get dual data type for AD
-        att   = Vector{T}(undef, N)
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
 
-        @inbounds for i in 1:N
-            att[i] = desirability(P[to[i]], D[i], γ, δ, ϕ)
+        if norm_type == "sample"
+            denom = normalize(norm, denom, to, P, D, N, from, Ndist, β,
+                              desirability, radius, γ, δ, ϕ)
+        elseif norm_type == "full"
+            denom = normalize(norm, denom, tofull, P, Dfull, Nfull, fromfull, Ndist, β,
+                              desirability, radius, γ, δ, ϕ)
         end
 
-        if norm_type == "sample"
-            denom = normalize(norm, denom, N, from, att, Ndist, β,
-                              desirability, P, radius, γ, δ, ϕ)
-        else
-            denom = normalize(norm, denom, Nfull, fromfull, att, Ndist, β,
-                              desirability, P, radius, γ, δ, ϕ)
-        end
         @inbounds for i in 1:N
-               ps[i] = A[i] * exp(α) * (att[i] / denom[from[i]])
+               ps[i] = A[i] * exp(α) *
+                   (desirability(P[to[i]], D[i], γ, δ, ϕ) / denom[from[i]])
         end
 
         Y .~ Poisson.(ps)
@@ -76,11 +74,11 @@ function genfrompop(df, type)
     return leftjoin(df, df2, on = :fromdist).flows_sum
 end
 
-function normalize(norm, denom, N, from, att, Ndist, β, desf, P, radius, γ, δ, ϕ)
+function normalize(norm, denom, to, P, D, N, from, Ndist, β, desf, radius, γ, δ, ϕ)
     norm == "none" && return ones(N)
     if norm in ("destination", "both")
         @inbounds for i in 1:N
-            denom[from[i]] += att[i]
+            denom[from[i]] += desf(P[to[i]], D[i], γ, δ, ϕ)
         end
     end
     if norm in ("origin", "both")
