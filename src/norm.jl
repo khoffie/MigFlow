@@ -11,7 +11,7 @@ function norm(data::NamedTuple; normalize = true)
     nfrom    = length(unique(fromdist))
     N        = length(flows)
     fpt      = districts.pop
-    radius   = fradius(districts.pop, districts.density)
+    radius   = fradius.(districts.pop, districts.density)
     data = (; flows, df.fromdist, df.todist, df.dist, df.frompop, df.topop)
     @model function model(flows, fromdist, fp, tp, di, nfrom, N,
                           fpt, radius, normalize)
