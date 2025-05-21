@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; norm, type)
+function norm(data::NamedTuple; norm::String, type::String)
     @assert type ∈ ["joint", "conditional"] "Invalid type $type. Must be 'joint' or 'conditional'."
     @assert norm ∈ ["none", "both", "origin", "destination"] "Invalid norm $norm. Must be 'none', 'both', 'origin' or 'destination'."
     df        = sort(data.df, :fromdist)
