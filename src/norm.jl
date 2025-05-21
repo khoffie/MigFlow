@@ -1,16 +1,20 @@
 function norm(data::NamedTuple; normalize = true)
-    flows    = data.flows
-    fromdist = data.fromdist
-    fp       = data.frompop
-    tp       = data.topop ./ 153000 # median topop
-    di       = data.dist  ./ data.distscale
+    df = sort(data.df, :fromdist)
+    districts = sort(data.districts, :distcode)
+    ds = 100
+
+    flows    = df.flows
+    fromdist = lc(df.fromdist)
+    fp       = df.frompop
+    tp       = df.topop ./ 153000 # median topop
+    di       = df.dist  ./ ds
     nfrom    = length(unique(fromdist))
     N        = length(flows)
-    fpt      = data.fpt
-    radius   = data.radius
+    fpt      = districts.pop
+    radius   = fradius(districts.pop, districts.density)
+    data = (; flows, df.fromdist, df.todist, df.dist, df.frompop, df.topop)
     @model function model(flows, fromdist, fp, tp, di, nfrom, N,
                           fpt, radius, normalize)
-        # Priors
         a      ~ Normal(-5, 1)
         b  ~ Gamma(1, 1);     ## b  = b_raw / 100
         c_raw  ~ Gamma(15, 0.2);  c  = c_raw / 10
@@ -47,5 +51,8 @@ function norm(data::NamedTuple; normalize = true)
                 fpt, radius, normalize)
     lb = [-20.0, -100.0, 10.0, 0.0, 1.0]
     ub = [20.0, 10.0, 100.0, 99.0, 100.0]
-    return (; mdl, lb, ub)
+    return (; mdl, lb, ub, data)
 end
+
+fradius(P, ρ) = sqrt((P / ρ) / 2π)
+lc(x) = levelcode.(categorical(x))
