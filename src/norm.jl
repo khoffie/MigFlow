@@ -3,23 +3,23 @@ function norm(data::NamedTuple; normalize = true, type)
     districts = sort(data.districts, :distcode)
     ds = 100
 
-    flows    = df.flows
-    fromdist = lc(df.fromdist)
-    todist = lc(df.todist)
+    Y    = df.flows
+    from = lc(df.fromdist)
+    to = lc(df.todist)
     if type == "joint"
-        fp = df.frompop
+        A = df.frompop
     elseif type == "conditional"
         df2 = combine(groupby(data.df, :fromdist), :flows => sum)
-        fp = leftjoin(df, df2, on = :fromdist).flows_sum
+        A = leftjoin(df, df2, on = :fromdist).flows_sum
     end
     P       = districts.pop ./ 153000 # median topop
-    di       = df.dist  ./ ds
-    nfrom    = length(unique(fromdist))
+    D       = df.dist  ./ ds
+    Ndist    = length(districts.distcode)
     N        = length(flows)
     radius   = fradius.(districts.pop, districts.density)
-    data = (; flows, df.fromdist, df.todist, df.dist, df.frompop, df.topop)
+    data = (; Y, df.fromdist, df.todist, D, , df.topop)
 
-    @model function model(flows, fromdist, todist,fp, P, di, nfrom, N,
+    @model function model(Y, from, to, A, P, D, Ndist, N,
                           radius, normalize)
         a      ~ Normal(-5, 1)
         b  ~ Gamma(1, 1);     ## b  = b_raw / 100
@@ -33,19 +33,19 @@ function norm(data::NamedTuple; normalize = true, type)
         preds = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
-            att[i] = P[todist[i]] * (l + (1-l)/((di[i] + d0)^c))
+            att[i] = P[to[i]] * (l + (1-l)/((D[i] + d0)^c))
             if normalize
-                denom[fromdist[i]] += att[i]
-                denom[fromdist[i]] += exp(b) * (P[fromdist[i]] * (l + (1 - l) /
-                    ((radius[fromdist[i]] + d0)^c)))
+                denom[from[i]] += att[i]
+                denom[from[i]] += exp(b) * (P[from[i]] * (l + (1 - l) /
+                    ((radius[from[i]] + d0)^c)))
             end
         end
 
         @inbounds for i in 1:N
             if normalize
-               preds[i] = fp[i] * exp(a) * (att[i] / denom[fromdist[i]])
+               preds[i] = A[i] * exp(a) * (att[i] / denom[from[i]])
             else
-                preds[i] = fp[i] * exp(a) * (att[i])
+                preds[i] = A[i] * exp(a) * (att[i])
             end
         end
 
@@ -53,7 +53,7 @@ function norm(data::NamedTuple; normalize = true, type)
         return preds
     end
 
-    mdl = model(flows, fromdist, todist,fp, P, di, nfrom, N,
+    mdl = model(Y, from, to, A, P, D, Ndist, N,
                 radius, normalize)
     lb = [-20.0, -100.0, 10.0, 0.0, 1.0]
     ub = [20.0, 10.0, 100.0, 99.0, 100.0]
