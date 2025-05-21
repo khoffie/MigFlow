@@ -21,7 +21,7 @@ function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
     D        = df.dist  ./ ds
     Ndist    = length(districts.distcode)
     N        = length(Y)
-    radius   = fradius.(districts.pop, districts.density)
+    radius   = fradius.(districts.pop, districts.density, ds)
     fromfull = lc(dffull.fromdist)
     tofull   = lc(dffull.todist)
     Dfull    = dffull.dist
