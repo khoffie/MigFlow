@@ -6,12 +6,7 @@ function norm(data::NamedTuple; normalize = true, type)
     Y    = df.flows
     from = lc(df.fromdist)
     to = lc(df.todist)
-    if type == "joint"
-        A = df.frompop
-    elseif type == "conditional"
-        df2 = combine(groupby(data.df, :fromdist), :flows => sum)
-        A = leftjoin(df, df2, on = :fromdist).flows_sum
-    end
+    A = genfrompop(df, type)
     P       = districts.pop ./ 153000 # median topop
     poporig = districts.pop
     D       = df.dist  ./ ds
@@ -63,3 +58,8 @@ end
 
 fradius(P, ρ) = sqrt((P / ρ) / 2π)
 lc(x) = levelcode.(categorical(x))
+function genfrompop(df, type)
+    type == "joint" && return df.frompop
+    df2 = combine(groupby(data.df, :fromdist), :flows => sum)
+    return leftjoin(df, df2, on = :fromdist).flows_sum
+end
