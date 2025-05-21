@@ -16,31 +16,31 @@ function norm(data::NamedTuple; normalize = true, type)
     data    = (; Y, D, from, to, A,  P, poporig)
 
     @model function model(Y, from, to, A, P, D, Ndist, N, radius, normalize)
-        a      ~ Normal(-5, 1)
-        b      ~ Gamma(1, 1);     ## b  = b_raw / 100
-        c_raw  ~ Gamma(15, 0.2);  c  = c_raw / 10
-        l_raw  ~ Gamma(10, 1.0);  l  = l_raw / 100
-        d0_raw ~ Gamma(10, 1.0);  d0 = d0_raw / 100
+        α      ~ Normal(-5, 1)
+        β      ~ Gamma(1, 1);     ## b  = b_raw / 100
+        γ_raw  ~ Gamma(15, 0.2);  γ  = γ_raw / 10
+        ϕ_raw  ~ Gamma(10, 1.0);  ϕ  = ϕ_raw / 100
+        δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
 
-        T = eltype(c)  # to get dual data type for AD
+        T = eltype(γ)  # to get dual data type for AD
         att   = Vector{T}(undef, N)
         denom = zeros(T, Ndist)
         preds = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
-            att[i] = P[to[i]] * (l + (1-l)/((D[i] + d0)^c))
+            att[i] = P[to[i]] * (ϕ + (1 - ϕ)/ ((D[i] + δ)^γ))
             if normalize
                 denom[from[i]] += att[i]
-                denom[from[i]] += exp(b) * (P[from[i]] * (l + (1 - l) /
-                    ((radius[from[i]] + d0)^c)))
+                denom[from[i]] += exp(β) * (P[from[i]] * (ϕ + (1 - ϕ) /
+                    ((radius[from[i]] + δ)^γ)))
             end
         end
 
         @inbounds for i in 1:N
             if normalize
-               preds[i] = A[i] * exp(a) * (att[i] / denom[from[i]])
+               preds[i] = A[i] * exp(α) * (att[i] / denom[from[i]])
             else
-                preds[i] = A[i] * exp(a) * (att[i])
+                preds[i] = A[i] * exp(α) * (att[i])
             end
         end
 
