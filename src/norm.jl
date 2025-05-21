@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; normalize = true, type)
+function norm(data::NamedTuple; norm = true, type)
     df        = sort(data.df, :fromdist)
     districts = sort(data.districts, :distcode)
     ds        = 100
@@ -15,7 +15,7 @@ function norm(data::NamedTuple; normalize = true, type)
     radius  = fradius.(districts.pop, districts.density)
     data    = (; Y, D, from, to, A,  P, poporig)
 
-    @model function model(Y, from, to, A, P, D, Ndist, N, radius, normalize)
+    @model function model(Y, from, to, A, P, D, Ndist, N, radius, norm)
         α      ~ Normal(-5, 1)
         β      ~ Gamma(1, 1);     ## b  = b_raw / 100
         γ_raw  ~ Gamma(15, 0.2);  γ  = γ_raw / 10
@@ -25,33 +25,25 @@ function norm(data::NamedTuple; normalize = true, type)
         T = eltype(γ)  # to get dual data type for AD
         att   = Vector{T}(undef, N)
         denom = zeros(T, Ndist)
-        preds = Vector{T}(undef, N)
+        ps = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
             att[i] = desirability(P[to[i]], D[i], γ, δ, ϕ)
-            if normalize
-                denom[from[i]] += att[i]
-            end
         end
 
-        @inbounds for i in 1:Ndist
-            denom[i] += exp(β) * desirability(P[i], radius[i], γ, δ, ϕ)
-        end
+        denom = normalize(norm, denom, N, from, att, Ndist, β,
+                          desirability, P, radius, γ, δ, ϕ)
 
         @inbounds for i in 1:N
-            if normalize
-               preds[i] = A[i] * exp(α) * (att[i] / denom[from[i]])
-            else
-                preds[i] = A[i] * exp(α) * (att[i])
-            end
+               ps[i] = A[i] * exp(α) * (att[i] / denom[from[i]])
         end
 
-        Y .~ Poisson.(preds)
-        return preds
+        Y .~ Poisson.(ps)
+        return ps
     end
 
     mdl = model(Y, from, to, A, P, D, Ndist, N,
-                radius, normalize)
+                radius, norm)
     lb = [-20.0, -100.0, 10.0, 0.0, 1.0]
     ub = [20.0, 10.0, 100.0, 99.0, 100.0]
     return (; mdl, lb, ub, data)
@@ -64,4 +56,20 @@ function genfrompop(df, type)
     type == "joint" && return df.frompop
     df2 = combine(groupby(data.df, :fromdist), :flows => sum)
     return leftjoin(df, df2, on = :fromdist).flows_sum
+end
+
+function normalize(norm, denom, N, from, att, Ndist, β, desf, P, radius, γ, δ, ϕ)
+    norm == "none" && return ones(N)
+    if norm in ("destination", "both")
+        @inbounds for i in 1:N
+            denom[from[i]] += att[i]
+        end
+    end
+
+    if norm in ("origin", "both")
+        @inbounds for i in 1:Ndist
+            denom[i] += exp(β) * desf(P[i], radius[i], γ, δ, ϕ)
+        end
+    end
+    return denom
 end
