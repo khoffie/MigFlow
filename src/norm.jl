@@ -1,11 +1,16 @@
-function norm(data::NamedTuple; normalize = true)
+function norm(data::NamedTuple; normalize = true, type)
     df = sort(data.df, :fromdist)
     districts = sort(data.districts, :distcode)
     ds = 100
 
     flows    = df.flows
     fromdist = lc(df.fromdist)
-    fp       = df.frompop
+    if type == "joint"
+        fp = df.frompop
+    elseif type == "conditional"
+        df2 = combine(groupby(data.df, :fromdist), :flows => sum)
+        fp = leftjoin(df, df2, on = :fromdist).flows_sum
+    end
     tp       = df.topop ./ 153000 # median topop
     di       = df.dist  ./ ds
     nfrom    = length(unique(fromdist))
