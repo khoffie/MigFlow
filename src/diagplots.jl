@@ -6,7 +6,7 @@ function plotfit(flows, preds)
     scatter(df.x, df.y, xlab = L"\log(\hat{y})", ylab = L"\log(y)",
             label = "", alpha = 0.5)
     diagonal!(df.x, df.y)
-    smoother!(x, y)
+    smoother!(df.x, df.y)
 end
 
 function _plotdist(f, flows, preds, dist, lbl)
