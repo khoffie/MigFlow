@@ -28,11 +28,11 @@ function norm(data::NamedTuple; normalize = true, type)
         preds = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
-            att[i] = P[to[i]] * (ϕ + (1 - ϕ)/ ((D[i] + δ)^γ))
+            att[i] = desirability(P[to[i]], D[i], γ, δ, ϕ)
             if normalize
                 denom[from[i]] += att[i]
-                denom[from[i]] += exp(β) * (P[from[i]] * (ϕ + (1 - ϕ) /
-                    ((radius[from[i]] + δ)^γ)))
+                denom[from[i]] += exp(β) *
+                    desirability(P[from[i]], radius[from[i]], γ, δ, ϕ)
             end
         end
 
@@ -55,6 +55,7 @@ function norm(data::NamedTuple; normalize = true, type)
     return (; mdl, lb, ub, data)
 end
 
+desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
 fradius(P, ρ) = sqrt((P / ρ) / 2π)
 lc(x) = levelcode.(categorical(x))
 function genfrompop(df, type)
