@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; norm = true, type)
+function norm(data::NamedTuple; norm, type)
     df        = sort(data.df, :fromdist)
     districts = sort(data.districts, :distcode)
     ds        = 100
@@ -18,8 +18,8 @@ function norm(data::NamedTuple; norm = true, type)
     @model function model(Y, from, to, A, P, D, Ndist, N, radius, norm)
         α      ~ Normal(-5, 1)
         β      ~ Gamma(1, 1);     ## b  = b_raw / 100
-        γ_raw  ~ Gamma(15, 0.2);  γ  = γ_raw / 10
-        ϕ_raw  ~ Gamma(10, 1.0);  ϕ  = ϕ_raw / 100
+        γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
+        ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
 
         T = eltype(γ)  # to get dual data type for AD
@@ -52,6 +52,7 @@ end
 desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
 fradius(P, ρ) = sqrt((P / ρ) / 2π)
 lc(x) = levelcode.(categorical(x))
+
 function genfrompop(df, type)
     type == "joint" && return df.frompop
     df2 = combine(groupby(data.df, :fromdist), :flows => sum)
@@ -65,7 +66,6 @@ function normalize(norm, denom, N, from, att, Ndist, β, desf, P, radius, γ, δ
             denom[from[i]] += att[i]
         end
     end
-
     if norm in ("origin", "both")
         @inbounds for i in 1:Ndist
             denom[i] += exp(β) * desf(P[i], radius[i], γ, δ, ϕ)
