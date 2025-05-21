@@ -1,24 +1,23 @@
 function norm(data::NamedTuple; normalize = true, type)
-    df = sort(data.df, :fromdist)
+    df        = sort(data.df, :fromdist)
     districts = sort(data.districts, :distcode)
-    ds = 100
+    ds        = 100
 
-    Y    = df.flows
-    from = lc(df.fromdist)
-    to = lc(df.todist)
-    A = genfrompop(df, type)
+    Y       = df.flows
+    from    = lc(df.fromdist)
+    to      = lc(df.todist)
+    A       = genfrompop(df, type)
     P       = districts.pop ./ 153000 # median topop
     poporig = districts.pop
     D       = df.dist  ./ ds
-    Ndist    = length(districts.distcode)
-    N        = length(Y)
-    radius   = fradius.(districts.pop, districts.density)
-    data = (; Y, D, from, to, A,  P, poporig)
+    Ndist   = length(districts.distcode)
+    N       = length(Y)
+    radius  = fradius.(districts.pop, districts.density)
+    data    = (; Y, D, from, to, A,  P, poporig)
 
-    @model function model(Y, from, to, A, P, D, Ndist, N,
-                          radius, normalize)
+    @model function model(Y, from, to, A, P, D, Ndist, N, radius, normalize)
         a      ~ Normal(-5, 1)
-        b  ~ Gamma(1, 1);     ## b  = b_raw / 100
+        b      ~ Gamma(1, 1);     ## b  = b_raw / 100
         c_raw  ~ Gamma(15, 0.2);  c  = c_raw / 10
         l_raw  ~ Gamma(10, 1.0);  l  = l_raw / 100
         d0_raw ~ Gamma(10, 1.0);  d0 = d0_raw / 100
