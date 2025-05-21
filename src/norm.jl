@@ -31,9 +31,11 @@ function norm(data::NamedTuple; normalize = true, type)
             att[i] = desirability(P[to[i]], D[i], γ, δ, ϕ)
             if normalize
                 denom[from[i]] += att[i]
-                denom[from[i]] += exp(β) *
-                    desirability(P[from[i]], radius[from[i]], γ, δ, ϕ)
             end
+        end
+
+        @inbounds for i in 1:Ndist
+            denom[i] += exp(β) * desirability(P[i], radius[i], γ, δ, ϕ)
         end
 
         @inbounds for i in 1:N
