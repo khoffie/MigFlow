@@ -7,9 +7,9 @@ function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
     @assert norm ∈ ["none", "both", "origin", "destination"] m2
     @assert norm_type ∈ ["sample", "full", "none"] m3
 
-    df        = sort(data.df, :fromdist)
+    df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
-    dffull    = sort(data.dffull, :fromdist)
+    dffull    = sort(data.dffull, [:fromdist, :todist])
     ds        = 100
 
     Y        = df.flows
@@ -18,13 +18,13 @@ function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
     A        = genfrompop(df, type)
     P        = districts.pop ./ 153000 # median topop
     poporig  = districts.pop
-    D        = df.dist  ./ ds
+    D        = fdist.(df.dist, ds)
     Ndist    = length(districts.distcode)
     N        = length(Y)
     radius   = fradius.(districts.pop, districts.density, ds)
     fromfull = lc(dffull.fromdist)
     tofull   = lc(dffull.todist)
-    Dfull    = dffull.dist
+    Dfull    = fdist(dffull.dist, ds)
     Nfull    = length(fromfull)
     data     = (; Y, D, from, to, A,  P, poporig)
 
@@ -67,6 +67,7 @@ function norm(data::NamedTuple; norm::String, type::String, norm_type::String)
 end
 
 desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
+fdist(D, ds) = D / ds
 fradius(P, ρ, ds) = sqrt((P / ρ) / 2π) / ds
 lc(x) = levelcode.(categorical(x))
 
@@ -78,10 +79,15 @@ end
 
 function normalize(norm, denom, T, to, P, D, N, from, Ndist, β, desf, radius, γ, δ, ϕ)
     norm == "none" && return ones(T, Ndist)
+##    counts = zeros(Int, Ndist)
     if norm in ("destination", "both")
         @inbounds for i in 1:N
             denom[from[i]] += desf(P[to[i]], D[i], γ, δ, ϕ)
+##            counts[from[i]] += 1
         end
+        # @inbounds for i in 1:Ndist
+        #     denom[i] /= counts[i]
+        # end
     end
     if norm in ("origin", "both")
         @inbounds for i in 1:Ndist
