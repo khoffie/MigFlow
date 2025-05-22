@@ -16,16 +16,28 @@ include("../src/fullmodel2.jl")
 include("../src/othermodels.jl")
 include("../src/norm.jl")
 
-data = load_data("30-50", 2017, 0.1, "../data/"; only_positive = false);
+ratio(out) = exp(out.out["β_raw"] / exp(out.out["α_raw"]))
+data = load_data("30-50", 2017, 1.0, "../data/"; only_positive = true,
+                 seed = 1234);
 
 out1 = @time estimate(norm, data; norm = "none", type = "conditional",
                       norm_type = "none");
-
-out2 = @time estimate(norm, data; norm = "both", type = "conditional",
+n = "both"
+out2 = @time estimate(norm, data; norm = n, type = "conditional",
                       norm_type = "sample");
-
-out3 = @time estimate(norm, data; norm = "both", type = "conditional",
+out3 = @time estimate(norm, data; norm = n, type = "conditional",
                       norm_type = "full");
+
+data = load_data("30-50", 2017, 0.1, "../data/"; only_positive = true);
+
+ty = "joint"
+out1 = @time estimate(norm, data; norm = "none", type = ty, norm_type = "none");
+n = "both"
+out2 = @time estimate(norm, data; norm = n, type = ty, norm_type = "sample");
+out3 = @time estimate(norm, data; norm = n, type = ty, norm_type = "full");
+
+lc(data.dffull.todist)
+
 
 out1.out # conditional, no normalization
 out2.out # conditional, normalization with subset
@@ -45,7 +57,7 @@ out2 = @time estimate(norm, data; norm = "both", type = "joint",
 out1.out # no normalization
 out2.out # normalization
 
-ratio(out) = exp(out.out["β_raw"] / exp(out.out["α_raw"]))
+
 ratio(out1)
 out1 = @time estimate(norm, data; norm = "origin", type = "joint");
 out1 = @time estimate(norm, data; norm = "destination", type = "joint");
