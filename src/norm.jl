@@ -81,13 +81,8 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true)
 end
 
 ## desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
-
 function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * Gto / Gfrom)
-end
-
-function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * (Gto / Gfrom))
+    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * exp(Gto - Gfrom))
 end
 
 fdist(D, ds) = D / ds
@@ -100,5 +95,3 @@ function genfrompop(df, type)
     df2 = combine(groupby(data.df, :fromdist), :flows => sum)
     return leftjoin(df, df2, on = :fromdist).flows_sum
 end
-
-desirability(P, D, ϕ, δ, γ) = P * (ϕ + (1 - ϕ) / (D + δ)^γ)
