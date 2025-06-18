@@ -16,19 +16,16 @@ include("../src/fullmodel2.jl")
 include("../src/othermodels.jl")
 include("../src/norm.jl")
 
-ratio(out) = exp(out.out["β_raw"] / exp(out.out["α_raw"]))
 p = 1.0
-n = "both"
-ty = "joint"
+p = .1
 
-out3f = @profilehtml estimate(norm,
-                              load_data("30-50", 2017, p,
-                                        "data/";
-                                        only_positive = true,
-                                        seed = 1234,
-                                        opf = false);
-                              norm = n, type = ty,
-                              norm_type = "full");
+data = load_data("30-50", 2017, 1.0,
+                 "../data/";
+                 only_positive = true,
+                 seed = 1234,
+                 opf = false);
 
-# out1f = @time estimate(norm, data; norm = "none", type = ty, norm_type = "none");
-# out2f = @time estimate(norm, data; norm = n, type = ty, norm_type = "sample");
+## out1 = @time estimate(norm, data; ndc = 1, ngc = 1, normalize = true);
+out2 = @time estimate(norm, data; ndc = 1, ngc = 1, normalize = false);
+
+out1.plt[5]

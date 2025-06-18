@@ -36,12 +36,20 @@ function addlrd!(districts::DataFrame)
     return districts
 end
 
-function joinlrd(flows, districts)
-    flows = innerjoin(flows, districts[:, [:distcode, :lrd, :year]],
-                      on = [:fromdist => :distcode, :year])
-    rename!(flows, :lrd => :fromdens)
-    flows = innerjoin(flows, districts[:, [:distcode, :lrd, :year]],
-                      on = [:todist => :distcode, :year])
-    rename!(flows, :lrd => :todens)
-    return flows
+# function joinlrd(flows, districts)
+#     flows = innerjoin(flows, districts[:, [:distcode, :lrd, :year]],
+#                       on = [:fromdist => :distcode, :year])
+#     rename!(flows, :lrd => :fromdens)
+#     flows = innerjoin(flows, districts[:, [:distcode, :lrd, :year]],
+#                       on = [:todist => :distcode, :year])
+#     rename!(flows, :lrd => :todens)
+#     return flows
+# end
+
+function joinlrd(df, districts)
+    di = select(districts, :distcode, :year, :lrd => :fromdens)
+    leftjoin!(df, di, on = [:fromdist => :distcode, :year])
+    di = select(districts, :distcode, :year, :lrd => :todens)
+    leftjoin!(df, di, on = [:todist => :distcode, :year])
+    return df
 end

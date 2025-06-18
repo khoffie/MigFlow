@@ -17,7 +17,7 @@ function fraction_within(rs, N, coords, hull)
 end
 
 makehull(coords) = convex_hull(map(r -> [r.x, r.y], eachrow(coords)))
-mm(x) = minimum(x), maximum(x)
+extrema(x) = minimum(x), maximum(x)
 
 function sample_circle(coords, r)
     circ = circle_shape(coords[1], coords[2], r)
@@ -66,8 +66,8 @@ function barplots(df, bw = 20)
 end
 
 function plothull(coords, add_pts = true)
-    xmin, xmax = mm(coords[!, :x])
-    ymin, ymax = mm(coords[!, :y])
+    xmin, xmax = extrema(coords[!, :x])
+    ymin, ymax = extrema(coords[!, :y])
     w = xmax - xmin
     h = ymax - ymin
     p = plot(VPolygon(hull), aspect_ratio = h / w)
