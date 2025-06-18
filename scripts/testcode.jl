@@ -8,7 +8,6 @@ include("../src/loadgermdata.jl")
 include("../src/diag.jl")
 include("../src/diagplots.jl")
 include("../src/chebies.jl")
-include("../src/gen_mdat.jl")
 ## available models
 include("../src/norm.jl")
 
