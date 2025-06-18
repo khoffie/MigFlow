@@ -20,7 +20,10 @@ data = load_data("30-50", 2017, p,
                  seed = 1234,
                  opf = false);
 
-out1 = @time estimate(norm, data; ndc = 1, ngc = 1, normalize = true);
-out2 = @time estimate(norm, data; ndc = 1, ngc = 1, normalize = false);
+## out1 = @time estimate(norm, data; ndc = 6, ngc = 1, normalize = true);
+out2 = @time estimate(norm, data; ndc = 1, ngc = 6, normalize = false);
+out3 = @time estimate(norm, data; ndc = 1, ngc = 10, normalize = false);
 
-out1.plt[5]
+out2.plt[5]
+out2.plt[6]
+coeforder(4)
