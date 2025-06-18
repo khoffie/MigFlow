@@ -15,8 +15,8 @@ function full(data::NamedTuple)
     xcoord = data.xcoord
     ycoord = data.ycoord
     N = length(flows)
-    xmin, xmax = mm(xcoord)
-    ymin, ymax = mm(ycoord)
+    xmin, xmax = extrema(xcoord)
+    ymin, ymax = extrema(ycoord)
 
     @model function model(flows, fromdist, todist, fp, tp, di, fd, td, N,
                           ndc, ngc, dmin, dmax, xcoord, ycoord, distcode,

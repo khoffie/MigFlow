@@ -10,17 +10,17 @@ function defgeocheby(coefs, xmin, xmax, ymin, ymax)
 end
 
 function evaldens(out, d)
-    if any(occursin.("kd", names(out)[1]))
-        kds = out[["kd[$i]" for i in 1 : d.ndc]]
-        return evaldensitycheby(kds, d.dmin, d.dmax)
+    if any(occursin.("ζ", names(out)[1]))
+        kds = out[["ζ_raw[$i]" for i in 1 : d.ndc]]
+        return evaldensitycheby(kds, d.Rmin, d.Rmax)
     else
         return nothing, nothing
     end
 end
 
 function evalgeo(out, d)
-    if any(occursin.("kg", names(out)[1]))
-        kgs = out[["kg[$i]" for i in 1 : d.ngc]]
+    if any(occursin.("η", names(out)[1]))
+        kgs = out[["η_raw[$i]" for i in 1 : d.ngc]]
         return evalgeocheby(kgs, d.distcode, d.xcoord, d.ycoord)
     else
         return nothing, nothing
@@ -29,8 +29,8 @@ end
 
 function evalgeocheby(coefs, distcode, xcoord, ycoord,
                       show_plt = false)
-    xmin, xmax = mm(xcoord)
-    ymin, ymax = mm(ycoord)
+    xmin, xmax = extrema(xcoord)
+    ymin, ymax = extrema(ycoord)
     geocheby = defgeocheby(coefs, xmin, xmax, ymin, ymax)
     geo = geocheby.(xcoord, ycoord)
     ##geo = ForwardDiff.value.(geo)
@@ -56,7 +56,8 @@ function evaldensitycheby(coefs, densmin, densmax,
     df = DataFrame(df)
     ## otherwise upper right corner too bright
     df = df[df.fromdens .< 2.8 .&& df.todens .< 2.8, :]
-    p = heatmap(vals, vals, reshape(df.funval, (90, 90)))
+    s = Int(sqrt(nrow(df)))
+    p = heatmap(vals[1:s], vals[1:s], reshape(df.funval, (s, s)))
     if show_plt; display(p); end
     return df, p
 end

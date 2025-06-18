@@ -1,25 +1,20 @@
 function load_data(a::String, y::Int, p::Float64, path::String;
-                   positive::Bool, full::Bool)
+                   only_positive::Bool, seed::Int = 123,
+                   opf::Bool)
     di = CSV.read(joinpath(path, "districts.csv"), DataFrame)
     di = addlrd!(di)
-    dffull = CSV.read(joinpath(path, "FlowDataGermans.csv"), DataFrame)
-    dffull = year(age(dffull, a), y)
-    if positive; dffull = pos(dffull); end
-    if p < 1.0
-        df = sample_flows(dffull, p)
-    elseif p == 1.0
-        df = dffull
-    end
-    if !full
-        out = (df = df, districts = year(di, y))
-    elseif full
-        dffull = dffull[!, [:fromdist, :todist, :dist]]
-        out = (df = df, districts = year(di, y), dffull)
-    end
-    return out
+    df = CSV.read(joinpath(path, "FlowDataGermans.csv"), DataFrame)
+    df = year(age(df, a), y)
+    Random.seed!(seed)
+    if !opf; dffull = df[!, [:fromdist, :todist, :dist]]; end
+    if only_positive; df = pos(df); end
+    if opf; dffull = df[!, [:fromdist, :todist, :dist]]; end
+    if p < 1.0; df = sample_flows(df, p); end
+    return (df = df, districts = year(di, y), dffull = dffull)
 end
 
 function sample_flows(flows::DataFrame, p::AbstractFloat)
+    ## just to be save in case some years or age groups are passed
     ods = unique(flows, [:fromdist, :todist])[:, [:fromdist, :todist]]
     ## / 2 bc every pair is duplicated to make sure for o -> d the
     ## other direction is included as well
@@ -27,7 +22,9 @@ function sample_flows(flows::DataFrame, p::AbstractFloat)
     ods = ods[StatsBase.sample(1 : nrow(ods), nrows, replace = false), :]
     fromdist = vcat(ods.fromdist, ods.todist)
     todist = vcat(ods.todist, ods.fromdist)
-    ods = DataFrame(; fromdist, todist)
+    ## since for all o -> d, we also use all d -> o, and vice versa,
+    ## we need to make sure we throw away all duplicated rows
+    ods = unique(DataFrame(; fromdist, todist))
     return innerjoin(flows, ods, on = [:fromdist, :todist])
 end
 

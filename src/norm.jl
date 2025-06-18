@@ -1,69 +1,104 @@
-function norm(data::NamedTuple; normalize = true)
-    flows    = data.flows
-    from     = data.fromdist
-    fp       = data.frompop
-    tp       = data.topop ./ 153000 # median topop
-    di       = data.dist  ./ data.distscale
-    nfrom    = length(unique(from))
-    N        = length(flows)
-    fpt      = data.fpt
-    radius   = data.radius
-    fromfull = data.fromdistfull
-    tpfull   = data.topopfull
-    Nfull    = length(data.fromdistfull)
-    difull   = data.distfull
-    @model function model(flows, from, fp, tp, di, nfrom, N,
-                          fpt, radius, normalize, fromfull, tpfull,
-                          Nfull)
-        # Priors
-        a      ~ Normal(-5, 1)
-        b      ~ Gamma(1, 1);
-        c_raw  ~ Gamma(15, 0.2);  c  = c_raw / 10
-        l_raw  ~ Gamma(10, 1.0);  l  = l_raw / 100
-        d0_raw ~ Gamma(10, 1.0);  d0 = d0_raw / 100
+function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true)
 
-        T = eltype(c)  # to get dual data type for AD
-        att   = Vector{T}(undef, N)
-        denom = zeros(T, nfrom)
-        preds = Vector{T}(undef, N)
+    df        = sort(data.df, [:fromdist, :todist])
+    districts = sort(data.districts, :distcode)
+    dffull    = sort(data.dffull, [:fromdist, :todist])
+    ds        = 100
 
-        @inbounds for i in 1:N
-            att[i] = desirability(tp[i], di[i], l, d0, c)
-        end
+    Y          = df.flows
+    from       = lc(df.fromdist)
+    to         = lc(df.todist)
+    A          = genfrompop(df, "joint")
+    P          = districts.pop ./ 153000 # median topop
+    poporig    = districts.pop
+    D          = fdist.(df.dist, ds)
+    R          = log.(districts.density ./ median(districts.density))
+    Rmin, Rmax = extrema(R)
+    Ndist      = length(districts.distcode)
+    N          = length(Y)
+    radius     = fradius.(districts.pop, districts.density, ds)
+    xcoord     = districts.xcoord
+    ycoord     = districts.ycoord
+    xmin, xmax = extrema(xcoord)
+    ymin, ymax = extrema(ycoord)
+    fromfull   = lc(dffull.fromdist)
+    tofull     = lc(dffull.todist)
+    Dfull      = fdist(dffull.dist, ds)
+    Nfull      = length(fromfull)
+    data       = (; Y, D, from, to, A,  P, districts.distcode, poporig,
+                  ndc, ngc, Rmin, Rmax, xcoord, ycoord)
 
-        # if normalize
-        #     @inbounds for i in 1:Nfull
-        #         denom[fromfull[i]] += desirability(tpfull[i], difull[i], l, d0, c)
-        #         denom[fromfull[i]] += exp(b) *
-        #             desirability(fpt[fromfull[i]], radius[fromfull[i]], l, d0, c)
-        #     end
-        # end
+    @model function model(Y, from, to, A, P, D, R, Ndist, N, radius,
+                          xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
+                          fromfull, tofull, Dfull, Nfull, ndc, ngc,
+                          normalize)
+
+        α_raw  ~ Normal(-5, 1);   α = exp(α_raw)
+        β_raw  ~ Gamma(1, 1);     β = exp(β_raw)
+        γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
+        ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
+        δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
+        ζ_raw ~ StMvN(ndc, 10); ζ = ζ_raw / 100; ζ[1] = 0.0 # cheby intercept, ensure heatmap is not elevated
+        η_raw ~ StMvN(ngc, 10); η = η_raw / 100; η[1] = 0.0
+
+        T = eltype(γ)  # to get dual data type for AD
+        denom = zeros(T, Ndist)
+        ps = Vector{T}(undef, N)
+
+        Q = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[from], R[to]))
+        G = exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord))
 
         if normalize
-            @inbounds for i in 1:N
-                denom[from[i]] += desirability(tp[i], di[i], l, d0, c)
-                denom[from[i]] += exp(b) *
-                    desirability(fpt[from[i]], radius[from[i]], l, d0, c)
+            Qfull = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[fromfull], R[tofull]))
+            @inbounds for i in 1:Nfull
+                denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i], Qfull[i],
+                                                   G[fromfull[i]], G[tofull[i]], γ, δ, ϕ)
             end
+            @inbounds for i in 1:Ndist
+                denom[i] += desirability(P[i], β * radius[i],
+                                         exp.(defdensitycheby(ζ, Rmin, Rmax).(R[i], R[i])),
+                                         1, 1, γ, δ, ϕ)
+            end
+        else
+            denom = ones(T, Ndist)
         end
 
         @inbounds for i in 1:N
-            if normalize
-               preds[i] = fp[i] * exp(a) * (att[i] / denom[from[i]])
-            else
-                preds[i] = fp[i] * exp(a) * (att[i])
-            end
+            ps[i] = A[i] * α *
+                (desirability(P[to[i]], D[i], Q[i],
+                              G[from[i]], G[to[i]], γ, δ, ϕ) / denom[from[i]])
         end
-
-        flows .~ Poisson.(preds)
-        return preds
+        Y .~ Poisson.(ps)
+        return ps
     end
 
-    mdl = model(flows, from, fp, tp, di, nfrom, N,
-                fpt, radius, normalize, fromfull, tpfull, Nfull)
-    lb = [-20.0, -100.0, 10.0, 0.0, 1.0]
-    ub = [20.0, 10.0, 100.0, 99.0, 100.0]
-    return (; mdl, lb, ub)
+    mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
+                xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
+                fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize)
+    lb = [-20.0, -100.0, 10.0, 0.0, 1.0, fill(-100, ndc)..., fill(-100, ngc)...]
+    ub = [20.0, 100.0, 100.0, 99.0, 100.0, fill(100, ndc)..., fill(100, ngc)...]
+    return (; mdl, lb, ub, data)
+end
+
+## desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
+
+function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
+    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * Gto / Gfrom)
+end
+
+function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
+    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * (Gto / Gfrom))
+end
+
+fdist(D, ds) = D / ds
+fradius(P, ρ, ds) = sqrt((P / ρ) / 2π) / ds
+lc(x) = levelcode.(categorical(x))
+StMvN(n, σ) = MvNormal(zeros(n), fill(σ, n))
+
+function genfrompop(df, type)
+    type == "joint" && return df.frompop
+    df2 = combine(groupby(data.df, :fromdist), :flows => sum)
+    return leftjoin(df, df2, on = :fromdist).flows_sum
 end
 
 desirability(P, D, ϕ, δ, γ) = P * (ϕ + (1 - ϕ) / (D + δ)^γ)

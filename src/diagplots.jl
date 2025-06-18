@@ -6,7 +6,7 @@ function plotfit(flows, preds)
     scatter(df.x, df.y, xlab = L"\log(\hat{y})", ylab = L"\log(y)",
             label = "", alpha = 0.5)
     diagonal!(df.x, df.y)
-    smoother!(x, y)
+    smoother!(df.x, df.y)
 end
 
 function _plotdist(f, flows, preds, dist, lbl)
@@ -86,14 +86,9 @@ end
 
 subset(x, n) = StatsBase.sample(1:length(x), n)
 
-function pma!(x, y, w)
-    plot!(x, moving_average(y, w), linewidth = 5,
-      colour = :blue, label = "SMA, m = $w")
-end
-
 function diagonal!(x, y)
-    xmin, xmax = mm(x)
-    ymin, ymax = mm(y)
+    xmin, xmax = extrema(x)
+    ymin, ymax = extrema(y)
     low = min(xmin, ymin)
     high = max(xmax, ymax)
 
