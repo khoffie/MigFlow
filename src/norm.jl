@@ -82,7 +82,7 @@ end
 
 ## desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
 function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * exp(Gto - Gfrom))
+    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto - Gfrom))
 end
 
 fdist(D, ds) = D / ds
