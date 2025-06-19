@@ -45,7 +45,7 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true)
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
 
-        Q = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[from], R[to]))
+        Q = log.( 1 .+ exp.(defdensitycheby(ζ, Rmin, Rmax).(R[from], R[to])))
         G = exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord))
 
         if normalize
@@ -82,7 +82,7 @@ end
 
 ## desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
 function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto - Gfrom))
+    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * exp(Gto - Gfrom))
 end
 
 fdist(D, ds) = D / ds
