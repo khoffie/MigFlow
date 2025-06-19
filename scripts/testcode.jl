@@ -14,16 +14,10 @@ include("../src/norm.jl")
 p = 1.0
 p = .1
 
-data = load_data("30-50", 2017, p,
-                 "../data/";
-                 only_positive = true,
-                 seed = 1234,
-                 opf = false);
-
-## out1 = @time estimate(norm, data; ndc = 6, ngc = 1, normalize = true);
-out2 = @time estimate(norm, data; ndc = 1, ngc = 6, normalize = false);
-out3 = @time estimate(norm, data; ndc = 1, ngc = 10, normalize = false);
-
-out2.plt[5]
-out2.plt[6]
-coeforder(4)
+out2 = @time estimate(norm,
+                      load_data("30-50", 2017, p,
+                                "../data/";
+                                only_positive = true,
+                                seed = 1234,
+                                opf = false);
+                      ndc = 28, ngc = 28, normalize = false);
