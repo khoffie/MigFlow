@@ -4,6 +4,8 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true)
     districts = sort(data.districts, :distcode)
     dffull    = sort(data.dffull, [:fromdist, :todist])
     ds        = 100
+    age       = unique(df.agegroup)[1]
+    year      = unique(df.year)[1]
 
     Y          = df.flows
     from       = lc(df.fromdist)
@@ -26,7 +28,7 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true)
     Dfull      = fdist(dffull.dist, ds)
     Nfull      = length(fromfull)
     data       = (; Y, D, from, to, A,  P, districts.distcode, poporig,
-                  ndc, ngc, Rmin, Rmax, xcoord, ycoord)
+                  ndc, ngc, Rmin, Rmax, xcoord, ycoord, age, year)
 
     @model function model(Y, from, to, A, P, D, R, Ndist, N, radius,
                           xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
@@ -45,8 +47,8 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true)
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
 
-        Q = log.( 1 .+ exp.(defdensitycheby(ζ, Rmin, Rmax).(R[from], R[to])))
-        G = exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord))
+        Q = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[from], R[to]))
+        G = log.(1 .+ exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord)))
 
         if normalize
             Qfull = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[fromfull], R[tofull]))

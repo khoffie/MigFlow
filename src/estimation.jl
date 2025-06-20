@@ -4,8 +4,11 @@ function estimate(model, data::NamedTuple;
     mdl = model(data; kwargs...)
     mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub, ad)
     out = format_mles(mles)
-
     data = mdl.data
+
+    out = NamedArray(out ∪ [data.age, data.year],
+                     names(out)[1] ∪ ["age", "year"])
+
     net = calc_net_df(DataFrame(flows = data.Y,
                                 preds = preds,
                                 fromdist = data.from,
