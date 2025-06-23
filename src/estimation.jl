@@ -26,7 +26,7 @@ function estimate(model, data::NamedTuple;
         pgeo
 #           plotdens(ma[:flows], preds, ma[:fd], ma[:td])
            ]
-    p = plot(plt[1 : 4]..., plot_title = "LP $(round(out[end], digits = 0))",
+    p = plot(plt[1 : 4]..., plot_title = "LP $(round(out["lp"], digits = 0))",
              size = (1000, 600))
     if show_plt; display(p); end
     res = (out = out, net = net, preds = preds,
