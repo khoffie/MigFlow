@@ -47,7 +47,7 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
         ps = Vector{T}(undef, N)
 
         Q = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[from], R[to]))
-        G = log.(1 .+ exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord)))
+        G = (defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord))
 
         if normalize
             Qfull = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[fromfull], R[tofull]))
