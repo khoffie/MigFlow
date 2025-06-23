@@ -1,9 +1,8 @@
-function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true)
+function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
     dffull    = sort(data.dffull, [:fromdist, :todist])
-    ds        = 100
     age       = unique(df.agegroup)[1]
     year      = unique(df.year)[1]
 
