@@ -1,7 +1,7 @@
 using CSV, Plots, DataFrames, StatsBase, StatsPlots, Random
 using Distributions, LazySets, Turing
 include("utils.jl")
-
+figpath = "/home/konstantin/paper/images/"
 function fraction_within(rs, N, coords, hull)
     res = []
     vhull = VPolygon(hull)
@@ -69,7 +69,7 @@ function plothull(coords, add_pts = true)
     ymin, ymax = extrema(coords[!, :y])
     w = xmax - xmin
     h = ymax - ymin
-    p = plot(VPolygon(hull), aspect_ratio = h / w)
+    p = plot(VPolygon(makehull(coords)), aspect_ratio = h / w)
     if add_pts; scatter!(coords.x, coords.y, markersize = 0.5, label = ""); end
     return p
 end
@@ -89,18 +89,39 @@ function maincircle(df, districts)
     return res
 end
 
-# df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
-# ## df = age(year(df, 2017), "30-50")
-# districts = CSV.read("../data/districts.csv", DataFrame)
+function makeplots(df, districts)
+    res = maincircle(df, districts) ## joins res to df
+    groups = groupby(df, [:agegroup, :year])
+    results = barplots.(collect(groups), 25)
+    return res, getindex.(results, 1), getindex.(results, 2)
+end
 
-## res = maincircle(df, districts)
+function saveageplots(plts)
+    ageplts = Vector{Plots.Plot}(undef, 6)
+    for i in 0:5
+        ageplts[i + 1] = plot(plots[5 + i * 17], plots[17 + i * 17],
+                              layout = (2, 1), size = (600, 800))
+        savefig(joinpath(figpath, "age_dist_$(i+1).svg"))
+    end
+end
 
-# groups = groupby(df, [:agegroup, :year])
-# dfs, plots = barplots.(collect(groups), 25)
+function makehullplot(districts)
+    cs = select(unique(districts, :distcode), [:xcoord => :x, :ycoord => :y])
+    phull = plothull(cs, true)
+    for _ in 1:10
+        c = cs[StatsBase.sample(1:nrow(cs)), :]
+        c, x, y = sample_circle(c, rand(1:821))
+        plot!(phull, c, label = "")
+    end
+    return phull
+end
 
-# phull = plothull(coords, true)
-# for _ in 1:20
-#     c, x, y = sample_circle(sample_coords(coords), rand(1:821))
-#     plot!(phull, c, label = "")
-# end
-# phull
+df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
+## df = age(year(df, 2017), "30-50")
+districts = CSV.read("../data/districts.csv", DataFrame)
+
+res, dfs, plots = makeplots(df, districts)
+saveageplots(plots)
+savefig(plots[51], joinpath(figpath, "dist_30-50_2017.svg"))
+savefig(diagplots(res), joinpath(figpath, "capacity.svg"))
+makehullplot(districts)
