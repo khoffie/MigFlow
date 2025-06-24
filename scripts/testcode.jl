@@ -15,9 +15,9 @@ p = 1.0
 p = .1
 
 data = load_data("30-50", 2016, p, "../data/"; only_positive = true,
-                 seed = 1234, full = "none");
+                 seed = 1234, opf = true);
 
-out = @time estimate(norm, data, ndc = 1, ngc = 1, normalize = false);
+out = @time estimate(norm, data, ndc = 4, ngc = 1, normalize = false);
 
 # LP with 15 geo -33208.7, with exp(Gto - Gfrom)
 out.out
