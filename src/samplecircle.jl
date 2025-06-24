@@ -37,15 +37,14 @@ function circle_shape(h, k, r)
 end
 
 function diagplots(res)
-    main = "Capacity at distance d: cap(d) = d * a2π\na: average fraction of circle with random
-center and radius d that falls within Germany"
+    main = "Capacity at distance d: cap(d) = d * a2π"
     p1 = scatter(res.radius, res.pot,
-                 xlab = "Distance in km",
+                 xlab = "Distance (km)",
                  ylab = "Capacity: Distance * a2π",
                  title = main, label = "", size = (900, 600))
     p2 = scatter(res.radius, res.frac,
-                 xlab = "Distance", ylab = "fraction within", label = "",
-                 title = "Fraction of circle falling within Germany")
+                 xlab = "Radius", ylab = "fraction within", label = "",
+                 title = "a: fraction of circle within Germany")
     return plot(p1, p2)
 end
 
