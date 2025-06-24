@@ -17,7 +17,6 @@ function fraction_within(rs, N, coords, hull)
 end
 
 makehull(coords) = convex_hull(map(r -> [r.x, r.y], eachrow(coords)))
-extrema(x) = minimum(x), maximum(x)
 
 function sample_circle(coords, r)
     circ = circle_shape(coords[1], coords[2], r)
@@ -33,8 +32,8 @@ function centers(df, n = 1)
 end
 
 function circle_shape(h, k, r)
-	θ = LinRange(0, 2 * π, 500)
-	return h .+ r * sin.(θ), k .+ r * cos.(θ)
+    θ = LinRange(0, 2 * π, 500)
+    return h .+ r * sin.(θ), k .+ r * cos.(θ)
 end
 
 function diagplots(res)
@@ -55,7 +54,7 @@ function barplots(df, bw = 20)
     df2 = combine(groupby(df, :distbin), [:flows, :fpp] .=> sum)
     b1 = bar(df2.distbin, log.(df2.fpp_sum),
              xlab = "distance binned",
-             ylab = "log(flows / a2pir)", label = "")
+             ylab = "log(flows / a2πr)", label = "")
 
     b2 = bar(df2.distbin, log.(df2.flows_sum),
              xlab = "distance binned",
