@@ -52,8 +52,9 @@ function evalgeocheby(coefs, distcode, xcoord, ycoord,
     ymin, ymax = extrema(ycoord)
     geocheby = defgeocheby(coefs, xmin, xmax, ymin, ymax)
     geo = geocheby.(xcoord, ycoord)
+    geo2 = exp.(geo)
     ##geo = ForwardDiff.value.(geo)
-    df = DataFrame(; distcode, xcoord, ycoord, geo)
+    df = DataFrame(; distcode, xcoord, ycoord, geo, geo2)
 
     ratio = (ymax - ymin) / (xmax - xmin)
     width = 600
