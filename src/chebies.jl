@@ -4,9 +4,11 @@ function defdensitycheby(coefs, densmin, densmax)
 end
 
 function evaldens(out, d)
-    if any(occursin.("ζ", names(out)[1]))
-        kds = out[["ζ_raw[$i]" for i in 1 : d.ndc]]
-        return evaldensitycheby(kds, d.Rmin, d.Rmax)
+    idx = occursin.("ζ", names(out)[1])
+    if sum(idx) > 0
+        ## Float, otherwise ./ 100 fails, even with out[idx].array ./ 100
+        coefs = Float64.(collect(out[idx])) ./ 100
+        return evaldensitycheby(coefs, d.Rmin, d.Rmax)
     else
         return nothing, nothing
     end
@@ -35,9 +37,10 @@ function defgeocheby(coefs, xmin, xmax, ymin, ymax)
 end
 
 function evalgeo(out, d)
-    if any(occursin.("η", names(out)[1]))
-        kgs = out[["η_raw[$i]" for i in 1 : d.ngc]]
-        return evalgeocheby(kgs, d.distcode, d.xcoord, d.ycoord)
+    idx = occursin.("η", names(out)[1])
+    if sum(idx) > 0
+        coefs = Float64.(collect(out[idx])) ./ 100
+        return evalgeocheby(coefs, d.distcode, d.xcoord, d.ycoord)
     else
         return nothing, nothing
     end
