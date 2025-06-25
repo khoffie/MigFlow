@@ -5,9 +5,7 @@ function estimate(model, data::NamedTuple;
     mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub, ad)
     out = format_mles(mles)
     data = mdl.data
-
-    out = NamedArray(out ∪ [data.age, data.year],
-                     names(out)[1] ∪ ["age", "year"])
+    out = add_age_year(out, data)
 
     net = calc_net_df(DataFrame(flows = data.Y,
                                 preds = preds,
@@ -24,7 +22,6 @@ function estimate(model, data::NamedTuple;
         plotnet(net),
         pdens,
         pgeo
-#           plotdens(ma[:flows], preds, ma[:fd], ma[:td])
            ]
     p = plot(plt[1 : 4]..., plot_title = "LP $(round(out["lp"], digits = 0))",
              size = (1000, 600))
@@ -34,6 +31,12 @@ function estimate(model, data::NamedTuple;
     display(res.out)
     println("")
     return res
+end
+
+function add_age_year(out, data)
+    new_vals = vcat(out, [data.age, data.year])
+    new_names = vcat(names(out)[1], ["age", "year"])
+    return NamedArray(new_vals, (new_names,))
 end
 
 function format_mles(mles)
