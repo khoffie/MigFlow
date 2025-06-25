@@ -3,12 +3,6 @@ function defdensitycheby(coefs, densmin, densmax)
     return Fun(cheby * cheby, coefs)
 end
 
-function defgeocheby(coefs, xmin, xmax, ymin, ymax)
-    chebyx = ApproxFun.Chebyshev(xmin .. xmax)
-    chebyy = ApproxFun.Chebyshev(ymin .. ymax)
-    return Fun(chebyx * chebyy, coefs)
-end
-
 function evaldens(out, d)
     if any(occursin.("ζ", names(out)[1]))
         kds = out[["ζ_raw[$i]" for i in 1 : d.ndc]]
@@ -16,6 +10,28 @@ function evaldens(out, d)
     else
         return nothing, nothing
     end
+end
+
+function evaldensitycheby(coefs, densmin, densmax,
+                          vals = range(densmin, densmax, 100),
+                          show_plt = false)
+    densitycheby = defdensitycheby(coefs, densmin, densmax)
+    df = ((fromdens = fd,
+          todens = td,
+          funval = densitycheby(fd, td)) for fd in vals, td in vals)
+    df = DataFrame(df)
+    ## otherwise upper right corner too bright
+    df = df[df.fromdens .< 2.8 .&& df.todens .< 2.8, :]
+    s = Int(sqrt(nrow(df)))
+    p = heatmap(vals[1:s], vals[1:s], reshape(df.funval, (s, s)))
+    if show_plt; display(p); end
+    return df, p
+end
+
+function defgeocheby(coefs, xmin, xmax, ymin, ymax)
+    chebyx = ApproxFun.Chebyshev(xmin .. xmax)
+    chebyy = ApproxFun.Chebyshev(ymin .. ymax)
+    return Fun(chebyx * chebyy, coefs)
 end
 
 function evalgeo(out, d)
@@ -42,22 +58,6 @@ function evalgeocheby(coefs, distcode, xcoord, ycoord,
                 marker_z = df.geo,
                 markersize = 10, size = (600, width * ratio),
                 label = "")
-    if show_plt; display(p); end
-    return df, p
-end
-
-function evaldensitycheby(coefs, densmin, densmax,
-                          vals = range(densmin, densmax, 100),
-                          show_plt = false)
-    densitycheby = defdensitycheby(coefs, densmin, densmax)
-    df = ((fromdens = fd,
-          todens = td,
-          funval = densitycheby(fd, td)) for fd in vals, td in vals)
-    df = DataFrame(df)
-    ## otherwise upper right corner too bright
-    df = df[df.fromdens .< 2.8 .&& df.todens .< 2.8, :]
-    s = Int(sqrt(nrow(df)))
-    p = heatmap(vals[1:s], vals[1:s], reshape(df.funval, (s, s)))
     if show_plt; display(p); end
     return df, p
 end
