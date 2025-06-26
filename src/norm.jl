@@ -46,18 +46,20 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
 
-        Q = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[from], R[to]))
+        dc = defdensitycheby(ζ, Rmin, Rmax)
         G = exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord))
 
         if normalize
             Qfull = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[fromfull], R[tofull]))
             @inbounds for i in 1:Nfull
-                denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i], Qfull[i],
-                                                   G[fromfull[i]], G[tofull[i]], γ, δ, ϕ)
+                denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
+                                                   exp(dc(R[fromfull[i]], R[tofull[i]])),
+                                                   G[fromfull[i]], G[tofull[i]],
+                                                   γ, δ, ϕ)
             end
             @inbounds for i in 1:Ndist
                 denom[i] += desirability(P[i], β * radius[i],
-                                         exp.(defdensitycheby(ζ, Rmin, Rmax).(R[i], R[i])),
+                                         exp(dc(R[i], R[i])),
                                          1, 1, γ, δ, ϕ)
             end
         else
@@ -66,8 +68,11 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
 
         @inbounds for i in 1:N
             ps[i] = A[i] * α *
-                (desirability(P[to[i]], D[i], Q[i],
-                              G[from[i]], G[to[i]], γ, δ, ϕ) / denom[from[i]])
+                (desirability(P[to[i]], D[i],
+   ##                           Q[i],
+                              exp(dc(R[from[i]], R[to[i]])),
+                              G[from[i]], G[to[i]],
+                              γ, δ, ϕ) / denom[from[i]])
         end
         Y .~ Poisson.(ps)
         return ps
