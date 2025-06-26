@@ -28,7 +28,7 @@ function estimate(model, data::NamedTuple;
     if show_plt; display(p); end
     res = (out = out, net = net, preds = preds,
            dens = densdesir, geo = geo, mles = mles, plt = plt)
-    display(res.out)
+##    display(res.out)
     println("")
     return res
 end
