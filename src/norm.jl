@@ -74,7 +74,7 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
                               G[from[i]], G[to[i]],
                               γ, δ, ϕ) / denom[from[i]])
         end
-        Y .~ Poisson.(ps)
+        Y ~ product_distribution(Poisson.(ps))
         return ps
     end
 
