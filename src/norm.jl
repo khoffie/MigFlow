@@ -39,11 +39,8 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
         γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
-        ζ_raw ~ StMvN(ndc, 10) ##; ζ = ζ_raw / 100 ; ζ[1] = 0.0 # cheby intercept, ensure heatmap is not elevated
-        η_raw ~ StMvN(ngc, 10) ##; η = η_raw / 100 ; η[1] = 0.0
-
-        ζ = vcat(1.0, ζ_raw / 100)
-        η = vcat(1.0, η_raw / 100)
+        ζ_raw ~ StMvN(ndc, 10);   ζ = vcat(1.0, ζ_raw / 100)
+        η_raw ~ StMvN(ngc, 10);   η = vcat(1.0, η_raw / 100)
 
         T = eltype(γ)  # to get dual data type for AD
         denom = zeros(T, Ndist)
@@ -53,7 +50,6 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
         G = exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord))
 
         if normalize
-            Qfull = exp.(defdensitycheby(ζ, Rmin, Rmax).(R[fromfull], R[tofull]))
             @inbounds for i in 1:Nfull
                 denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
                                                    exp(dc(R[fromfull[i]], R[tofull[i]])),
