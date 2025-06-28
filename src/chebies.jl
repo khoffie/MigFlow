@@ -6,8 +6,10 @@ end
 function evaldens(out, d)
     idx = occursin.("ζ", names(out)[1])
     if sum(idx) > 0
-        ## Float, otherwise ./ 100 fails, even with out[idx].array ./ 100
-        coefs = Float64.(collect(out[idx])) ./ 100
+        ## Float, otherwise ./ 100 fails, even with out[idx].array ./
+        ## 100 Appending 0.0, because, the first coef is no parameter,
+        ## but fixed. Because it is no parameter it is not returned by the model
+        coefs = vcat(0.0, Float64.(collect(out[idx])) ./ 100)
         return evaldensitycheby(coefs, d.Rmin, d.Rmax)
     else
         return nothing, nothing
@@ -39,7 +41,9 @@ end
 function evalgeo(out, d)
     idx = occursin.("η", names(out)[1])
     if sum(idx) > 0
-        coefs = Float64.(collect(out[idx])) ./ 100
+        ## 100 Appending 0.0, because, the first coef is no parameter,
+        ## but fixed. Because it is no parameter it is not returned by the model
+        coefs = vcat(0.0, Float64.(collect(out[idx])) ./ 100)
         return evalgeocheby(coefs, d.distcode, d.xcoord, d.ycoord)
     else
         return nothing, nothing
