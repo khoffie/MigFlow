@@ -17,6 +17,10 @@ data = load_data("30-50", 2016, p, "../data/"; only_positive = true,
                  seed = 1234, opf = false);
 Random.seed!(123)
 out = @time estimate(norm, data, ndc = 28, ngc = 28, normalize = true);
+inits = Float64.(collect(out.out[1: (end-3)]))
+out = @time estimate(norm, data, ndc = 28, ngc = 28, normalize = true,
+                     inits = inits);
+
 out.out
 out.plt[5]
 out.plt[6]

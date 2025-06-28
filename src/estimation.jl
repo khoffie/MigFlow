@@ -1,5 +1,6 @@
 function estimate(model, data::NamedTuple;
                   ad = ADTypes.AutoForwardDiff(), show_plt = true,
+                  inits = nothing,
                   kwargs...)
     mdl = model(data; kwargs...)
     mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub, ad)
@@ -51,8 +52,10 @@ function runoptim(mdl, lb, ub, ad)
     while attempt < 5
         try
             mles = Turing.maximum_likelihood(mdl; lb = lb, ub = ub,
-                                             adtype = ad, reltol = 1e-2,
-                                             maxiters = 10, show_trace = true,
+                                             adtype = ad,
+                                             initial_params = inits,
+                                             reltol = 1e-2,
+                                             maxiters = 5, show_trace = true,
                                              extended_trace = true)
 ##            mles = @time(Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub))
             return mles, predict(mdl, mles)
