@@ -52,6 +52,7 @@ function runoptim(mdl, lb, ub;
                   inits = nothing,
                   reltol = nothing,
                   maxiters = nothing,
+                  maxtime = nothing,
                   show_trace = false)
     attempt = 0
     while attempt < 5
@@ -60,8 +61,10 @@ function runoptim(mdl, lb, ub;
                                              adtype = ad,
                                              initial_params = inits,
                                              maxiters = maxiters,
+                                             maxtime = maxtime,
                                              reltol = reltol,
-                                             show_trace = show_trace)
+                                             show_trace = show_trace,
+                                             store_trace = false)
 ##            mles = @time(Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub))
             return mles, predict(mdl, mles)
         catch e
