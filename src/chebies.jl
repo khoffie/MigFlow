@@ -9,7 +9,7 @@ function evaldens(out, d)
         ## Float, otherwise ./ 100 fails, even with out[idx].array ./
         ## 100 Appending 0.0, because, the first coef is no parameter,
         ## but fixed. Because it is no parameter it is not returned by the model
-        coefs = vcat(0.0, Float64.(collect(out[idx])) ./ 100)
+        coefs = vcat(Float64.(collect(out[idx])) ./ 100)
         return evaldensitycheby(coefs, d.Rmin, d.Rmax)
     else
         return nothing, nothing
@@ -43,7 +43,7 @@ function evalgeo(out, d)
     if sum(idx) > 0
         ## 100 Appending 0.0, because, the first coef is no parameter,
         ## but fixed. Because it is no parameter it is not returned by the model
-        coefs = vcat(0.0, Float64.(collect(out[idx])) ./ 100)
+        coefs = vcat(Float64.(collect(out[idx])) ./ 100)
         return evalgeocheby(coefs, d.distcode, d.xcoord, d.ycoord)
     else
         return nothing, nothing
