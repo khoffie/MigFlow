@@ -50,8 +50,8 @@ end
 function runoptim(mdl, lb, ub;
                   ad = ADTypes.AutoForwardDiff(),
                   inits = nothing,
-                  reltol = 1e-2,
-                  maxiters = 100,
+                  reltol = nothing,
+                  maxiters = nothing,
                   show_trace = false)
     attempt = 0
     while attempt < 5
