@@ -11,12 +11,18 @@ include("../src/chebies.jl")
 ## available models
 include("../src/norm.jl")
 
-p = .1
 p = 1.0
+p = 0.1
 data = load_data("30-50", 2016, p, "../data/"; only_positive = true,
                  seed = 1234, opf = false);
+
 Random.seed!(123)
-out = @time estimate(norm, data, ndc = 28, ngc = 28, normalize = true);
+out = @time estimate(norm, data;
+                     model_kwargs = (; ndc = 1, ngc = 1, normalize = true),
+                     optim_kwargs = (; maxiters = 5, show_trace = true));
+
+
+
 inits = Float64.(collect(out.out[1: (end-3)]))
 out = @time estimate(norm, data, ndc = 28, ngc = 28, normalize = true,
                      inits = inits);
