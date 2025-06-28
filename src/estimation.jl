@@ -1,9 +1,9 @@
 function estimate(model, data::NamedTuple;
-                  ad = ADTypes.AutoForwardDiff(), show_plt = true,
+                  show_plt = true,
                   model_kwargs = (;),
                   optim_kwargs = (;))
     mdl = model(data; model_kwargs...)
-    mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub, ad, optim_kwargs...)
+    mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
     out = format_mles(mles)
     data = mdl.data
     out = add_age_year(out, data)
@@ -47,8 +47,13 @@ function format_mles(mles)
     return out
 end
 
-function runoptim(mdl, lb, ub, ad, inits = nothing, reltol, maxiters,
-                  show_trace = false, extended_trace = false)
+function runoptim(mdl, lb, ub;
+                  ad = ADTypes.AutoForwardDiff(),
+                  inits = nothing,
+                  reltol = 1e-2,
+                  maxiters = 100,
+                  show_trace = false,
+                  extended_trace = false)
     attempt = 0
     while attempt < 5
         try
