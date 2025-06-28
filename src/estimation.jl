@@ -1,9 +1,9 @@
 function estimate(model, data::NamedTuple;
                   ad = ADTypes.AutoForwardDiff(), show_plt = true,
-                  inits = nothing,
-                  kwargs...)
-    mdl = model(data; kwargs...)
-    mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub, ad)
+                  model_kwargs = (;),
+                  optim_kwargs = (;))
+    mdl = model(data; model_kwargs...)
+    mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub, ad, optim_kwargs...)
     out = format_mles(mles)
     data = mdl.data
     out = add_age_year(out, data)
@@ -47,16 +47,18 @@ function format_mles(mles)
     return out
 end
 
-function runoptim(mdl, lb, ub, ad)
+function runoptim(mdl, lb, ub, ad, inits = nothing, reltol, maxiters,
+                  show_trace = false, extended_trace = false)
     attempt = 0
     while attempt < 5
         try
             mles = Turing.maximum_likelihood(mdl; lb = lb, ub = ub,
                                              adtype = ad,
                                              initial_params = inits,
-                                             reltol = 1e-2,
-                                             maxiters = 5, show_trace = true,
-                                             extended_trace = true)
+                                             maxiters = maxiters,
+                                             reltol = reltol,
+                                             show_trace = show_trace,
+                                             extended_trace = extended_trace)
 ##            mles = @time(Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub))
             return mles, predict(mdl, mles)
         catch e
