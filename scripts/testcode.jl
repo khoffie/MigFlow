@@ -17,16 +17,12 @@ p = .1
 data = load_data("30-50", 2016, p, "../data/"; only_positive = true,
                  seed = 1234, opf = false);
 
-out = @time estimate(norm, data, ndc = 1, ngc = 1, normalize = true);
+out = @time estimate(norm, data, ndc = 1, ngc = 1, normalize = false);
 
 # LP with 15 geo -33208.7, with exp(Gto - Gfrom)
 out.out
 out.plt[5]
 out.plt[6]
 
-mdl = norm(data; ndc = 1, ngc = 1, normalize = true)
+mdl = norm(data; ndc = 1, ngc = 1, normalize = false)
 chn = Turing.sample(mdl.mdl, NUTS(), 100, progress = true)
-
-preds = returned(mdl.mdl, chn)[end]
-
-plot(chn[:lp])

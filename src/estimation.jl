@@ -68,7 +68,7 @@ end
 
 function predict(mdl, mles)
     ## mdl is an instantiated Turing model
-    params = string.(names(mles.values)...)
-    preds = generated_quantities(mdl, mles.values, params)
-    return preds
+    vs = Tuple(mles.values)
+    ks = Tuple(names(mles.values)[1])
+    return returned(mdl, NamedTuple{ks}(vs))
 end
