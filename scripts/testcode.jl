@@ -1,6 +1,6 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
-using ADTypes, KernelDensity, Serialization
+using ADTypes, KernelDensity, Serialization, DynamicPPL
 
 include("../src/utils.jl")
 include("../src/estimation.jl")
@@ -44,19 +44,13 @@ out5 = testrun(norm, data, 15, 1, true);
 ## out6 = testrun(norm, data, 28, 1, true, 20);
 
 
-inits = Float64.(collect(out.out[1: (end-3)]))
-out = @time estimate(norm, data, ndc = 28, ngc = 28, normalize = true,
-                     inits = inits);
-
-out.out
-out.plt[5]
-out.plt[6]
-
 AD = ADTypes.AutoForwardDiff()
-mdl = norm(data; ndc = 28, ngc = 28, normalize = true);
+mdl = norm(data; ndc = 1, ngc = 1, normalize = false);
 Random.seed!(123)
 mles = Turing.maximum_likelihood(mdl.mdl; lb = mdl.lb, ub = mdl.ub, adtype = AD,
                                  reltol = 1e-1, maxiters = 5, show_trace = true,
                                  extended_trace = true)
 
 chn = Turing.sample(mdl.mdl, NUTS(), 5, progress = true)
+
+DynamicPPL.DebugUtils.model_warntype(mdl.mdl)
