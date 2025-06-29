@@ -1,7 +1,7 @@
 function calc_net(df, col)
     netf = combine(groupby(df, :fromdist), col => sum)
     rename!(netf, string(col) * "_sum" => :outflux)
-    nett = combine(groupby(fdf, :todist), col => sum)
+    nett = combine(groupby(df, :todist), col => sum)
     rename!(nett, string(col) * "_sum" => :influx)
     net = innerjoin(netf, nett, on = [:fromdist => :todist])
     net.net = net.influx .- net.outflux
