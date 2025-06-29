@@ -11,51 +11,32 @@ include("../src/chebies.jl")
 ## available models
 include("../src/norm.jl")
 
-function cornet(out)
-    p1 = scatter(out.net.nmr, out.net.nmrp)
-    p2 = scatter(out.net.net, out.net.netp)
-    display(plot(p1, p2))
-    println("Cor nmr: $(cor(out.net.nmr, out.net.nmrp))")
-    println("Cor net: $(cor(out.net.net, out.net.netp))")
-end
 
 p = 1.0
 p = 0.1
 data = load_data("18-25", 2016, p, "../data/"; only_positive = true,
                  seed = 1234, opf = false);
 
-function testrun(norm, data, ndc, ngc, normalize, maxmin = 20)
+function testrun(norm, data, ndc, ngc, normalize, maxmin = 20, save = false)
     Random.seed!(123)
     out = @time estimate(norm, data;
                          model_kwargs = (; ndc = ndc, ngc = ngc,
                                          normalize = normalize),
                          optim_kwargs = (; show_trace = false,
                                      maxtime = maxmin * 60));
-    f = "out_ndc$(ndc)_normalize$(normalize)"
-    p = "/home/konstantin/code/scripts/output/"
-    serialize(joinpath(p, f), out)
-    println("$f saved")
+    if save
+        f = "out_ndc$(ndc)_normalize$(normalize)"
+        p = "/home/konstantin/code/scripts/output/"
+        serialize(joinpath(p, f), out)
+        println("$f saved")
+    end
     return out
 end
 
 out1 = testrun(norm, data, 1, 1, false);
-out2 = testrun(norm, data, 15, 1, false);
-out3 = testrun(norm, data, 28, 1, false);
-
-out3.out
-out3.plt[5]
-sort(out3.net[:, [:nmr, :nmrp]], :nmr)
-
-### 28 chebies is much better with both correlations, however,
-### correlation between net and predicted net is still below zero!
-## All with 10% sample of data
-# julia> cornet(out)
-# Cor nmr: 0.29709508420026887
-# Cor net: -0.6645164962014762
-
-# julia> cornet(out2)
-# Cor nmr: 0.42324015023232686
-# Cor net: -0.1310660226079404
+out2 = testrun(norm, data, 1, 15, false);
+out3 = testrun(norm, data, 15, 1, false);
+## out4 = testrun(norm, data, 28, 1, false);
 
 
 ## Let's see what normalization does for us
