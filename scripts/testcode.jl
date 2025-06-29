@@ -47,10 +47,6 @@ out5 = testrun(norm, data, 15, 1, true);
 AD = ADTypes.AutoForwardDiff()
 mdl = norm(data; ndc = 1, ngc = 1, normalize = false);
 Random.seed!(123)
-mles = Turing.maximum_likelihood(mdl.mdl; lb = mdl.lb, ub = mdl.ub, adtype = AD,
-                                 reltol = 1e-1, maxiters = 5, show_trace = true,
-                                 extended_trace = true)
-
 chn = Turing.sample(mdl.mdl, NUTS(), 5, progress = true)
 
 DynamicPPL.DebugUtils.model_warntype(mdl.mdl)
