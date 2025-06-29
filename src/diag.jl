@@ -1,8 +1,8 @@
-function calc_net(flows, col)
-    netf = combine(groupby(flows, :fromdist), col => sum)
-    rename!(netf, string(col) * "_sum" => :influx)
-    nett = combine(groupby(flows, :todist), col => sum)
-    rename!(nett, string(col) * "_sum" => :outflux)
+function calc_net(df, col)
+    netf = combine(groupby(df, :fromdist), col => sum)
+    rename!(netf, string(col) * "_sum" => :outflux)
+    nett = combine(groupby(fdf, :todist), col => sum)
+    rename!(nett, string(col) * "_sum" => :influx)
     net = innerjoin(netf, nett, on = [:fromdist => :todist])
     net.net = net.influx .- net.outflux
     net.total = net.influx .+ net.outflux
@@ -10,9 +10,9 @@ function calc_net(flows, col)
     return net
 end
 
-function calc_net_df(flows)
-    net = calc_net(flows, :flows)
-    netp = calc_net(flows, :preds)
+function calc_net_df(df)
+    net = calc_net(df, :flows)
+    netp = calc_net(df, :preds)
 
     new = names(netp) .* "p"
     names(netp)
