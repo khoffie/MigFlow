@@ -85,3 +85,14 @@ function predict(mdl, mles)
     ks = Tuple(names(mles.values)[1])
     return returned(mdl, NamedTuple{ks}(vs))
 end
+
+## not needed because the lp Turing returns from optimization is
+## actually the loglikelihood
+# function makechain(out)
+#     coefs = Float64.(collect(out.out[1 : end - 3]))
+#     coefs = reshape(coefs, (1, length(coefs), 1))
+#     return Chains(coefs, names(out.out)[1][1 : end - 3])
+# end
+
+# LL(mdl, out) = loglikelihood(mdl, makechain(out))
+# LP(mdl, out) = logjoint(mdl, makechain(out))
