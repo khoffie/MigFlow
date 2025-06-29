@@ -10,7 +10,7 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
     from       = lc(df.fromdist)
     to         = lc(df.todist)
     A          = genfrompop(df, "joint")
-    P          = districts.pop ./ 153000 # median topop
+    P          = log.(districts.pop ./ 153000) # median topop
     poporig    = districts.pop
     D          = fdist.(df.dist, ds)
     R          = log.(districts.density ./ median(districts.density))
@@ -34,8 +34,8 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
                           fromfull, tofull, Dfull, Nfull, ndc, ngc,
                           normalize)
 
-        α_raw  ~ Normal(-5, 1);   α = exp(α_raw)
-        β_raw  ~ Gamma(1, 1);     β = exp(β_raw)
+        α_raw  ~ Normal(-5, 1);   α = α_raw
+        β_raw  ~ Gamma(1, 1);     β = β_raw
         γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
@@ -48,29 +48,29 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
         ps = Vector{T}(undef, N)
 
         dc = defdensitycheby(ζ, Rmin, Rmax)
-        G = exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord))
+        G = defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord)
 
         if normalize
             @inbounds for i in 1:Nfull
                 denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
-                                                   exp(dc(R[fromfull[i]], R[tofull[i]])),
+                                                   dc(R[fromfull[i]], R[tofull[i]]),
                                                    G[fromfull[i]], G[tofull[i]],
                                                    γ, δ, ϕ)
             end
             @inbounds for i in 1:Ndist
                 denom[i] += desirability(P[i], β * radius[i],
-                                         exp(dc(R[i], R[i])),
+                                         dc(R[i], R[i]),
                                          1, 1, γ, δ, ϕ)
             end
         else
-            denom = ones(T, Ndist)
+            fill!(denom, one(T))
         end
 
         @inbounds for i in 1:N
-            ps[i] = A[i] * α *
-                (desirability(P[to[i]], D[i],
+            ps[i] = A[i] * exp(α +
+                desirability(P[to[i]], D[i],
    ##                           Q[i],
-                              exp(dc(R[from[i]], R[to[i]])),
+                              dc(R[from[i]], R[to[i]]),
                               G[from[i]], G[to[i]],
                               γ, δ, ϕ) / denom[from[i]])
         end
@@ -87,9 +87,14 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
 end
 
 ## desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
+# function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
+#     P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto / Gfrom))
+# end
+
 function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto / Gfrom))
+    P + log(ϕ + (1 - ϕ) / ((D + δ) ^ γ)) + Q + (Gto - Gfrom)
 end
+
 
 fdist(D, ds) = D / ds
 fradius(P, ρ, ds) = sqrt((P / ρ) / 2π) / ds
