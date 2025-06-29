@@ -41,8 +41,8 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
         ζ_raw ~ StMvN(ndc, 10);   ζ = ζ_raw / 100
         η_raw ~ StMvN(ngc, 10);   η = η_raw / 100
-        ζ[1] = 0
-        η[1] = 0
+        # ζ[1] = 0 # not enough for centered data, centering in evaldensitycheby
+        # η[1] = 0 evaldensitycheby(vcat(0.0, fill(20.0, 5)), Rmin, Rmax)
         T = eltype(γ)  # to get dual data type for AD
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
