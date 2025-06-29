@@ -34,17 +34,14 @@ function testrun(norm, data, ndc, ngc, normalize, maxmin = 20, save = false)
 end
 
 out1 = testrun(norm, data, 1, 1, false);
-out2 = testrun(norm, data, 1, 15, false);
+## out2 = testrun(norm, data, 1, 15, false);
 out3 = testrun(norm, data, 15, 1, false);
 ## out4 = testrun(norm, data, 28, 1, false);
-
 
 ## Let's see what normalization does for us
 out4 = testrun(norm, data, 1, 1, true);
 out5 = testrun(norm, data, 15, 1, true);
-out6 = testrun(norm, data, 28, 1, true, 20);
-
-
+## out6 = testrun(norm, data, 28, 1, true, 20);
 
 
 inits = Float64.(collect(out.out[1: (end-3)]))
@@ -63,30 +60,3 @@ mles = Turing.maximum_likelihood(mdl.mdl; lb = mdl.lb, ub = mdl.ub, adtype = AD,
                                  extended_trace = true)
 
 chn = Turing.sample(mdl.mdl, NUTS(), 5, progress = true)
-
-
-using Dates
-
-
-result = nothing
-timelimit = 10.0  # seconds
-
-task = @async begin
-    result = Turing.maximum_likelihood(mdl.mdl;
-        lb = mdl.lb, ub = mdl.ub,
-        adtype = AD,
-        reltol = 1e-6,
-        maxiters = 10_000,
-        callback = cb,
-    )
-end
-
-timer = Timer(timelimit) do _
-    Base.throwto(task, InterruptException())
-end
-
-try
-    wait(task)
-catch e
-    @warn "Optimization interrupted after $timelimit seconds."
-end
