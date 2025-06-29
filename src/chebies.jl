@@ -24,10 +24,11 @@ function evaldensitycheby(coefs, densmin, densmax,
           todens = td,
           funval = densitycheby(fd, td)) for fd in vals, td in vals)
     df = DataFrame(df)
+    df.funval = df.funval .- mean(df.funval)
     ## otherwise upper right corner too bright
     df = df[df.fromdens .< 2.8 .&& df.todens .< 2.8, :]
     s = Int(sqrt(nrow(df)))
-    p = heatmap(vals[1:s], vals[1:s], reshape(df.funval, (s, s)))
+    p = heatmap(vals[1:s], vals[1:s], reshape(df.funval, (s, s))')
     if show_plt; display(p); end
     return df, p
 end
@@ -56,6 +57,7 @@ function evalgeocheby(coefs, distcode, xcoord, ycoord,
     ymin, ymax = extrema(ycoord)
     geocheby = defgeocheby(coefs, xmin, xmax, ymin, ymax)
     geo = geocheby.(xcoord, ycoord)
+    geo = geo .- mean(geo)
     geo2 = exp.(geo)
     ##geo = ForwardDiff.value.(geo)
     df = DataFrame(; distcode, xcoord, ycoord, geo, geo2)
