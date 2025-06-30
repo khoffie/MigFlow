@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
+function norm(data::NamedTuple; W = 16, ndc = 1, ngc = 1, normalize = true, ds = 100)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -13,8 +13,10 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
     P          = log.(districts.pop ./ 153000) # median topop
     poporig    = districts.pop
     D          = fdist.(df.dist, ds)
-    R          = log.(districts.density ./ median(districts.density))
+    R          = scale_to_unit(log.(districts.density ./ median(districts.density)))
     Rmin, Rmax = extrema(R)
+    cx         = [range(Rmin, Rmax, Int(sqrt(W)));]
+    cy         = [range(Rmin, Rmax, Int(sqrt(W)));]
     Ndist      = length(districts.distcode)
     N          = length(Y)
     radius     = fradius.(districts.pop, districts.density, ds)
@@ -37,13 +39,14 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
                           Rmin::Float64, Rmax::Float64,
                           fromfull::Vector{Int}, tofull::Vector{Int},
                           Dfull::Vector{Float64}, Nfull::Int, ndc::Int, ngc::Int,
-                          normalize::Bool)
+                          normalize::Bool, W, cx, cy)
 
         α_raw  ~ Normal(-5, 1);   α = α_raw
         β_raw  ~ Gamma(1, 1);     β = β_raw
         γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
+        ω_raw  ~ StMvN(W, 10);    ω = ω_raw / 100
         ζ_raw ~ StMvN(ndc, 10);   ζ = ζ_raw / 100
         η_raw ~ StMvN(ngc, 10);   η = η_raw / 100
 
@@ -51,7 +54,8 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
 
-        dc = defdensitycheby(ζ, Rmin, Rmax)
+##         dc = defdensitycheby(ζ, Rmin, Rmax)
+
         G = defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord)
 
         if normalize
@@ -73,8 +77,7 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
         @inbounds for i in 1:N
             ps[i] = A[i] * exp(α +
                 desirability(P[to[i]], D[i],
-   ##                           Q[i],
-                              dc(R[from[i]], R[to[i]]),
+                             interpolant(rbf, R[from[i]], R[to[i]], ω, cx, cy),
                               G[from[i]], G[to[i]],
                               γ, δ, ϕ) / denom[from[i]])
         end
@@ -84,9 +87,9 @@ function norm(data::NamedTuple; ndc = 1, ngc = 1, normalize = true, ds = 100)
 
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
-                fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize)
-    lb = [-20.0, -100.0, 10.0, 0.0, 1.0, fill(-100, ndc)..., fill(-100, ngc)...]
-    ub = [20.0, 100.0, 100.0, 99.0, 100.0, fill(100, ndc)..., fill(100, ngc)...]
+                fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize, W, cx, cy)
+    lb = [-20.0, -100.0, 10.0, 0.0, 1.0, fill(-100, W)..., fill(-100, ndc)..., fill(-100, ngc)...]
+    ub = [20.0, 100.0, 100.0, 99.0, 100.0, fill(100, W)..., fill(100, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub, data)
 end
 
