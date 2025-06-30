@@ -12,7 +12,7 @@ function interpolant(f, x::Float64, y::Float64,
     for i in eachindex(cx)
         for j in eachindex(cy)
             r = sqrt((x - cx[i])^2 + (y - cy[j])^2) / k
-            res += w[i + j] * r
+            res += w[(j - 1) * length(cx) + i] * f(r)
         end
     end
     return res
@@ -23,9 +23,9 @@ function scale_to_unit(x)
     return [2 * (xi - xmin) / (xmax - xmin) - 1  for xi in x]
 end
 
-x = rand(10)
-y = rand(10)
-w = rand(9)
-cx = [.1, .2, .3]
-cy = [.1, .2, .3]
-interpolant(rbf, x[1], y[1], w, cx, cy)
+# x = rand(10)
+# y = rand(10)
+# w = rand(9)
+# cx = [.1, .2, .3]
+# cy = [.1, .2, .3]
+# interpolant(rbf, x[1], y[1], w, cx, cy)
