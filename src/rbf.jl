@@ -1,6 +1,6 @@
 # Define the RBF function, valid only for r < 1
 
-rbf(x) = abs(x) < 1 ? exp(1 - 1 / (1 - x^2)) : 0.0
+rbf(x) = abs(x) < one(x) ? exp(one(x) - one(x) / (one(x) - x^2)) : zero(x)
 
 function interpolant(f, x::Float64, y::Float64,
                      w,
