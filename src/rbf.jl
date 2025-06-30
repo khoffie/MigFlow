@@ -2,16 +2,17 @@
 
 rbf(x) = abs(x) < one(x) ? exp(one(x) - one(x) / (one(x) - x^2)) : zero(x)
 
-function interpolant(f, x::Float64, y::Float64,
+function interpolant(f, x, y,
                      w,
-                     cx::Vector{Float64},
-                     cy::Vector{Float64},
-                     k::Int = 2)
+                     cx,
+                     cy,
+                     k = 2.0)
     @assert length(w) == length(cx) * length(cy)
-    res = 0.0
+    res = zero(x)
+    scale = k * abs(cx[1]-cx[2])
     for i in eachindex(cx)
         for j in eachindex(cy)
-            r = sqrt((x - cx[i])^2 + (y - cy[j])^2) / k
+            r = sqrt((x - cx[i])^2 + (y - cy[j])^2) / scale
             res += w[(j - 1) * length(cx) + i] * f(r)
         end
     end
