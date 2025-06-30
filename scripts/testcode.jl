@@ -54,3 +54,5 @@ plot(chn[:lp])
 
 DynamicPPL.DebugUtils.model_warntype(mdl.mdl)
 
+out = @time estimate(norm, data; model_kwargs = (; W = 16, ndc = 1, ngc = 1,
+                                                 normalize = false));
