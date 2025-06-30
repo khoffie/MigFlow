@@ -8,6 +8,7 @@ include("../src/loadgermdata.jl")
 include("../src/diag.jl")
 include("../src/diagplots.jl")
 include("../src/chebies.jl")
+include("../src/rbf.jl")
 ## available models
 include("../src/norm.jl")
 
@@ -33,7 +34,7 @@ function testrun(norm, data, ndc, ngc, normalize, maxmin = 20, save = false)
     return out
 end
 
-out1 = testrun(norm, data, 1, 1, false);
+
 ## out2 = testrun(norm, data, 1, 15, false);
 out3 = testrun(norm, data, 15, 1, false);
 ## out4 = testrun(norm, data, 28, 1, false);
@@ -45,8 +46,11 @@ out5 = testrun(norm, data, 15, 1, true);
 
 
 AD = ADTypes.AutoForwardDiff()
-mdl = norm(data; ndc = 1, ngc = 1, normalize = false);
+mdl = norm(data; W = 16, ndc = 1, ngc = 1, normalize = false);
 Random.seed!(123)
-chn = Turing.sample(mdl.mdl, NUTS(), 5, progress = true)
+chn = Turing.sample(mdl.mdl, NUTS(100, .6), 5, progress = true)
+chn[:lp][end]
+plot(chn[:lp])
 
 DynamicPPL.DebugUtils.model_warntype(mdl.mdl)
+
