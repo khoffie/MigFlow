@@ -1,6 +1,6 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
-using ADTypes, KernelDensity, Serialization, DynamicPPL
+using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
 
 include("../src/utils.jl")
 include("../src/estimation.jl")
@@ -12,10 +12,24 @@ include("../src/rbf.jl")
 ## available models
 include("../src/norm.jl")
 
+corround(x, y) = round(cor(x, y), digits = 2)
+
+function heat(coefs, districts)
+    R = scale_to_unit(log.(districts.density ./ median(districts.density)))
+    Rmin, Rmax = extrema(R)
+    vals = range(Rmin, Rmax, 1000)
+
+    cx = [range(Rmin, Rmax, 4);]
+    cy = [range(Rmin, Rmax, 4);]
+
+    mat = [interpolant(rbf, Rfrom, Rto, coefs, cx, cy)
+           for Rfrom in vals, Rto in vals]';
+    display(heatmap(mat))
+end
 
 p = 1.0
 p = 0.1
-data = load_data("18-25", 2016, p, "../data/"; only_positive = true,
+data = load_data("below18", 2017, p, "../data/"; only_positive = true,
                  seed = 1234, opf = false);
 
 function testrun(norm, data, ndc, ngc, normalize, maxmin = 20, save = false)
@@ -46,13 +60,19 @@ out5 = testrun(norm, data, 15, 1, true);
 
 
 AD = ADTypes.AutoForwardDiff()
-mdl = norm(data; W = 16, ndc = 1, ngc = 1, normalize = false);
+mdl = norm(data; W = 9, ndc = 1, ngc = 1, normalize = false);
 Random.seed!(123)
 chn = Turing.sample(mdl.mdl, NUTS(100, .6), 5, progress = true)
-chn[:lp][end]
-plot(chn[:lp])
+coefs = chn[end, :, 1].value[1, 6:21, ].data;
+plot(chn[:lp], label = "$(round(chn[:lp][end], digits = 2))")
 
-DynamicPPL.DebugUtils.model_warntype(mdl.mdl)
+preds = returned(mdl.mdl, chn[end])[1];
+df = DataFrame(; data.df.fromdist, data.df.todist, data.df.flows, preds, data.df.dist);
+plot(plotfit(df.flows, df.preds),
+     title = "Cor: $(corround(log.(df.flows), log.(df.preds)))")
 
-out = @time estimate(norm, data; model_kwargs = (; W = 16, ndc = 1, ngc = 1,
-                                                 normalize = false));
+net = calc_net_df(df);
+plotnet(net)
+
+districts = year(CSV.read("../data/districts.csv", DataFrame), 2017)
+heat(coefs, districts)
