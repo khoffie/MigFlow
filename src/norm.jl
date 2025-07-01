@@ -21,10 +21,13 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
     Ndist      = length(districts.distcode)
     N          = length(Y)
     radius     = fradius.(districts.pop, districts.density, ds)
-    xcoord     = districts.xcoord
-    ycoord     = districts.ycoord
+    xcoord     = scale_to_unit(districts.xcoord)
+    ycoord     = scale_to_unit(districts.ycoord)
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
+    cxgeo      = [range(xmin, xmax, Int(sqrt(W)));]
+    cygeo      = [range(ymin, ymax, Int(sqrt(W)));]
+    geoscale   = rbfscale(cxgeo, cygeo, densscale)
     fromfull   = lc(dffull.fromdist)
     tofull     = lc(dffull.todist)
     Dfull      = fdist(dffull.dist, ds)
@@ -40,7 +43,7 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
                           Rmin::Float64, Rmax::Float64,
                           fromfull::Vector{Int}, tofull::Vector{Int},
                           Dfull::Vector{Float64}, Nfull::Int, ndc::Int, ngc::Int,
-                          normalize::Bool, W, cx, cy, rbf_scale)
+                          normalize::Bool, W, cx, cy, rbf_scale, cxgeo, cygeo, geoscale)
 
         α_raw  ~ Normal(-5, 1);   α = α_raw
         β_raw  ~ Gamma(1, 1);     β = β_raw
@@ -48,22 +51,18 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
         ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
         ζ_raw  ~ StMvN(W, 10);    ζ = ζ_raw / 100
-        η_raw ~ StMvN(ngc, 10);   η = η_raw / 100
+        η_raw  ~ StMvN(W, 10);    η = η_raw / 100
 
         T = eltype(γ)  # to get dual data type for AD
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
 
-##         dc = defdensitycheby(ζ, Rmin, Rmax)
-
-        G = defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord)
-
         if normalize
             @inbounds for i in 1:Nfull
                 denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
                                                    interpolant(rbf, R[fromfull[i]], R[tofull[i]], ζ, cx, cy, rbf_scale),
-                                                   ## dc(R[fromfull[i]], R[tofull[i]]),
-                                                   G[fromfull[i]], G[tofull[i]],
+                                                   interpolant(rbf, xcoord[fromfull[i]], ycoord[fromfull[i]], ζ, cxgeo, cygeo, geoscale),
+                                                   interpolant(rbf, xcoord[tofull[i]], ycoord[tofull[i]], ζ, cxgeo, cygeo, geoscale),
                                                    γ, δ, ϕ)
             end
             @inbounds for i in 1:Ndist
@@ -79,7 +78,8 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
             ps[i] = A[i] * exp(α +
                 desirability(P[to[i]], D[i],
                              interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
-                              G[from[i]], G[to[i]],
+                             interpolant(rbf, xcoord[from[i]], ycoord[from[i]], ζ, cxgeo, cygeo, geoscale),
+                             interpolant(rbf, xcoord[to[i]], ycoord[to[i]], ζ, cxgeo, cygeo, geoscale),
                               γ, δ, ϕ) / denom[from[i]])
         end
         Y ~ product_distribution(Poisson.(ps))
@@ -89,7 +89,7 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize,
-                W, cx, cy, rbf_scale)
+                W, cx, cy, rbf_scale, cxgeo, cygeo, geoscale)
     lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-100, W)..., fill(-100, ndc)..., fill(-100, ngc)...]
     ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(100, W)..., fill(100, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub, data)

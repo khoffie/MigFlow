@@ -25,7 +25,6 @@ function scale_to_unit(x)
 end
 
 # districts = year(CSV.read("../data/districts.csv", DataFrame), 2017)
-
 # R = scale_to_unit(log.(districts.density ./ median(districts.density)))
 # Rmin, Rmax = extrema(R)
 # vals = range(Rmin, Rmax, 1000)
@@ -39,3 +38,10 @@ end
 
 # mat = [interpolant(rbf, xi, yi, w, cx, cy, scale) for xi in vals, yi in vals];
 # heatmap(mat)
+
+# xcoord = scale_to_unit(districts.xcoord)
+# xmin, xmax = extrema(xcoord)
+# ycoord = scale_to_unit(districts.ycoord)
+# ymin, ymax = extrema(ycoord)
+# cxgeo = [range(xmin, xmax, 4);]
+# cygeo = [range(ymin, ymax, 4);]
