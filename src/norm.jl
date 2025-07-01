@@ -91,8 +91,8 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize,
                 W, cx, cy, rbf_scale)
-    lb = [-20.0, -100.0, 10.0, 0.0, 1.0, fill(-100, W)..., fill(-100, ndc)..., fill(-100, ngc)...]
-    ub = [20.0, 100.0, 100.0, 99.0, 100.0, fill(100, W)..., fill(100, ndc)..., fill(100, ngc)...]
+    lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-100, W)..., fill(-100, ndc)..., fill(-100, ngc)...]
+    ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(100, W)..., fill(100, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub, data)
 end
 
