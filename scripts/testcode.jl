@@ -12,6 +12,11 @@ include("../src/rbf.jl")
 ## available models
 include("../src/norm.jl")
 
+function extract_coefs(chn, string)
+    nms = String.(names(chn))
+    return chn.value[occursin.(string, nms)].data
+end
+
 corround(x, y) = round(cor(x, y), digits = 2)
 
 function heat(coefs, districts)
@@ -24,7 +29,9 @@ function heat(coefs, districts)
 
     mat = [interpolant(rbf, Rfrom, Rto, coefs, cx, cy)
            for Rfrom in vals, Rto in vals]';
+    mat = mat .- mean(mat)
     display(heatmap(mat))
+    return mat
 end
 
 p = 1.0
@@ -60,10 +67,10 @@ out5 = testrun(norm, data, 15, 1, true);
 
 
 AD = ADTypes.AutoForwardDiff()
-mdl = norm(data; W = 9, ndc = 1, ngc = 1, normalize = false);
+mdl = norm(data; W = 16, ndc = 1, ngc = 1, normalize = false);
 Random.seed!(123)
-chn = Turing.sample(mdl.mdl, NUTS(100, .6), 5, progress = true)
-coefs = chn[end, :, 1].value[1, 6:21, ].data;
+chn = Turing.sample(mdl.mdl, NUTS(100, .6), 10, progress = true)
+coefs = extract_coefs(chn[end, :, 1], "ω")
 plot(chn[:lp], label = "$(round(chn[:lp][end], digits = 2))")
 
 preds = returned(mdl.mdl, chn[end])[1];
@@ -75,4 +82,5 @@ net = calc_net_df(df);
 plotnet(net)
 
 districts = year(CSV.read("../data/districts.csv", DataFrame), 2017)
-heat(coefs, districts)
+mat = heat(coefs, districts)
+heatmap(mat)
