@@ -6,10 +6,9 @@ function interpolant(f, x, y,
                      w,
                      cx,
                      cy,
-                     k = 2.0)
+                     scale)
     @assert length(w) == length(cx) * length(cy)
     res = zero(x)
-    scale = k * norm([cx[1],cy[1]] - [cx[2],cy[2]])
     for i in eachindex(cx)
         for j in eachindex(cy)
             r = sqrt((x - cx[i])^2 + (y - cy[j])^2) / scale
