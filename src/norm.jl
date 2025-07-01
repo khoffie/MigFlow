@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, normalize = true, ds = 100)
+function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = true, ds = 100)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -10,13 +10,13 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
     from       = lc(df.fromdist)
     to         = lc(df.todist)
     A          = genfrompop(df, "joint")
-    P          = log.(districts.pop ./ 153000) # median topop
+    P          = districts.pop ./ 153000 # median topop
     poporig    = districts.pop
     D          = fdist.(df.dist, ds)
     R          = scale_to_unit(log.(districts.density ./ median(districts.density)))
     Rmin, Rmax = extrema(R)
-    cx         = [range(Rmin, Rmax, Int(sqrt(W)));]
-    cy         = [range(Rmin, Rmax, Int(sqrt(W)));]
+    cx         = [range(Rmin, Rmax, Int(sqrt(ndc)));]
+    cy         = [range(Rmin, Rmax, Int(sqrt(ndc)));]
     rbf_scale   = rbfscale(cx, cy, densscale)
     Ndist      = length(districts.distcode)
     N          = length(Y)
@@ -40,23 +40,21 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
                           Rmin::Float64, Rmax::Float64,
                           fromfull::Vector{Int}, tofull::Vector{Int},
                           Dfull::Vector{Float64}, Nfull::Int, ndc::Int, ngc::Int,
-                          normalize::Bool, W, cx, cy, rbf_scale)
+                          normalize::Bool, cx, cy, rbf_scale)
 
-        α_raw  ~ Normal(-5, 1);   α = α_raw
+        α_raw  ~ Normal(-5, 1);   α = exp(α_raw)
         β_raw  ~ Gamma(1, 1);     β = β_raw
         γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
-        ζ_raw  ~ StMvN(W, 10);    ζ = ζ_raw / 100
+        ζ_raw  ~ StMvN(ndc, 10);  ζ = ζ_raw / 100
         η_raw ~ StMvN(ngc, 10);   η = η_raw / 100
 
         T = eltype(γ)  # to get dual data type for AD
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
 
-##         dc = defdensitycheby(ζ, Rmin, Rmax)
-
-        G = defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord)
+        G = exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord))
 
         if normalize
             @inbounds for i in 1:Nfull
@@ -76,11 +74,11 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
         end
 
         @inbounds for i in 1:N
-            ps[i] = A[i] * exp(α +
+            ps[i] = A[i] * α *
                 desirability(P[to[i]], D[i],
-                             interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
-                              G[from[i]], G[to[i]],
-                              γ, δ, ϕ) / denom[from[i]])
+                             exp(interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale)),
+                             G[from[i]], G[to[i]],
+                             γ, δ, ϕ) / denom[from[i]]
         end
         Y ~ product_distribution(Poisson.(ps))
         return ps
@@ -89,20 +87,19 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize,
-                W, cx, cy, rbf_scale)
-    lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-100, W)..., fill(-100, ndc)..., fill(-100, ngc)...]
-    ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(100, W)..., fill(100, ndc)..., fill(100, ngc)...]
+                cx, cy, rbf_scale)
+    lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-200, ndc)..., fill(-100, ngc)...]
+    ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(200, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub, data)
 end
 
-## desirability(P, D, γ, δ, ϕ) = P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ))
-# function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-#     P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto / Gfrom))
-# end
-
 function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-    P + log(ϕ + (1 - ϕ) / ((D + δ) ^ γ)) + Q + (Gto - Gfrom)
+    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto / Gfrom))
 end
+
+# function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
+#     P + log(ϕ + (1 - ϕ) / ((D + δ) ^ γ)) + Q + (Gto - Gfrom)
+# end
 
 
 fdist(D, ds) = D / ds
