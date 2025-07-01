@@ -17,7 +17,7 @@ function norm(data::NamedTuple; W = 16, ndc = 1, ngc = 1, normalize = true, ds =
     Rmin, Rmax = extrema(R)
     cx         = [range(Rmin, Rmax, Int(sqrt(W)));]
     cy         = [range(Rmin, Rmax, Int(sqrt(W)));]
-    rbfscale   = 2.0 * LinearAlgebra.norm([cx[1],cy[1]] - [cx[2],cy[2]])
+    rbf_scale   = rbfscale(cx, cy, 2.0)
     Ndist      = length(districts.distcode)
     N          = length(Y)
     radius     = fradius.(districts.pop, districts.density, ds)
@@ -40,7 +40,7 @@ function norm(data::NamedTuple; W = 16, ndc = 1, ngc = 1, normalize = true, ds =
                           Rmin::Float64, Rmax::Float64,
                           fromfull::Vector{Int}, tofull::Vector{Int},
                           Dfull::Vector{Float64}, Nfull::Int, ndc::Int, ngc::Int,
-                          normalize::Bool, W, cx, cy, rbfscale)
+                          normalize::Bool, W, cx, cy, rbf_scale)
 
         α_raw  ~ Normal(-5, 1);   α = α_raw
         β_raw  ~ Gamma(1, 1);     β = β_raw
@@ -89,7 +89,7 @@ function norm(data::NamedTuple; W = 16, ndc = 1, ngc = 1, normalize = true, ds =
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize,
-                W, cx, cy, rbfscale)
+                W, cx, cy, rbf_scale)
     lb = [-20.0, -100.0, 10.0, 0.0, 1.0, fill(-100, W)..., fill(-100, ndc)..., fill(-100, ngc)...]
     ub = [20.0, 100.0, 100.0, 99.0, 100.0, fill(100, W)..., fill(100, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub, data)
