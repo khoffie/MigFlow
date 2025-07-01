@@ -10,7 +10,7 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
     from       = lc(df.fromdist)
     to         = lc(df.todist)
     A          = genfrompop(df, "joint")
-    P          = districts.pop ./ 153000 # median topop
+    P          = log.(districts.pop ./ 153000) # median topop
     poporig    = districts.pop
     D          = fdist.(df.dist, ds)
     R          = scale_to_unit(log.(districts.density ./ median(districts.density)))
@@ -21,10 +21,13 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
     Ndist      = length(districts.distcode)
     N          = length(Y)
     radius     = fradius.(districts.pop, districts.density, ds)
-    xcoord     = districts.xcoord
-    ycoord     = districts.ycoord
+    xcoord     = scale_to_unit(districts.xcoord)
+    ycoord     = scale_to_unit(districts.ycoord)
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
+    cxgeo      = [range(xmin, xmax, Int(sqrt(ngc)));]
+    cygeo      = [range(ymin, ymax, Int(sqrt(ngc)));]
+    geoscale   = rbfscale(cxgeo, cygeo, densscale)
     fromfull   = lc(dffull.fromdist)
     tofull     = lc(dffull.todist)
     Dfull      = fdist(dffull.dist, ds)
@@ -40,9 +43,9 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
                           Rmin::Float64, Rmax::Float64,
                           fromfull::Vector{Int}, tofull::Vector{Int},
                           Dfull::Vector{Float64}, Nfull::Int, ndc::Int, ngc::Int,
-                          normalize::Bool, cx, cy, rbf_scale)
+                          normalize::Bool, cx, cy, rbf_scale, cxgeo, cygeo, geoscale)
 
-        α_raw  ~ Normal(-5, 1);   α = exp(α_raw)
+        α_raw  ~ Normal(-5, 1);   α = α_raw
         β_raw  ~ Gamma(1, 1);     β = β_raw
         γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
@@ -54,14 +57,12 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
 
-        G = exp.(defgeocheby(η, xmin, xmax, ymin, ymax).(xcoord, ycoord))
-
         if normalize
             @inbounds for i in 1:Nfull
                 denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
                                                    interpolant(rbf, R[fromfull[i]], R[tofull[i]], ζ, cx, cy, rbf_scale),
-                                                   ## dc(R[fromfull[i]], R[tofull[i]]),
-                                                   G[fromfull[i]], G[tofull[i]],
+                                                   interpolant(rbf, xcoord[fromfull[i]], ycoord[fromfull[i]], ζ, cxgeo, cygeo, geoscale),
+                                                   interpolant(rbf, xcoord[tofull[i]], ycoord[tofull[i]], ζ, cxgeo, cygeo, geoscale),
                                                    γ, δ, ϕ)
             end
             @inbounds for i in 1:Ndist
@@ -75,10 +76,11 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
 
         @inbounds for i in 1:N
             ps[i] = A[i] * α *
-                desirability(P[to[i]], D[i],
-                             exp(interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale)),
-                             G[from[i]], G[to[i]],
-                             γ, δ, ϕ) / denom[from[i]]
+                exp(desirability(P[to[i]], D[i],
+                             interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
+                             interpolant(rbf, xcoord[from[i]], ycoord[from[i]], ζ, cxgeo, cygeo, geoscale),
+                             interpolant(rbf, xcoord[to[i]], ycoord[to[i]], ζ, cxgeo, cygeo, geoscale),
+                              γ, δ, ϕ) / denom[from[i]])
         end
         Y ~ product_distribution(Poisson.(ps))
         return ps
@@ -87,19 +89,19 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize,
-                cx, cy, rbf_scale)
+                cx, cy, rbf_scale, cxgeo, cygeo, geoscale)
     lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-200, ndc)..., fill(-100, ngc)...]
     ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(200, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub, data)
 end
 
-function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-    P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto / Gfrom))
-end
-
 # function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-#     P + log(ϕ + (1 - ϕ) / ((D + δ) ^ γ)) + Q + (Gto - Gfrom)
+#     P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto / Gfrom))
 # end
+
+function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
+    P + log(ϕ + (1 - ϕ) / ((D + δ) ^ γ)) + Q + (Gto - Gfrom)
+end
 
 
 fdist(D, ds) = D / ds

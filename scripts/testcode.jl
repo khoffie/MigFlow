@@ -1,7 +1,6 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
-using Enzyme
 
 include("../src/utils.jl")
 include("../src/estimation.jl")
@@ -24,9 +23,9 @@ function heat(coefs, districts)
     R = scale_to_unit(log.(districts.density ./ median(districts.density)))
     Rmin, Rmax = extrema(R)
     vals = range(Rmin, Rmax, 1000)
-
-    cx = [range(Rmin, Rmax, 4);]
-    cy = [range(Rmin, Rmax, 4);]
+    s = Int(sqrt(length(coefs)))
+    cx = [range(Rmin, Rmax, s);]
+    cy = [range(Rmin, Rmax, s);]
     scale = rbfscale(cx, cy, 2.0)
     mat = [interpolant(rbf, Rfrom, Rto, coefs, cx, cy, scale)
            for Rfrom in vals, Rto in vals]';
@@ -40,33 +39,34 @@ p = 0.1
 data = load_data("below18", 2017, p, "../data/"; only_positive = true,
                  seed = 1234, opf = false);
 
-out = @time estimate(norm, data;
-                     model_kwargs = (; ndc = 16, ngc = 1, normalize = false),
-                     optim_kwargs = (; ad = AutoEnzyme()));
-out.out
-out.plt[6]
+# out = @time estimate(norm, data;
+#                      model_kwargs = (; ndc = 4, ngc = 4, normalize = false),
+#                      optim_kwargs = (; ad = AutoEnzyme()));
 
 
 AD = ADTypes.AutoForwardDiff()
 AD = AutoEnzyme()
-mdl = norm(data; W = 16, densscale = 2.0, ndc = 1, ngc = 1, normalize = false);
+mdl = norm(data; densscale = 1.0, ndc = 16, ngc = 16, normalize = false);
 Random.seed!(123)
-chn = Turing.sample(mdl.mdl, NUTS(100, .5), 1, progress = true)
+chn = Turing.sample(mdl.mdl, NUTS(100, .5), 10, progress = true)
+plot(chn[:lp], label = "$(round(chn[:lp][end], digits = 2))")
+
 denscoefs = extract_coefs(chn[end, :, 1], "ζ")
 geocoefs = extract_coefs(chn[end, :, 1], "η")
 
-plot(chn[:lp], label = "$(round(chn[:lp][end], digits = 2))")
 
 preds = returned(mdl.mdl, chn[end])[1];
 df = DataFrame(; data.df.fromdist, data.df.todist, data.df.flows, preds, data.df.dist);
 plot(plotfit(df.flows, df.preds),
      title = "Cor: $(corround(log.(df.flows), log.(df.preds)))")
 
+plotdist(df, :preds)
+
 net = calc_net_df(df);
 plotnet(net)
 
 districts = year(CSV.read("../data/districts.csv", DataFrame), 2017)
-mat = heat(coefs, districts)
+mat = heat(denscoefs, districts);
 heatmap(mat)
 
 W = 16
