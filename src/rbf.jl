@@ -23,9 +23,18 @@ function scale_to_unit(x)
     return [2 * (xi - xmin) / (xmax - xmin) - 1  for xi in x]
 end
 
-# x = rand(10)
-# y = rand(10)
-# w = rand(9)
-# cx = [.1, .2, .3]
-# cy = [.1, .2, .3]
-# interpolant(rbf, x[1], y[1], w, cx, cy)
+# districts = year(CSV.read("../data/districts.csv", DataFrame), 2017)
+
+# R = scale_to_unit(log.(districts.density ./ median(districts.density)))
+# Rmin, Rmax = extrema(R)
+# vals = range(Rmin, Rmax, 1000)
+# s = 5
+# cx = [range(Rmin, Rmax, s);]
+# cy = [range(Rmin, Rmax, s);]
+# scale = rbfscale(cx, cy, 1.0)
+# w = zeros(Float64, s, s)
+# w = zeros(Float64, s^2)
+# w[3] = 1
+
+# mat = [interpolant(rbf, xi, yi, w, cx, cy, scale) for xi in vals, yi in vals];
+# heatmap(mat)
