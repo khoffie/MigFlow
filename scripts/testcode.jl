@@ -1,6 +1,7 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
+using Enzyme
 
 include("../src/utils.jl")
 include("../src/estimation.jl")
@@ -26,8 +27,8 @@ function heat(coefs, districts)
 
     cx = [range(Rmin, Rmax, 4);]
     cy = [range(Rmin, Rmax, 4);]
-
-    mat = [interpolant(rbf, Rfrom, Rto, coefs, cx, cy)
+    scale = rbfscale(cx, cy, 2.0)
+    mat = [interpolant(rbf, Rfrom, Rto, coefs, cx, cy, scale)
            for Rfrom in vals, Rto in vals]';
     mat = mat .- mean(mat)
     display(heatmap(mat))
@@ -39,38 +40,21 @@ p = 0.1
 data = load_data("below18", 2017, p, "../data/"; only_positive = true,
                  seed = 1234, opf = false);
 
-function testrun(norm, data, ndc, ngc, normalize, maxmin = 20, save = false)
-    Random.seed!(123)
-    out = @time estimate(norm, data;
-                         model_kwargs = (; ndc = ndc, ngc = ngc,
-                                         normalize = normalize),
-                         optim_kwargs = (; show_trace = false,
-                                     maxtime = maxmin * 60));
-    if save
-        f = "out_ndc$(ndc)_normalize$(normalize)"
-        p = "/home/konstantin/code/scripts/output/"
-        serialize(joinpath(p, f), out)
-        println("$f saved")
-    end
-    return out
-end
-
-
-## out2 = testrun(norm, data, 1, 15, false);
-out3 = testrun(norm, data, 15, 1, false);
-## out4 = testrun(norm, data, 28, 1, false);
-
-## Let's see what normalization does for us
-out4 = testrun(norm, data, 1, 1, true);
-out5 = testrun(norm, data, 15, 1, true);
-## out6 = testrun(norm, data, 28, 1, true, 20);
+out = @time estimate(norm, data;
+                     model_kwargs = (; ndc = 16, ngc = 1, normalize = false),
+                     optim_kwargs = (; ad = AutoEnzyme()));
+out.out
+out.plt[6]
 
 
 AD = ADTypes.AutoForwardDiff()
-mdl = norm(data; W = 16, ndc = 1, ngc = 1, normalize = false);
+AD = AutoEnzyme()
+mdl = norm(data; W = 16, densscale = 2.0, ndc = 1, ngc = 1, normalize = false);
 Random.seed!(123)
-chn = Turing.sample(mdl.mdl, NUTS(100, .6), 10, progress = true)
-coefs = extract_coefs(chn[end, :, 1], "ω")
+chn = Turing.sample(mdl.mdl, NUTS(100, .5), 1, progress = true)
+denscoefs = extract_coefs(chn[end, :, 1], "ζ")
+geocoefs = extract_coefs(chn[end, :, 1], "η")
+
 plot(chn[:lp], label = "$(round(chn[:lp][end], digits = 2))")
 
 preds = returned(mdl.mdl, chn[end])[1];
@@ -84,3 +68,25 @@ plotnet(net)
 districts = year(CSV.read("../data/districts.csv", DataFrame), 2017)
 mat = heat(coefs, districts)
 heatmap(mat)
+
+W = 16
+xcoord     = scale_to_unit(districts.xcoord)
+ycoord     = scale_to_unit(districts.ycoord)
+xmin, xmax = extrema(xcoord)
+ymin, ymax = extrema(ycoord)
+cxgeo      = [range(xmin, xmax, Int(sqrt(W)));]
+cygeo      = [range(ymin, ymax, Int(sqrt(W)));]
+geoscale   = rbfscale(cxgeo, cygeo, 2.0)
+
+val = [interpolant(rbf, xcoord[i], ycoord[i], geocoefs, cxgeo, cygeo, geoscale)
+       for i in eachindex(xcoord)]
+val = val .- mean(val)
+dfgeo = DataFrame(; xcoord, ycoord, val)
+
+ratio = (ymax - ymin) / (xmax - xmin)
+width = 600
+p = scatter(dfgeo.xcoord, dfgeo.ycoord,
+            marker_z = dfgeo.val,
+                markersize = 10, size = (600, width * ratio),
+            label = "")
+p
