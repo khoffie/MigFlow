@@ -48,7 +48,7 @@ AD = ADTypes.AutoForwardDiff()
 AD = AutoEnzyme()
 mdl = norm(data; densscale = 1.0, ndc = 16, ngc = 16, normalize = false);
 Random.seed!(123)
-chn = Turing.sample(mdl.mdl, NUTS(100, .5), 10, progress = true)
+chn = Turing.sample(mdl.mdl, NUTS(100, .7), 10, progress = true)
 plot(chn[:lp], label = "$(round(chn[:lp][end], digits = 2))")
 
 denscoefs = extract_coefs(chn[end, :, 1], "ζ")
