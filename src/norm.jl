@@ -47,8 +47,7 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
         γ_raw  ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw  ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw  ~ Gamma(10, 1.0);  δ = δ_raw / 100
-        ω_raw  ~ StMvN(W, 10);    ω = ω_raw / 100
-        ζ_raw ~ StMvN(ndc, 10);   ζ = ζ_raw / 100
+        ζ_raw  ~ StMvN(W, 10);    ζ = ζ_raw / 100
         η_raw ~ StMvN(ngc, 10);   η = η_raw / 100
 
         T = eltype(γ)  # to get dual data type for AD
@@ -62,14 +61,14 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
         if normalize
             @inbounds for i in 1:Nfull
                 denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
-                                                   interpolant(rbf, R[fromfull[i]], R[tofull[i]], ω, cx, cy, rbf_scale),
+                                                   interpolant(rbf, R[fromfull[i]], R[tofull[i]], ζ, cx, cy, rbf_scale),
                                                    ## dc(R[fromfull[i]], R[tofull[i]]),
                                                    G[fromfull[i]], G[tofull[i]],
                                                    γ, δ, ϕ)
             end
             @inbounds for i in 1:Ndist
                 denom[i] += desirability(P[i], β * radius[i],
-                                         interpolant(rbf, R[i], R[i], ω, cx, cy, rbf_scale),
+                                         interpolant(rbf, R[i], R[i], ζ, cx, cy, rbf_scale),
                                          1, 1, γ, δ, ϕ)
             end
         else
@@ -79,7 +78,7 @@ function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, norma
         @inbounds for i in 1:N
             ps[i] = A[i] * exp(α +
                 desirability(P[to[i]], D[i],
-                             interpolant(rbf, R[from[i]], R[to[i]], ω, cx, cy, rbf_scale),
+                             interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
                               G[from[i]], G[to[i]],
                               γ, δ, ϕ) / denom[from[i]])
         end
