@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; W = 16, ndc = 1, ngc = 1, normalize = true, ds = 100)
+function norm(data::NamedTuple; W = 16, densscale = 2.0, ndc = 1, ngc = 1, normalize = true, ds = 100)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -17,7 +17,7 @@ function norm(data::NamedTuple; W = 16, ndc = 1, ngc = 1, normalize = true, ds =
     Rmin, Rmax = extrema(R)
     cx         = [range(Rmin, Rmax, Int(sqrt(W)));]
     cy         = [range(Rmin, Rmax, Int(sqrt(W)));]
-    rbf_scale   = rbfscale(cx, cy, 2.0)
+    rbf_scale   = rbfscale(cx, cy, densscale)
     Ndist      = length(districts.distcode)
     N          = length(Y)
     radius     = fradius.(districts.pop, districts.density, ds)
