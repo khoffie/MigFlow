@@ -62,13 +62,14 @@ function norm(data::NamedTuple; W = 16, ndc = 1, ngc = 1, normalize = true, ds =
         if normalize
             @inbounds for i in 1:Nfull
                 denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
-                                                   dc(R[fromfull[i]], R[tofull[i]]),
+                                                   interpolant(rbf, R[fromfull[i]], R[tofull[i]], ω, cx, cy, rbf_scale),
+                                                   ## dc(R[fromfull[i]], R[tofull[i]]),
                                                    G[fromfull[i]], G[tofull[i]],
                                                    γ, δ, ϕ)
             end
             @inbounds for i in 1:Ndist
                 denom[i] += desirability(P[i], β * radius[i],
-                                         dc(R[i], R[i]),
+                                         interpolant(rbf, R[i], R[i], ω, cx, cy, rbf_scale),
                                          1, 1, γ, δ, ϕ)
             end
         else
@@ -78,7 +79,7 @@ function norm(data::NamedTuple; W = 16, ndc = 1, ngc = 1, normalize = true, ds =
         @inbounds for i in 1:N
             ps[i] = A[i] * exp(α +
                 desirability(P[to[i]], D[i],
-                             interpolant(rbf, R[from[i]], R[to[i]], ω, cx, cy),
+                             interpolant(rbf, R[from[i]], R[to[i]], ω, cx, cy, rbf_scale),
                               G[from[i]], G[to[i]],
                               γ, δ, ϕ) / denom[from[i]])
         end
