@@ -2,19 +2,14 @@
 
 rbf(x) = abs(x) < one(x) ? exp(one(x) - one(x) / (one(x) - x^2)) : zero(x)
 rbfscale(cx, cy, k) = k * LinearAlgebra.norm([cx[1],cy[1]] - [cx[2],cy[2]])
-function interpolant(f, x, y,
-                     w,
-                     cx,
-                     cy,
-                     scale,
-                     N = length(cx))
-    @assert length(w) == length(cx) * length(cy)
+
+function interpolant(f, x, y, w, cx, cy, scale)
     res = zero(x)
-    for i in eachindex(cx)
-        for j in eachindex(cy)
-            r = sqrt((x - cx[i])^2 + (y - cy[j])^2) / scale
-            res += w[(j - 1) * N + i] * f(r)
-        end
+    @inbounds for i in eachindex(cx), j in eachindex(cy)
+        dx = x - cx[i]
+        dy = y - cy[j]
+        r = sqrt(dx * dx + dy * dy) / scale
+        res += w[i, j] * f(r)
     end
     return res
 end
@@ -24,24 +19,21 @@ function scale_to_unit(x)
     return [2 * (xi - xmin) / (xmax - xmin) - 1  for xi in x]
 end
 
-# districts = year(CSV.read("../data/districts.csv", DataFrame), 2017)
-# R = scale_to_unit(log.(districts.density ./ median(districts.density)))
-# Rmin, Rmax = extrema(R)
-# vals = range(Rmin, Rmax, 1000)
-# s = 5
-# cx = [range(Rmin, Rmax, s);]
-# cy = [range(Rmin, Rmax, s);]
-# scale = rbfscale(cx, cy, 1.0)
-# w = zeros(Float64, s, s)
-# w = zeros(Float64, s^2)
-# w[3] = 1
+xmin = 0
+xmax = 1
+x = range(xmin, xmax, 100)
+y = x
+N = 81
+s = Int(sqrt(N))
+w = coefmat(randn(N))
+w = zeros((s, s))
 
-# mat = [interpolant(rbf, xi, yi, w, cx, cy, scale) for xi in vals, yi in vals];
-# heatmap(mat)
+w[5, 5] = 1
+cx = [range(0, 1, s);]
+cy = [range(0, 1, s);]
+rbf_scale = rbfscale(cx, cy, 1.0)
+interpolant(rbf, x[1], y[1], w, cx, cy, rbf_scale)
+@benchmark interpolant(rbf, x[1], y[1], w, cx, cy, rbf_scale)
 
-# xcoord = scale_to_unit(districts.xcoord)
-# xmin, xmax = extrema(xcoord)
-# ycoord = scale_to_unit(districts.ycoord)
-# ymin, ymax = extrema(ycoord)
-# cxgeo = [range(xmin, xmax, 4);]
-# cygeo = [range(ymin, ymax, 4);]
+mat = [interpolant(rbf, xi, yi, w, cx, cy, rbf_scale) for xi in x, yi in y];
+heatmap(mat .- mean(mat))
