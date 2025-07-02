@@ -75,8 +75,8 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
         end
 
         @inbounds for i in 1:N
-            ps[i] = A[i] * α *
-                exp(desirability(P[to[i]], D[i],
+            ps[i] = A[i] * exp(α +
+                desirability(P[to[i]], D[i],
                              interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
                              interpolant(rbf, xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geoscale),
                              interpolant(rbf, xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geoscale),
@@ -90,8 +90,8 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize,
                 cx, cy, rbf_scale, cxgeo, cygeo, geoscale)
-    lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-200, ndc)..., fill(-100, ngc)...]
-    ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(200, ndc)..., fill(100, ngc)...]
+    lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-100, ndc)..., fill(-100, ngc)...]
+    ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(100, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub, data)
 end
 
@@ -108,7 +108,10 @@ fdist(D, ds) = D / ds
 fradius(P, ρ, ds) = sqrt((P / ρ) / 2π) / ds
 lc(x) = levelcode.(categorical(x))
 StMvN(n, σ) = MvNormal(zeros(n), fill(σ, n))
-
+function coefmat(c)
+    s = Int(sqrt(length(c)))
+    return reshape(c, (s, s))
+end
 function genfrompop(df, type)
     type == "joint" && return df.frompop
     df2 = combine(groupby(data.df, :fromdist), :flows => sum)
