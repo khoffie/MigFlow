@@ -61,8 +61,8 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
             @inbounds for i in 1:Nfull
                 denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
                                                    interpolant(rbf, R[fromfull[i]], R[tofull[i]], ζ, cx, cy, rbf_scale),
-                                                   interpolant(rbf, xcoord[fromfull[i]], ycoord[fromfull[i]], ζ, cxgeo, cygeo, geoscale),
-                                                   interpolant(rbf, xcoord[tofull[i]], ycoord[tofull[i]], ζ, cxgeo, cygeo, geoscale),
+                                                   interpolant(rbf, xcoord[fromfull[i]], ycoord[fromfull[i]], η, cxgeo, cygeo, geoscale),
+                                                   interpolant(rbf, xcoord[tofull[i]], ycoord[tofull[i]], η, cxgeo, cygeo, geoscale),
                                                    γ, δ, ϕ)
             end
             @inbounds for i in 1:Ndist
@@ -78,8 +78,8 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
             ps[i] = A[i] * α *
                 exp(desirability(P[to[i]], D[i],
                              interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
-                             interpolant(rbf, xcoord[from[i]], ycoord[from[i]], ζ, cxgeo, cygeo, geoscale),
-                             interpolant(rbf, xcoord[to[i]], ycoord[to[i]], ζ, cxgeo, cygeo, geoscale),
+                             interpolant(rbf, xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geoscale),
+                             interpolant(rbf, xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geoscale),
                               γ, δ, ϕ) / denom[from[i]])
         end
         Y ~ product_distribution(Poisson.(ps))
