@@ -31,7 +31,7 @@ end
 function addlrd!(districts::DataFrame)
     calc_lrd(x) = log.(x ./ median(x))
     districts.lrd = calc_lrd(districts.density)
-    DataFrames.transform!(groupby(districts, :year),
+    DataFrames.transform!(DataFrames.groupby(districts, :year),
                           :density => calc_lrd => :lrd)
     return districts
 end
