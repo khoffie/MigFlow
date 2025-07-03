@@ -33,7 +33,7 @@ function plotgeorbf_(coefs::Vector{Float64},
     yvals = getindex.(res, 2)
     scatter!(vec(xvals), vec(yvals), color = :red)
     display(p)
-    return dfgeo
+    return dfgeo, p
 end
 
 function plotdensrbf(coefs::Vector{Float64}, data::NamedTuple)
@@ -56,6 +56,7 @@ function plotdensrbf_(coefs::Vector{Float64},
     mat = [interpolant(rbf, Rfrom, Rto, coefmat(coefs), cx, cy, scale)
            for Rfrom in vals, Rto in vals]';
     mat = mat .- mean(mat)
-    display(heatmap(mat))
-    return mat
+    p = heatmap(mat)
+    display(p)
+    return mat, p
 end
