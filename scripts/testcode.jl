@@ -16,19 +16,26 @@ corround(x, y) = round(cor(x, y), digits = 2)
 
 p = 1.0
 p = 0.1
-data = load_data("below18", 2017, p, "../data/"; only_positive = true,
+data = load_data("18-25", 2017, p, "../data/"; only_positive = true,
                  seed = 1234, opf = false);
 
-out = @time estimate(norm, data;
-                     model_kwargs = (; ndc = 4, ngc = 4, normalize = false),
-                     optim_kwargs = (; ad = AD));
-
-
 AD = AutoEnzyme()
-AD = ADTypes.AutoForwardDiff()
-mdl = norm(data; ndc = 4, ngc = 4, normalize = false);
-chn = Turing.sample(mdl.mdl, NUTS(10, .7), 1, progress = true)
-out = chaindiag(chn, mdl, data)
+mdl = norm(data; ndc = 9, ngc = 4, normalize = false);
+chn = Turing.sample(mdl.mdl, NUTS(100, .7), 10, progress = true)
+out = chaindiag(chn, mdl, data);
+
+out.plts[1]
+out.plts[2]
+out.plts[3]
+out.plts[4]
+out.plts[5]
+out.plts[6]
+
+
 ## tree depth 4 or 5
 ## check how NUTS works
 ## rescale y axis, such that 1m = 1m
+
+# out = @time estimate(norm, data;
+#                      model_kwargs = (; ndc = 4, ngc = 4, normalize = false),
+#                      optim_kwargs = (; ad = AD));
