@@ -12,6 +12,33 @@ include("../src/chebies.jl")
 include("../src/norm.jl")
 include("../src/rbf.jl")
 
+function chaindiag(chain, mdl, data)
+    chn[:lp][end]
+    p1 = plot(chn[:lp], label = "$(round(chn[:lp][end], digits = 2))")
+
+    denscoefs = extract_coefs(chn[end, :, 1], "ζ")
+    mat, p2 = plotdensrbf(denscoefs, mdl.data)
+
+    geocoefs = extract_coefs(chn[end, :, 1], "η")
+    dfgeo, p3 = plotgeorbf(geocoefs, mdl.data)
+
+    df = DataFrame(;
+                   data.df.fromdist,
+                   data.df.todist,
+                   data.df.flows,
+                   preds = returned(mdl.mdl, chn[end])[1],
+                   data.df.dist);
+
+    p4 = plot(plotfit(df.flows, df.preds),
+              title = "Cor: $(corround(log.(df.flows), log.(df.preds)))")
+
+    p5 = plotdist(df, :preds)
+
+    net = calc_net_df(df);
+    p6 = plot(plotnet(net), title = "cor: $(corround(net.nmr, net.nmrp))")
+    plts = [p1, p2, p3, p4, p5, p6]
+    return (; df, net, plts)
+end
 
 function extract_coefs(chn, string)
     nms = String.(names(chn))
@@ -34,37 +61,7 @@ AD = AutoEnzyme()
 AD = ADTypes.AutoForwardDiff()
 mdl = norm(data; ndc = 4, ngc = 4, normalize = false);
 chn = Turing.sample(mdl.mdl, NUTS(10, .7), 1, progress = true)
-
+out = chaindiag(chn, mdl, data)
 ## tree depth 4 or 5
 ## check how NUTS works
 ## rescale y axis, such that 1m = 1m
-chn = Turing.sample(mdl.mdl, NUTS(100, .7), 10, progress = true)
-chn
-chn[:lp][end]
-plot(chn[:lp], label = "$(round(chn[:lp][end], digits = 2))")
-
-denscoefs = extract_coefs(chn[end, :, 1], "ζ")
-plotdensrbf(denscoefs, mdl.data)
-
-geocoefs = extract_coefs(chn[end, :, 1], "η")
-plotgeorbf(geocoefs, mdl.data)
-
-heat(denscoefs, 1.5, districts)
-
-
-preds = returned(mdl.mdl, chn[end])[1];
-df = DataFrame(; data.df.fromdist, data.df.todist, data.df.flows, preds, data.df.dist);
-plot(plotfit(df.flows, df.preds),
-     title = "Cor: $(corround(log.(df.flows), log.(df.preds)))")
-
-plotdist(df, :preds)
-
-net = calc_net_df(df);
-plot(plotnet(net), title = "cor: $(corround(net.nmr, net.nmrp))")
-
-# districts = year(CSV.read("../data/districts.csv", DataFrame), 2017)
-w = zeros(4, 4)
-w[4, 1] = 1
-w[1, 1] = 3
-# heat(w, 1, districts)
-plotgeo(w, 1.5, districts)
