@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = true, ds = 100)
+function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 1, ngc = 1, normalize = true, ds = 100)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -17,7 +17,7 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
     Rmin, Rmax = extrema(R)
     cx         = [range(Rmin, Rmax, Int(sqrt(ndc)));]
     cy         = [range(Rmin, Rmax, Int(sqrt(ndc)));]
-    rbf_scale   = rbfscale(cx, cy, densscale)
+    rbf_scale  = rbfscale(cx, cy, kdens)
     Ndist      = length(districts.distcode)
     N          = length(Y)
     radius     = fradius.(districts.pop, districts.density, ds)
@@ -25,15 +25,16 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
     ycoord     = scale_to_unit(districts.ycoord)
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
-    cxgeo      = [range(xmin, xmax, Int(sqrt(ngc)));]
-    cygeo      = [range(ymin, ymax, Int(sqrt(ngc)));]
-    geoscale   = rbfscale(cxgeo, cygeo, densscale)
+    cxgeo      = [range(-0.6, 0.4, Int(sqrt(ngc)));]
+    cygeo      = [range(-0.9, 0.6, Int(sqrt(ngc)));]
+    geo_scale  = rbfscale(cxgeo, cygeo, kgeo)
     fromfull   = lc(dffull.fromdist)
     tofull     = lc(dffull.todist)
     Dfull      = fdist(dffull.dist, ds)
     Nfull      = length(fromfull)
-    data       = (; Y, D, from, to, A,  P, districts.distcode, poporig,
-                  ndc, ngc, Rmin, Rmax, xcoord, ycoord, age, year)
+    data       = (; Y, D, from, to, A,  P, R, districts.distcode, poporig,
+                  ndc, ngc, Rmin, Rmax, xcoord, ycoord, age, year,
+                  cx, cy, cxgeo, cygeo, kdens, kgeo)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
@@ -43,7 +44,7 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
                           Rmin::Float64, Rmax::Float64,
                           fromfull::Vector{Int}, tofull::Vector{Int},
                           Dfull::Vector{Float64}, Nfull::Int, ndc::Int, ngc::Int,
-                          normalize::Bool, cx, cy, rbf_scale, cxgeo, cygeo, geoscale)
+                          normalize::Bool, cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
 
         α_raw  ~ Normal(-5, 1);   α = α_raw
         β_raw  ~ Gamma(1, 1);     β = β_raw
@@ -78,8 +79,8 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
             ps[i] = A[i] * exp(α +
                 desirability(P[to[i]], D[i],
                              interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
-                             interpolant(rbf, xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geoscale),
-                             interpolant(rbf, xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geoscale),
+                             interpolant(rbf, xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
+                             interpolant(rbf, xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
                               γ, δ, ϕ) / denom[from[i]])
         end
         Y ~ product_distribution(Poisson.(ps))
@@ -89,7 +90,7 @@ function norm(data::NamedTuple; densscale = 2.0, ndc = 1, ngc = 1, normalize = t
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize,
-                cx, cy, rbf_scale, cxgeo, cygeo, geoscale)
+                cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
     lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-100, ndc)..., fill(-100, ngc)...]
     ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(100, ndc)..., fill(100, ngc)...]
     return (; mdl, lb, ub, data)
@@ -102,7 +103,6 @@ end
 function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
     P + log(ϕ + (1 - ϕ) / ((D + δ) ^ γ)) + Q + (Gto - Gfrom)
 end
-
 
 fdist(D, ds) = D / ds
 fradius(P, ρ, ds) = sqrt((P / ρ) / 2π) / ds
