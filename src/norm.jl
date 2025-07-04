@@ -25,15 +25,20 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 1, ngc = 1, norma
     ycoord     = scale_to_unit(districts.ycoord)
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
-    cxgeo      = [range(-0.6, 0.4, Int(sqrt(ngc)));]
-    cygeo      = [range(-0.9, 0.6, Int(sqrt(ngc)));]
+    ## Germany's height is about 1.33 times it's with. Of the width,
+    ## we only use 50% as space for the grid, of the height we use
+    ## 70%. For equidistant points we thus need 1.86 = 1.33 * .7 / .5 as many
+    ## different y points as x points
+    ngcy = Int(round(ngcx * 1.86, digits = 0))
+    cxgeo      = [range(-0.6, 0.4, ngcx);]
+    cygeo      = [range(-0.9, 0.6, ngcy);]
     geo_scale  = rbfscale(cxgeo, cygeo, kgeo)
     fromfull   = lc(dffull.fromdist)
     tofull     = lc(dffull.todist)
     Dfull      = fdist(dffull.dist, ds)
     Nfull      = length(fromfull)
     data       = (; Y, D, from, to, A,  P, R, districts.distcode, poporig,
-                  ndc, ngc, Rmin, Rmax, xcoord, ycoord, age, year,
+                  ndc, ngcx, ngcy, Rmin, Rmax, xcoord, ycoord, age, year,
                   cx, cy, cxgeo, cygeo, kdens, kgeo)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
@@ -43,7 +48,8 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 1, ngc = 1, norma
                           xmin::Float64, xmax::Float64, ymin::Float64, ymax::Float64,
                           Rmin::Float64, Rmax::Float64,
                           fromfull::Vector{Int}, tofull::Vector{Int},
-                          Dfull::Vector{Float64}, Nfull::Int, ndc::Int, ngc::Int,
+                          Dfull::Vector{Float64}, Nfull::Int,
+                          ndc::Int, ngcx::Int, ngcy::Int,
                           normalize::Bool, cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
@@ -52,7 +58,7 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 1, ngc = 1, norma
         ϕ_raw ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw ~ Gamma(10, 1.0);  δ = δ_raw / 100
         ζ_raw ~ StMvN(ndc, 10);  ζ = coefmat(ζ_raw / 10)
-        η_raw ~ StMvN(ngc, 10);  η = coefmat(η_raw / 10)
+        η_raw ~ StMvN(Int(ngcx * ngcy), 10);  η = coefmat(η_raw / 10)
 
         T = eltype(γ)  # to get dual data type for AD
         denom = zeros(T, Ndist)
@@ -89,7 +95,7 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 1, ngc = 1, norma
 
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
-                fromfull, tofull, Dfull, Nfull, ndc, ngc, normalize,
+                fromfull, tofull, Dfull, Nfull, ndc, ngcx, ngcy, normalize,
                 cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
     lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-100, ndc)..., fill(-100, ngc)...]
     ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(100, ndc)..., fill(100, ngc)...]
