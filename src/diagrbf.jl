@@ -17,7 +17,8 @@ function plotgeorbf_(coefs::Vector{Float64},
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
     geoscale   = rbfscale(cx, cy, k)
-    geo = [interpolant(rbf, xcoord[i], ycoord[i], coefmat(coefs ./ 10),
+    geo = [interpolant(rbf, xcoord[i], ycoord[i],
+                       coefmat(coefs ./ 10, length(cx), length(cy)),
                        cx, cy, geoscale) for i in eachindex(xcoord)];
     geo = geo .- mean(geo)
     dfgeo = DataFrame(; xcoord, ycoord, geo)

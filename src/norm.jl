@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 1, ngc = 1, normalize = true, ds = 100)
+function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 1, ngcx = 1, normalize = true, ds = 100)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -57,8 +57,8 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 1, ngc = 1, norma
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         δ_raw ~ Gamma(10, 1.0);  δ = δ_raw / 100
-        ζ_raw ~ StMvN(ndc, 10);  ζ = coefmat(ζ_raw / 10)
-        η_raw ~ StMvN(Int(ngcx * ngcy), 10);  η = coefmat(η_raw / 10)
+        ζ_raw ~ StMvN(ndc, 10.0);  ζ = coefmat(ζ_raw / 10)
+        η_raw ~ StMvN(ngcx * ngcy, 10.0);  η = coefmat(η_raw / 10, ngcx, ngcy)
 
         T = eltype(γ)  # to get dual data type for AD
         denom = zeros(T, Ndist)
@@ -97,8 +97,8 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 1, ngc = 1, norma
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngcx, ngcy, normalize,
                 cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
-    lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-100, ndc)..., fill(-100, ngc)...]
-    ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(100, ndc)..., fill(100, ngc)...]
+    lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-100, ndc)..., fill(-100, ngcx * ngcy)...]
+    ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(100, ndc)..., fill(100, ngcx * ngcy)...]
     return (; mdl, lb, ub, data)
 end
 
@@ -118,6 +118,10 @@ function coefmat(c)
     s = Int(sqrt(length(c)))
     return reshape(c, (s, s))
 end
+function coefmat(c, nx::Int, ny::Int)
+    return reshape(c, (nx, ny))
+end
+
 function genfrompop(df, type)
     type == "joint" && return df.frompop
     df2 = combine(groupby(data.df, :fromdist), :flows => sum)

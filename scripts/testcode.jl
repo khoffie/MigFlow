@@ -24,19 +24,29 @@ data = load_data("18-25", 2017, p, "../data/"; only_positive = true,
 AD = AutoForwardDiff()
 ## AD = AutoReverseDiff()
 ## AD = AutoEnzyme()
-mdl = norm(data;
+mdl = norm(data,
            kdens = 2.0,
            kgeo = 2.0,
-           ndc = 4, ngc = 4,
+           ndc = 4, ngcx = 2,
            normalize = false);
 
 Random.seed!(1234)
-chn = Turing.sample(mdl.mdl, NUTS(100, .7; adtype = AD), 1, progress = true)
-out = chaindiag(chn, mdl, data);
+chn = Turing.sample(mdl.mdl, NUTS(200, .7; adtype = AD, max_depth = 5),
+                    MCMCThreads(), 100, 4, progress = true)
 
-# plot(out.plts[1:4]...)
-# out.plts[5]
-# out.plts[6]
+
+# Get sampler diagnostics
+sampler = get_transitions(chn).sampler
+
+# Access the final step size of each chain
+stepsizes = [s.ϵ for s in sampler]
+
+out = chaindiag(chn, mdl, data);
+plot(out.plts[1:4]...)
+chn[:lp]
+out.plts[5]
+out.plts[6]
+
 # chn
 
 ## tree depth 4 or 5
@@ -44,5 +54,6 @@ out = chaindiag(chn, mdl, data);
 ## rescale y axis, such that 1m = 1m
 
 # out = @time estimate(norm, data;
-#                      model_kwargs = (; ndc = 4, ngc = 4, normalize = false),
+#                      model_kwargs = (; kdens = 2.0, kgeo = 2.0,
+#                                      ndc = 4, ngc = 4, normalize = false),
 #                      optim_kwargs = (; ad = AD));
