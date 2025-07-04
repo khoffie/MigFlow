@@ -1,14 +1,14 @@
-function chaindiag(chn, mdl, data)
+function chaindiag(chn, mdl)
     p1 = plot(chn[:lp])
 
     m = argmax(chn[:lp].data)
     chn = chn[m[1], :, m[2]]
-    df = DataFrame(;
-                   data.df.fromdist,
-                   data.df.todist,
-                   data.df.flows,
+    df = DataFrame(
+                   fromdist = mdl.data.from,
+                   todist = mdl.data.to,
+                   flows = mdl.data.Y,
                    preds = returned(mdl.mdl, chn)[1],
-                   data.df.dist);
+                   dist = mdl.data.D);
 
     p2 = plot(plotfit(df.flows, df.preds),
               title = "Cor: $(corround(log.(df.flows), log.(df.preds)))")
