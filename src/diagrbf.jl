@@ -17,7 +17,7 @@ function plotgeorbf_(coefs::Vector{Float64},
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
     geoscale   = rbfscale(cx, cy, k)
-    geo = [interpolant(rbf, xcoord[i], ycoord[i], coefmat(coefs ./ 100),
+    geo = [interpolant(rbf, xcoord[i], ycoord[i], coefmat(coefs ./ 10),
                        cx, cy, geoscale) for i in eachindex(xcoord)];
     geo = geo .- mean(geo)
     dfgeo = DataFrame(; xcoord, ycoord, geo)
@@ -52,7 +52,7 @@ function plotdensrbf_(coefs::Vector{Float64},
     vals = range(Rmin, Rmax, 1000)
     s = Int(sqrt(length(coefs)))
     scale = rbfscale(cx, cy, k)
-    mat = [interpolant(rbf, Rfrom, Rto, coefmat(coefs ./ 100), cx, cy, scale)
+    mat = [interpolant(rbf, Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale)
            for Rto in vals, Rfrom in vals];
     mat = mat .- mean(mat)
     p = heatmap(mat)
