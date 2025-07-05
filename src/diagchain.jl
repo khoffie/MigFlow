@@ -1,4 +1,4 @@
-function chaindiag(chn, mdl)
+function diagchain(chn, mdl)
     p1 = plot(chn[:lp])
 
     m = argmax(chn[:lp].data)
@@ -43,4 +43,12 @@ end
 function extract_coefs(chn, string)
     nms = String.(names(chn))
     return chn.value[occursin.(string, nms)].data
+end
+
+function extract_sample(chn, type = "best")
+    if type == "best"
+        m = argmax(chn[:lp].data)
+        chn = chn[m[1], :, m[2]]
+    end
+    return chn
 end
