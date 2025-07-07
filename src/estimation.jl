@@ -19,7 +19,7 @@ function estimate(model, data::NamedTuple;
     plt = [
         plotfit(data.Y, preds),
         plotdist(df, :preds),
-        plotpop(data.Y, preds, data.A[data.from], data.P[data.to]),
+        plotpop(data.Y, preds, data.A[data.from], data.poporig[data.to]),
         plotnet(net),
         pdens,
         pgeo
