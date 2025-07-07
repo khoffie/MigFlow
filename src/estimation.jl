@@ -1,8 +1,6 @@
-function estimate(model, data::NamedTuple;
+function estimate(model;
                   show_plt = true,
-                  model_kwargs = (;),
                   optim_kwargs = (;))
-    mdl = model(data; model_kwargs...)
     mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
     out = format_mles(mles)
     data = mdl.data
