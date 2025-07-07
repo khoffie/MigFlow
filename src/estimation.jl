@@ -1,33 +1,8 @@
 function estimate(model; show_plt = true, optim_kwargs = (;))
     mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
     out = format_mles(mles)
-    data = mdl.data
-    out = add_age_year(out, data)
-
-    net = calc_net_df(DataFrame(flows = data.Y,
-                                preds = preds,
-                                fromdist = data.from,
-                                todist = data.to))
-
-    densdesir, pdens = evaldens(out, data)
-    geo, pgeo = evalgeo(out, data)
-    df = DataFrame(flows = data.Y, preds = preds, dist = data.D)
-    plt = [
-        plotfit(data.Y, preds),
-        plotdist(df, :preds),
-        plotpop(data.Y, preds, data.A[data.from], data.poporig[data.to]),
-        plotnet(net),
-        pdens,
-        pgeo
-           ]
-    p = plot(plt[1 : 4]..., plot_title = "LP $(round(out["lp"], digits = 0))",
-             size = (1000, 600))
-    if show_plt; display(p); end
-    res = (out = out, net = net, preds = preds,
-           dens = densdesir, geo = geo, mles = mles, plt = plt)
-##    display(res.out)
-    println("")
-    return res
+    out = add_age_year(out, mdl.data)
+    return diagchain(makechain(out), mdl)
 end
 
 function add_age_year(out, data)
@@ -80,6 +55,13 @@ function predict(mdl, mles)
     vs = Tuple(mles.values)
     ks = Tuple(names(mles.values)[1])
     return returned(mdl, NamedTuple{ks}(vs))
+end
+
+function makechain(out)
+    coefs = (out[1 : end - 2])
+    coefsnum = Float64.(coefs.array.array)
+    nms = names(coefs)[1]
+    return Chains(reshape(coefsnum, (1, :, 1)), nms)
 end
 
 ## not needed because the lp Turing returns from optimization is
