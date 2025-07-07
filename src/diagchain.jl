@@ -9,9 +9,9 @@ function diagchain(chn, mdl)
                    flows = mdl.data.Y,
                    preds = returned(mdl.mdl, chn)[1],
                    dist = mdl.data.D);
-
+    dev = round(deviance(df.flows, df.preds), digits = 2)
     p2 = plot(plotfit(df.flows, df.preds),
-              title = "Cor: $(corround(log.(df.flows), log.(df.preds)))")
+              title = "Mean deviance: $(dev)")
 
     if occursin("dist", names(df)[1])
         p3 = plotdist(df, :preds)
@@ -51,4 +51,12 @@ function extract_sample(chn, type = "best")
         chn = chn[m[1], :, m[2]]
     end
     return chn
+end
+
+function deviance(y, p)
+    loss = zeros(length(y))
+    for i in eachindex(y)
+        loss[i] = y[i] * log(y[i] / p[i]) - (y[i] - p[i])
+    end
+    return 2mean(loss)
 end
