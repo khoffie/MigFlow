@@ -37,7 +37,7 @@ function diagchain(chn, mdl)
     end
 
     plts = [p1, p2, p3, p4, p5, p6]
-    return (; df, net, mat, geo, plts)
+    return (; df, net, mat, geo, plts, chn)
 end
 
 function extract_coefs(chn, string)
