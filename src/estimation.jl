@@ -1,6 +1,4 @@
-function estimate(model;
-                  show_plt = true,
-                  optim_kwargs = (;))
+function estimate(model; show_plt = true, optim_kwargs = (;))
     mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
     out = format_mles(mles)
     data = mdl.data
