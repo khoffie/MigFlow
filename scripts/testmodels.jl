@@ -48,10 +48,10 @@ function fit_years(a, p)
     results = NamedTuple[]
     inits = [-7.5, 18.0, 20.0, rbfinits(9, 40.0)..., rbfinits(8, 10.0)...]
     for y in years
-
-        data = load_data(a, y, p, "../data/"; only_positive = true,
-                         seed = 1234, opf = false);
-        mdl = norm(data, normalize = false, ndc = 9, ngcx = 2);
+        mdl = norm(load_data(a, y, p, "../data/";
+                             only_positive = true,
+                             seed = 1234, opf = false),
+                   normalize = false, ndc = 9, ngcx = 2);
         out = @time estimate(mdl, optim_kwargs = (; show_trace = false,
                                                   inits = inits));
         println("$y done")
