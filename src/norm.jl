@@ -53,10 +53,10 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
                           normalize::Bool, cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
-        β_raw ~ Gamma(1, 1);     β = β_raw
+        # β_raw ~ Gamma(1, 1);     β = β_raw
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
-        δ_raw ~ Gamma(10, 1.0);  δ = δ_raw / 100
+        # δ_raw ~ Gamma(10, 1.0);  δ = δ_raw / 100
         ζ_raw ~ StMvN(ndc, 10.0);  ζ = coefmat(ζ_raw / 10)
         η_raw ~ StMvN(ngcx * ngcy, 10.0);  η = coefmat(η_raw / 10, ngcx, ngcy)
 
@@ -87,7 +87,7 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
                              interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
                              interpolant(rbf, xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
                              interpolant(rbf, xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
-                              γ, δ, ϕ) / denom[from[i]])
+                              γ, ϕ) / denom[from[i]])
         end
         Y ~ product_distribution(Poisson.(ps))
         return ps
@@ -97,8 +97,10 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngcx, ngcy, normalize,
                 cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
-    lb = [-20.0, -100.0, 10.0, 1.0, 1.0, fill(-100, ndc)..., fill(-100, ngcx * ngcy)...]
-    ub = [20.0, 100.0, 100.0, 99.0, 99.0, fill(100, ndc)..., fill(100, ngcx * ngcy)...]
+    ## ub alpha only makes sense for distscale = 100 and pop /
+    ## median(pop). Otherwise base prob to migrate might be very different
+    lb = [-10.0, 10.0, 1.0, fill(-100, ndc)..., fill(-100, ngcx * ngcy)...]
+    ub = [-5.0, 40.0, 30.0, fill(100, ndc)..., fill(100, ngcx * ngcy)...]
     return (; mdl, lb, ub, data)
 end
 
@@ -106,8 +108,8 @@ end
 #     P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto / Gfrom))
 # end
 
-function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-    P + log(ϕ + (1 - ϕ) / ((D + δ) ^ γ)) + Q + (Gto - Gfrom)
+function desirability(P, D, Q, Gfrom, Gto, γ, ϕ)
+    P + log(ϕ + (1 - ϕ) / ((D + 0.01) ^ γ)) + Q + (Gto - Gfrom)
 end
 
 fdist(D, ds) = D / ds
