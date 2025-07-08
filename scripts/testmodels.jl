@@ -17,6 +17,22 @@ include("../src/rbf.jl")
 include("../src/distonly.jl")
 
 corround(x, y) = round(cor(x, y), digits = 2)
+plotcoef(df, c) = (plot(df.year, df[!, c], title = c); scatter!(df.year, df[!, c]))
+
+function postprocess(results, loopvec)
+    params = results[1].name_map.parameters
+    df = DataFrame([Symbol(p) => [results[i].chn[p].data[1]
+                                  for i in eachindex(results)] for p in params])
+    df.group = loopvec
+    pgamma = plotcoef(df, :γ_raw)
+    palpha = plotcoef(df, :α_raw)
+    pphi = plotcoef(df, :ϕ_raw)
+    pdelta = plotcoef(df, :δ_raw)
+    pdens = [results[i].plts[5] for i in legitfits]
+    pgeo = [results[i].plts[6] for i in legitfits]
+    pls = [palpha, pgamma, pdelta, pphi, pdens, pgeo]
+    return (; df, pls)
+end
 
 p = 1.0
 p = 0.1
@@ -51,30 +67,3 @@ params = chn1.name_map.parameters[1 : end - 1]
 inits = NamedTuple{Tuple(params)}(Tuple(vals))
 
 sam = Turing.sample(mdl.mdl, Turing.Inference.HMC(.01, 200), 1; init_theta = [inits])
-
-
-df = DataFrame([Symbol(p) => [results[i].chn[p].data[1] for i in eachindex(results)] for p in params])
-df.year = years
-plotcoef(df, c) = (plot(df.year, df[!, c], title = c); scatter!(df.year, df[!, c]))
-plotcoef(df[df.lp .> -50000, :], :γ_raw)
-plotcoef(df[df.lp .> -50000, :], :α_raw)
-
-plotcoef(df[df.lp .> -50000, :], :ϕ_raw)
-plotcoef(df[df.lp .> -50000, :], :δ_raw)
-
-legitfits = [1:17;][df.lp .> -50000]
-
-densplots = [results[i].plts[5] for i in legitfits]
-
-plot(densplots[1:8]..., size = (1200, 900))
-
-geoplots = [results[i].plts[6] for i in legitfits]
-plot(geoplots..., size = (1200, 900))
-
-
-inits = vcat([-7.0, 0.0, 20.0, 5.0, 20.0], fill(1.0, 21))
-
-out = estimate(mdl, optim_kwargs = (; show_trace = true));
-out.chn
-plot(out.plts[1:4]...)
-out.plts[6]
