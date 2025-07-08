@@ -17,10 +17,10 @@ include("../src/rbf.jl")
 include("../src/distonly.jl")
 
 corround(x, y) = round(cor(x, y), digits = 2)
-plotcoef(df, c) = (plot(df.year, df[!, c], title = c); scatter!(df.year, df[!, c]))
+plotcoef(df, c) = (plot(df.group, df[!, c], title = c); scatter!(df.group, df[!, c]))
 
 function postprocess(results, loopvec)
-    params = results[1].name_map.parameters
+    params = results[1].chn.name_map.parameters
     df = DataFrame([Symbol(p) => [results[i].chn[p].data[1]
                                   for i in eachindex(results)] for p in params])
     df.group = loopvec
@@ -28,8 +28,8 @@ function postprocess(results, loopvec)
     palpha = plotcoef(df, :α_raw)
     pphi = plotcoef(df, :ϕ_raw)
     pdelta = plotcoef(df, :δ_raw)
-    pdens = [results[i].plts[5] for i in legitfits]
-    pgeo = [results[i].plts[6] for i in legitfits]
+    pdens = [r.plts[5] for r in results]
+    pgeo = [r.plts[6] for r in results]
     pls = [palpha, pgamma, pdelta, pphi, pdens, pgeo]
     return (; df, pls)
 end
@@ -57,13 +57,34 @@ end
 
 serialize("output/optim18-25", results)
 
+seeds = rand(1:1000, 10)
+results = NamedTuple[]
+for s in seeds
+    p = 0.2
+    data = load_data("18-25", 2017, p, "../data/"; only_positive = true,
+                     seed = s, opf = false);
+    mdl = norm(data, normalize = false, ndc = 9, ngcx = 2);
+    out = @time estimate(mdl, optim_kwargs = (; show_trace = false));
+    println("$s done")
+    push!(results, out)
+end
+
+out = postprocess(results, seeds)
+
+sort(out.df, :lp)[!, vcat(1:5, end - 1, end)]
+
+
+
 chn1 = results[1].chn
-data = load_data("18-25", years[1], p, "../data/"; only_positive = true,
-                 seed = 1234, opf = false);
+data = load_data("18-25", 2017, p, "../data/"; only_positive = true,
+                 seed = seeds[1], opf = false);
 mdl = norm(data, normalize = false, ndc = 9, ngcx = 2);
 
-vals = chn1.value.data[1 :  end - 1] .* 20
+vals = chn1.value.data[1 :  end - 1]
 params = chn1.name_map.parameters[1 : end - 1]
 inits = NamedTuple{Tuple(params)}(Tuple(vals))
 
-sam = Turing.sample(mdl.mdl, Turing.Inference.HMC(.01, 200), 1; init_theta = [inits])
+sam = Turing.sample(mdl.mdl, Turing.Inference.HMC(.01, 200), 100; initial_params = vals)
+sam[:lp]
+chn1[:lp]
+sam = Turing.sample(mdl.mdl, NUTS(), 1; init_params = [inits])
