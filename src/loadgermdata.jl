@@ -35,11 +35,3 @@ function addlrd!(districts::DataFrame)
                           :density => calc_lrd => :lrd)
     return districts
 end
-
-function joinlrd(df, districts)
-    di = select(districts, :distcode, :year, :lrd => :fromdens)
-    leftjoin!(df, di, on = [:fromdist => :distcode, :year])
-    di = select(districts, :distcode, :year, :lrd => :todens)
-    leftjoin!(df, di, on = [:todist => :distcode, :year])
-    return df
-end
