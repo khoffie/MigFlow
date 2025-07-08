@@ -12,7 +12,7 @@ function add_age_year(out, data)
 end
 
 function format_mles(mles)
-    out = NamedArray([mles.values.array..., mles.lp, mles.optim_result.retcode])
+    out = NamedArray([mles.values.array..., mles.lp, Int(mles.optim_result.retcode)])
     nms = [string.(names(mles.values)...)..., "lp", "retcode"]
     setnames!(out, nms, 1)
     return out
