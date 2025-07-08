@@ -20,20 +20,3 @@ function calc_net_df(df)
     net = innerjoin(net, netp, on = :fromdist => :fromdistp)
     return net
 end
-
-function moving_average(A::AbstractArray, m::Int)
-    ## https://discourse.julialang.org/t/smoothing-noisy-data-using-moving-mean/65329/6
-    out = similar(A)
-    R = CartesianIndices(A)
-    Ifirst, Ilast = first(R), last(R)
-    I1 = m÷2 * oneunit(Ifirst)
-    for I in R
-        n, s = 0, zero(eltype(out))
-        for J in max(Ifirst, I-I1):min(Ilast, I+I1)
-            s += A[J]
-            n += 1
-        end
-        out[I] = s/n
-    end
-    return out
-end
