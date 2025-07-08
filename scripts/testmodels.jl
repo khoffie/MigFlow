@@ -61,4 +61,14 @@ function fit_years(a, p)
     return results
 end
 
-results = fit_years("18-25", 1.0)
+ages = ["below18", "25-30", "30-50", "50-65", "above65"]
+for a in ages
+    fit_years(a, 1.0)
+end
+
+# post = postprocess(results, vcat(2000:2002, 2004:2017))
+# post.df
+# idx = [1, 2, 3, 15, 16, 17]
+# plot(post.pls[1:3]...)
+# plot(post.pls[4][idx]..., size = (1200, 900))
+# plot(post.pls[5][idx]..., size = (1200, 900))
