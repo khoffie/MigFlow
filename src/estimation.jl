@@ -1,5 +1,5 @@
-function estimate(model; show_plt = true, optim_kwargs = (;))
-    mles, preds = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
+function estimate(mdl; show_plt = true, optim_kwargs = (;))
+    mles = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
     out = format_mles(mles)
     out = add_age_year(out, mdl.data)
     return diagchain(makechain(out), mdl)
@@ -37,7 +37,7 @@ function runoptim(mdl, lb, ub;
                                              show_trace = show_trace,
                                              store_trace = false)
 ##            mles = @time(Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub))
-            return mles, predict(mdl, mles)
+            return mles
         catch e
             if e isa DomainError
                 println("Domainerror, retrying... Attempt $attempt")
@@ -48,13 +48,6 @@ function runoptim(mdl, lb, ub;
         end
     end
     error("Optimization failed after $attempt attempts")
-end
-
-function predict(mdl, mles)
-    ## mdl is an instantiated Turing model
-    vs = Tuple(mles.values)
-    ks = Tuple(names(mles.values)[1])
-    return returned(mdl, NamedTuple{ks}(vs))
 end
 
 function makechain(out)
