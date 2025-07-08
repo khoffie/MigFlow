@@ -47,7 +47,7 @@ function runoptim(mdl, lb, ub;
             end
         end
     end
-    error("Optimization failed after $attempt attempts")  # Ensure a clear failure message
+    error("Optimization failed after $attempt attempts")
 end
 
 function predict(mdl, mles)
