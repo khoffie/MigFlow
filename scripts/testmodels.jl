@@ -40,6 +40,7 @@ function postprocess(results, loopvec, lpthresh = -10e6)
 end
 
 rbfinits(N, σ, t = 90.0) = clamp.(rand(MvNormal(zeros(N), σ^2 *I(N))), -t, t)
+inits = [-7.5, 18.0, 20.0, rbfinits(9, 40.0)..., rbfinits(8, 10.0)...]
 
 function fit_years(a, p)
     years = vcat(2000:2002, 2004:2017)
@@ -54,8 +55,8 @@ function fit_years(a, p)
                                                   inits = inits));
         println("$y done")
         push!(results, out)
+        serialize("output/optim$(a)", results)
     end
-    serialize("output/optim$(a)", results)
     return results
 end
 
