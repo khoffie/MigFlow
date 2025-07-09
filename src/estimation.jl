@@ -51,8 +51,17 @@ function runoptim(mdl, lb, ub;
 end
 
 function makechain(out)
-    coefs = (out[1 : end - 2])
+    coefs = vcat(out[1 : end - 2], recodeage(out["age"]), out["year"])
     coefsnum = Float64.(coefs.array.array)
-    nms = names(coefs)[1]
+    nms = names(out)[1]
     return Chains(reshape(coefsnum, (1, :, 1)), nms)
+end
+
+function recodeage(a)
+    a == "below18" && return 1
+    a == "18-25" && return 2
+    a == "25-30" && return 3
+    a == "30-50" && return 4
+    a == "50-65" && return 5
+    a == "above65" && return 5
 end
