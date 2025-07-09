@@ -4,9 +4,9 @@ function diagchain(chn, mdl)
     m = argmax(chn[:lp].data)
     chn = chn[m[1], :, m[2]]
     df = DataFrame(
-                   fromdist = mdl.data.from,
-                   todist = mdl.data.to,
-                   flows = mdl.data.Y,
+                   fromdist = mdl.mdl.args.from,
+                   todist = mdl.mdl.args.to,
+                   flows = mdl.mdl.args.Y,
                    preds = returned(mdl.mdl, chn)[1],
                    dist = mdl.data.D);
     dev = round(deviance(df.flows, df.preds), digits = 2)
