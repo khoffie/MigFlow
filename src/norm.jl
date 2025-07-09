@@ -37,9 +37,7 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
     tofull     = lc(dffull.todist)
     Dfull      = fdist(dffull.dist, ds)
     Nfull      = length(fromfull)
-    data       = (; Y, D, from, to, A,  P, R, districts.distcode, poporig,
-                  ndc, ngcx, ngcy, Rmin, Rmax, xcoord, ycoord, age, year,
-                  cx, cy, cxgeo, cygeo, kdens, kgeo)
+    data       = (; age, year)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
