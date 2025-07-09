@@ -30,10 +30,7 @@ mdl = norm(data,
            ndc = 4, ngcx = 2,
            normalize = false);
 
-Random.seed!(1234)
-chn = Turing.sample(mdl.mdl, NUTS(200, .7; adtype = AD, max_depth = 5),
-                    MCMCThreads(), 100, 4, progress = true)
-
+out = @time estimate(mdl, optim_kwargs = (; show_trace = false));
 
 # Get sampler diagnostics
 sampler = get_transitions(chn).sampler
