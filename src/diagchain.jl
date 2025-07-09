@@ -60,3 +60,5 @@ function deviance(y, p)
     end
     return 2mean(loss)
 end
+
+corround(x, y) = round(cor(x, y), digits = 2)
