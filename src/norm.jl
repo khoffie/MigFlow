@@ -97,10 +97,8 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 fromfull, tofull, Dfull, Nfull, ndc, ngcx, ngcy, normalize,
                 cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
-    ## ub alpha only makes sense for distscale = 100 and pop /
-    ## median(pop). Otherwise base prob to migrate might be very different
-    lb = [-10.0, 10.0, 1.0, fill(-100, ndc)..., fill(-100, ngcx * ngcy)...]
-    ub = [-5.0, 40.0, 30.0, fill(100, ndc)..., fill(100, ngcx * ngcy)...]
+
+    lb, ub = bound(age, ndc, ngcx, ngcy)
     return (; mdl, lb, ub, data)
 end
 
