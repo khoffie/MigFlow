@@ -8,17 +8,14 @@ include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
 include("../src/diag.jl")
 include("../src/diagplots.jl")
-include("../src/chebies.jl")
 include("../src/diagchain.jl")
 include("../src/diagrbf.jl")
 include("../src/norm.jl")
 include("../src/rbf.jl")
 
-corround(x, y) = round(cor(x, y), digits = 2)
-
 p = 1.0
 p = 0.1
-data = load_data("18-25", 2017, p, "../data/"; only_positive = true,
+data = load_data("18-25", 2015, p, "../data/"; only_positive = true,
                  seed = 1234, opf = false);
 
 AD = AutoForwardDiff()
@@ -29,12 +26,10 @@ mdl = norm(data,
            kgeo = 2.0,
            ndc = 4, ngcx = 2,
            normalize = false);
+inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
 
-out = @time estimate(mdl, optim_kwargs = (; show_trace = false));
-
-
-
-out.chn
+out = @time estimate(mdl, optim_kwargs = (; show_trace = false,
+                                          inits = inits));
 plot(out.plts[1:4]...)
 plot(out.plts[5])
 plot(out.plts[6])
