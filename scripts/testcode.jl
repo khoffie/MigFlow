@@ -32,25 +32,33 @@ mdl = norm(data,
 
 out = @time estimate(mdl, optim_kwargs = (; show_trace = false));
 
-# Get sampler diagnostics
-sampler = get_transitions(chn).sampler
+rbfinits(N, σ, t = 90.0) = clamp.(rand(MvNormal(zeros(N), σ^2 *I(N))), -t, t)
 
-# Access the final step size of each chain
-stepsizes = [s.ϵ for s in sampler]
 
-out = chaindiag(chn, mdl, data);
-plot(out.plts[1:4]...)
-chn[:lp]
-out.plts[5]
-out.plts[6]
+function initialize(a, ndc, ngcx, ngcy)
+    density = rbfinits(ndc, 40.0)
+    geo = rbfinits(ngcx * ngcy, 10.0)
+    a == "below18" && return [-8.0, 25.0, 30.0, density..., geo...]
+    a == "18-25" && return [-7.0, 18.0, 20.0, density..., geo...]
+    a == "25-30" && return [-7.0, 18.0, 20.0, density..., geo...]
+    a == "30-50" && return [-7.5, 23.0, 30.0, density..., geo...]
+    a == "50-65" && return [-7.5, 23.0, 30.0, density..., geo...]
+    a == "above65" && return [-7.5, 23.0, 30.0, density..., geo...]
+end
 
-# chn
+function bound(a, ndc, ngcx, ngcy)
+    lbdensity = fill(-100.0, ndc)
+    lbgeo = fill(-100.0, ngcx * ngcy)
+    ubdensity = fill(100.0, ndc)
+    ubgeo = fill(100.0, ngcx * ngcy)
 
-## tree depth 4 or 5
-## check how NUTS works
-## rescale y axis, such that 1m = 1m
+    pastelb(c) = vcat(c, lbdensity..., lbgeo...)
+    pasteub(c) = vcat(c, ubdensity..., ubgeo...)
 
-# out = @time estimate(norm, data;
-#                      model_kwargs = (; kdens = 2.0, kgeo = 2.0,
-#                                      ndc = 4, ngc = 4, normalize = false),
-#                      optim_kwargs = (; ad = AD));
+    a == "below18" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 50.0])
+    a == "18-25" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 30.0])
+    a == "25-30" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 30.0])
+    a == "30-50" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 40.0])
+    a == "50-65" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 40.0])
+    a == "above65" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 40.0])
+end
