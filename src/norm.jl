@@ -125,3 +125,21 @@ function genfrompop(df, type)
     df2 = combine(groupby(data.df, :fromdist), :flows => sum)
     return leftjoin(df, df2, on = :fromdist).flows_sum
 end
+
+function bound(a, ndc, ngcx, ngcy)
+    lbdensity = fill(-100.0, ndc)
+    lbgeo = fill(-100.0, ngcx * ngcy)
+    ubdensity = fill(100.0, ndc)
+    ubgeo = fill(100.0, ngcx * ngcy)
+
+    pastelb(c) = vcat(c, lbdensity..., lbgeo...)
+    pasteub(c) = vcat(c, ubdensity..., ubgeo...)
+    ## ub alpha only makes sense for distscale = 100 and pop /
+    ## median(pop). Otherwise base prob to migrate might be very different
+    a == "below18" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 50.0])
+    a == "18-25" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 30.0])
+    a == "25-30" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 30.0])
+    a == "30-50" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 40.0])
+    a == "50-65" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 40.0])
+    a == "above65" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 40.0])
+end
