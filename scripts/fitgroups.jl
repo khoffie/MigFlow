@@ -28,10 +28,18 @@ function initialize(a, ndc, ngcx, ngcy)
 end
 
 function fit_years(a, p)
-    years = vcat(2000:2002, 2004:2017)
-    results = NamedTuple[]
+    allyears = vcat(2000:2002, 2004:2017)
+    if isfile("output/optim$a")
+        results = deserialize("output/optim$a")
+        fittedyears = [Int(r.chn[:year].data[1]) for r in results]
+        years = setdiff(allyears, fittedyears)
+    else
+        results = NamedTuple[]
+        years = allyears
+    end
 
     Threads.@threads for y in years
+        println("Starting $a in $y")
         mdl = norm(load_data(a, y, p, "../data/";
                              only_positive = true,
                              seed = 1234, opf = false),
@@ -39,7 +47,7 @@ function fit_years(a, p)
         inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
         out = @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 
-        println("$y done")
+        println("$a in $y done")
         push!(results, out)
         serialize("output/optim$(a)", results)
     end
