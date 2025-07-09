@@ -4,8 +4,8 @@ function plotgeorbf(coefs::Vector{Float64},
     ycoord = data.ycoord
     cx = data.cxgeo
     cy = data.cygeo
-    k = data.kgeo
-    return plotgeorbf_(coefs, xcoord, ycoord, cx, cy, k)
+    scale = data.geo_scale
+    return plotgeorbf_(coefs, xcoord, ycoord, cx, cy, scale)
 end
 
 function plotgeorbf_(coefs::Vector{Float64},
@@ -13,13 +13,12 @@ function plotgeorbf_(coefs::Vector{Float64},
                     ycoord::Vector{Float64},
                     cx::Vector{Float64},
                     cy::Vector{Float64},
-                    k::Float64)
+                    scale::Float64)
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
-    geoscale   = rbfscale(cx, cy, k)
     geo = [interpolant(rbf, xcoord[i], ycoord[i],
                        coefmat(coefs ./ 10, length(cx), length(cy)),
-                       cx, cy, geoscale) for i in eachindex(xcoord)];
+                       cx, cy, scale) for i in eachindex(xcoord)];
     geo = geo .- mean(geo)
     dfgeo = DataFrame(; xcoord, ycoord, geo)
     ratio = (ymax - ymin) / (xmax - xmin)
@@ -39,20 +38,19 @@ end
 function plotdensrbf(coefs::Vector{Float64}, data::NamedTuple)
     cx = data.cx
     cy = data.cy
-    k = data.kdens
+    scale = data.rbf_scale
     R = data.R
-    return plotdensrbf_(coefs, cx, cy, k, R)
+    return plotdensrbf_(coefs, cx, cy, scale, R)
 end
 
 function plotdensrbf_(coefs::Vector{Float64},
                       cx::Vector{Float64},
                       cy::Vector{Float64},
-                      k::Float64,
+                      scale::Float64,
                       R::Vector{Float64})
     Rmin, Rmax = extrema(R)
     vals = range(Rmin, Rmax, 1000)
     s = Int(sqrt(length(coefs)))
-    scale = rbfscale(cx, cy, k)
     mat = [interpolant(rbf, Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale)
            for Rto in vals, Rfrom in vals];
     mat = mat .- mean(mat)

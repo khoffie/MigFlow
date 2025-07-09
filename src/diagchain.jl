@@ -8,7 +8,7 @@ function diagchain(chn, mdl)
                    todist = mdl.mdl.args.to,
                    flows = mdl.mdl.args.Y,
                    preds = returned(mdl.mdl, chn)[1],
-                   dist = mdl.data.D);
+                   dist = mdl.mdl.args.D);
     dev = round(deviance(df.flows, df.preds), digits = 2)
     p2 = plot(plotfit(df.flows, df.preds),
               title = "Mean deviance: $(dev)")
@@ -24,14 +24,14 @@ function diagchain(chn, mdl)
 
     denscoefs = extract_coefs(chn[end, :, 1], "ζ")
     if length(denscoefs) > 0
-        mat, p5 = plotdensrbf(denscoefs, mdl.data)
+        mat, p5 = plotdensrbf(denscoefs, mdl.mdl.args)
     else
         mat, p5 = nothing, nothing
     end
 
     geocoefs = extract_coefs(chn[end, :, 1], "η")
     if length(geocoefs) > 0
-        geo, p6 = plotgeorbf(geocoefs, mdl.data)
+        geo, p6 = plotgeorbf(geocoefs, mdl.mdl.args)
     else
         geo, p6 = nothing, nothing
     end
