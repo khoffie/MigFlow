@@ -22,12 +22,13 @@ function initialize(a, ndc, ngcx, ngcy)
     a == "below18" && return [-8.0, 25.0, 30.0, density..., geo...]
     a == "18-25" && return [-7.0, 18.0, 20.0, density..., geo...]
     a == "25-30" && return [-7.0, 18.0, 20.0, density..., geo...]
-    a == "30-50" && return [-7.5, 23.0, 30.0, density..., geo...]
+    a == "30-50" && return [-6.5, 20.0, 18.0, density..., geo...]
     a == "50-65" && return [-7.5, 23.0, 30.0, density..., geo...]
     a == "above65" && return [-7.5, 23.0, 30.0, density..., geo...]
 end
 
 function fit_years(a, p)
+    ## 2003 has data issues
     allyears = vcat(2000:2002, 2004:2017)
     if isfile("output/optim$a")
         results = deserialize("output/optim$a")
@@ -55,6 +56,22 @@ function fit_years(a, p)
 end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
+ages = ["30-50"]
 for a in ages
     fit_years(a, 1.0)
 end
+
+mdl = norm(load_data("30-50", 2017, 0.5, "../data/";
+                     only_positive = true,
+                     seed = 1234, opf = false),
+           normalize = false, ndc = 9, ngcx = 2);
+inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
+out = @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
+
+mdl = norm(load_data("30-50", 2017, 1.0, "../data/";
+                     only_positive = true,
+                     seed = 1234, opf = false),
+           normalize = false, ndc = 9, ngcx = 2);
+## inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
+inits = out.chn[1, 1 : end - 4, 1].value.data
+out = @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = reshape(inits, 20)));
