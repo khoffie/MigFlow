@@ -21,15 +21,24 @@ function reorder(results)
     return results[sortperm(years)]
 end
 
-function coefdf(results)
-    params = results[1].chn.name_map.parameters
-    df = DataFrame([Symbol(p) => [r.chn[p].data[1] for r in results] for p in params])
-    df.group = [Int(r.chn[:year].data[1]) for r in results]
-    df.deviance = [getdeviance(r) for r in results]
-    first = ["α_raw", "γ_raw", "ϕ_raw", "lp", "group"]
+function loopstruct(s, f)
+    ages = fieldnames(typeof(s))
+    years = fieldnames(typeof(getfield(s, ages[1])))
+    res = [@suppress f(getfield(getfield(data, age), year))
+        for age in ages, year in years]
+    return res
+end
+
+function extract_params(result)
+    params = result.chn.name_map.parameters
+    df = DataFrame([Symbol(p) => result.chn[p].data[1] for p in params])
+    df.deviance .= getdeviance(result)
+    df.year .= result.chn[:year].data[1]
+    df.age .= recodeage(Int(result.chn[:age].data[1]))
+    first = ["age", "year", "α_raw", "γ_raw", "ϕ_raw", "lp"]
     last = setdiff(names(df), first)
     select!(df, vcat(first, last))
-    return sort!(df, :group)
+    return df
 end
 
 plotcoef(df, c) = (plot(df.group, df[!, c], title = c); scatter!(df.group, df[!, c]))
@@ -64,10 +73,25 @@ end
 data = [YearResults(reorder(deserialize(f))...) for f in files];
 data = AgeResults(data...);
 
+function loopstruct(s, f, ages = nothing, years = nothing)
+    if isnothing(ages)
+        ages = fieldnames(typeof(s))
+    end
+    if isnothing(years)
+        years = fieldnames(typeof(getfield(s, ages[1])))
+    end
+    res = [@suppress f(getfield(getfield(s, age), year))
+        for age in ages, year in years]
+    return res
+end
 
 
 
-dfs = [@suppress coefdf(r) for r in res];
+df = loopstruct(data, extract_params)
+df = reduce(vcat, df)
+
+
+
 ## accidentaly coded above65 as 5 not 6
 dfs[5].age .= 6.0
 dfs = reduce(vcat, dfs)
