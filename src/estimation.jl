@@ -2,7 +2,7 @@ function estimate(mdl; show_plt = true, optim_kwargs = (;))
     mles = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
     out = format_mles(mles)
     out = add_age_year(out, mdl.data)
-    return diagchain(makechain(out), mdl)
+    return (chn = makechain(out), mdl = mdl)
 end
 
 function add_age_year(out, data)
