@@ -57,11 +57,20 @@ function makechain(out)
     return Chains(reshape(coefsnum, (1, :, 1)), nms)
 end
 
-function recodeage(a)
+function recodeage(a::String)
     a == "below18" && return 1
     a == "18-25" && return 2
     a == "25-30" && return 3
     a == "30-50" && return 4
     a == "50-65" && return 5
-    a == "above65" && return 5
+    a == "above65" && return 6
+end
+
+function recodeage(i::Int)
+    i == 1 && return "below18"
+    i == 2 && return "18-25"
+    i == 3 && return "25-30"
+    i == 4 && return "30-50"
+    i == 5 && return "50-65"
+    i == 6 && return "above65"
 end
