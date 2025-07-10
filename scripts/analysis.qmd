@@ -1,0 +1,94 @@
+---
+engine: julia
+format: pdf
+---
+
+# Some first analyses
+
+```{julia}
+#| label: packages-scripts
+using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
+using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
+using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
+using BenchmarkTools, IterTools, StatProfilerHTML, ReverseDiff
+using Suppressor
+## using Enzyme
+
+include("../src/utils.jl")
+include("../src/estimation.jl")
+include("../src/loadgermdata.jl")
+include("../src/diag.jl")
+include("../src/diagplots.jl")
+include("../src/diagchain.jl")
+include("../src/diagrbf.jl")
+include("../src/norm.jl")
+include("../src/rbf.jl")
+include("../src/analysis.jl")
+
+```
+
+```{julia}
+#| label: data
+years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
+ages = ["18to25", "25to30", "30to50", "50to65", "above65", "below18"]
+ages = Symbol.("age" .* ages)
+
+@eval begin
+    struct YearResults
+        $(years...)
+    end
+end
+
+@eval begin
+    struct AgeResults
+        $(ages...)
+    end
+end
+
+files = readdir("./output"; join = true)
+data = AgeResults([YearResults(reorder(deserialize(f))...) for f in files]...);
+
+```
+
+```{julia}
+
+df = loopstruct(data, extract_params);
+## why is that still wrong?
+df = reduce(vcat, df);
+
+plotcoef(df, :α_raw, :age)
+plotcoef(df, :γ_raw, :age)
+plotcoef(df, :ϕ_raw, :age)
+plotcoef(df, :deviance, :age)
+
+
+```
+
+```{julia}
+
+plotyears = [:y2000, :y2001, :y2002, :y2015, :y2016, :y2017]
+
+plts = Plots.Plot[]
+for a in ages
+    geos = loopstruct(data, x -> plotgeorbf(x, (-.3, .3) ), [a], plotyears)
+    p = plot([g[2] for g in geos]..., size = (1200, 900), plot_title = "$a")
+    display(p)
+    push!(plts, p)
+end
+
+```
+
+
+```{julia}
+
+plotyears = [:y2000, :y2001, :y2002, :y2015, :y2016, :y2017]
+
+plts = Plots.Plot[]
+for a in ages
+    dens = loopstruct(data, x -> plotdensrbf(x, (-1, 1)), [a], plotyears)
+    p = plot([d[2] for d in dens]..., size = (1200, 900), plot_title = "$a")
+    display(p)
+    push!(plts, p)
+end
+
+```
