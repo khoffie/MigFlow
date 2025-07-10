@@ -1,4 +1,4 @@
-function diagchain(chn, mdl)
+function analyze(chn, mdl)
     p1 = plot(chn[:lp])
 
     m = argmax(chn[:lp].data)
@@ -37,7 +37,7 @@ function diagchain(chn, mdl)
     end
 
     plts = [p1, p2, p3, p4, p5, p6]
-    return (; df, net, mat, geo, plts, chn)
+    return (; df, net, mat, geo, plts)
 end
 
 function extract_coefs(chn, string)
