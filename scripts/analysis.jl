@@ -2,6 +2,7 @@ using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
 using BenchmarkTools, IterTools, StatProfilerHTML, ReverseDiff
+using Suppressor
 ## using Enzyme
 
 include("../src/utils.jl")
