@@ -15,6 +15,7 @@ include("../src/diagrbf.jl")
 include("../src/norm.jl")
 include("../src/rbf.jl")
 
+getdeviance(r) = deviance(r.mdl.mdl.args.Y, returned(r.mdl.mdl, r.chn)[1])
 function reorder(results)
     years = [Int(r.chn[:year].data[1]) for r in results]
     return results[sortperm(years)]
@@ -24,6 +25,7 @@ function coefdf(results)
     params = results[1].chn.name_map.parameters
     df = DataFrame([Symbol(p) => [r.chn[p].data[1] for r in results] for p in params])
     df.group = [Int(r.chn[:year].data[1]) for r in results]
+    df.deviance = [getdeviance(r) for r in results]
     first = ["α_raw", "γ_raw", "ϕ_raw", "lp", "group"]
     last = setdiff(names(df), first)
     select!(df, vcat(first, last))
