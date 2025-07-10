@@ -51,7 +51,7 @@ function runoptim(mdl, lb, ub;
 end
 
 function makechain(out)
-    coefs = vcat(out[1 : end - 2], recodeage(out["age"]), out["year"])
+    coefs = vcat(out[1 : end - 2], recodeage(String(out["age"])), out["year"])
     coefsnum = Float64.(coefs.array.array)
     nms = names(out)[1]
     return Chains(reshape(coefsnum, (1, :, 1)), nms)
