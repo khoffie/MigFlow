@@ -33,21 +33,68 @@ function coefdf(results)
 end
 
 plotcoef(df, c) = (plot(df.group, df[!, c], title = c); scatter!(df.group, df[!, c]))
+plotcoef(df, c, g) = (plot(df.group, df[!, c], group = df[!, g], title = c))
 
 function resplots(results, coefdf)
     pgamma = plotcoef(coefdf, :γ_raw)
     palpha = plotcoef(coefdf, :α_raw)
     pphi = plotcoef(coefdf, :ϕ_raw)
-    # pdelta = plotcoef(dfp, :δ_raw)
+    pdeviance = plotcoef(coefdf, :deviance)
     pdens = [r.plts[5] for r in results]
     pgeo = [r.plts[6] for r in results]
-    return [palpha, pgamma, pphi, pdens, pgeo]
+    return [palpha, pgamma, pphi, pdeviance, pdens, pgeo]
 end
 
-results = reorder(deserialize("./output/optim50-65"));
+years = vcat(2000:2002, 2004:2017)
+files = readdir("./output"; join = true)
+ages = ["18to25", "25to30", "30to50", "50to65", "above65", "below18"]
+
+@eval begin
+    struct YearResults
+        $(Symbol.("y" .* string.(years))...)
+    end
+end
+
+@eval begin
+    struct AgeResults
+        $(Symbol.("age" .* ages)...)
+    end
+end
+
+data = [YearResults(reorder(deserialize(f))...) for f in files];
+data = AgeResults(data...);
+
+
+
+
+dfs = [@suppress coefdf(r) for r in res];
+## accidentaly coded above65 as 5 not 6
+dfs[5].age .= 6.0
+dfs = reduce(vcat, dfs)
+dfs.age = recodeage.(Int.(dfs.age))
+
+plot(plotcoef(dfs, :α_raw, :age),
+plotcoef(dfs, :γ_raw, :age),
+plotcoef(dfs, :ϕ_raw, :age),
+plotcoef(dfs, :deviance, :age))
+
+out = [analyze(r.chn, r.mdl) for r in results];
 df = coefdf(results)
-plts = resplots(results, df)
+plts = resplots(out, df)
+
+
 idx = [1, 2, 3, 15, 16, 17]
-plot(plts[1:3]...)
+plot(plts[1:4]...)
 plot(plts[4][idx]..., size = (1200, 900))
 plot(plts[5][idx]..., size = (1200, 900))
+
+
+
+
+res = [coefdf(reorder(deserialize(f))) for f in files];
+
+
+
+keys(results[1])
+
+typeof(dfs.age)
