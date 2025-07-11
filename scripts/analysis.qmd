@@ -1,6 +1,10 @@
 ---
+author: Konstantin Hoffie, Daniel Lakeland
 engine: julia
 format: pdf
+julia:
+    exeflags: ["--project=/home/konstantin/code"]
+    env: ["JULIA_NUM_THREADS=5"]
 ---
 
 # Some first analyses
@@ -11,7 +15,7 @@ using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
 using BenchmarkTools, IterTools, StatProfilerHTML, ReverseDiff
-using Suppressor
+using Suppressor, Distributions
 ## using Enzyme
 
 include("../src/utils.jl")
@@ -30,8 +34,7 @@ include("../src/analysis.jl")
 ```{julia}
 #| label: data
 years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
-ages = ["18to25", "25to30", "30to50", "50to65", "above65", "below18"]
-ages = Symbol.("age" .* ages)
+ages = Symbol.("age" .* ["18to25", "25to30", "30to50", "50to65", "above65", "below18"])
 
 @eval begin
     struct YearResults
@@ -53,14 +56,12 @@ data = AgeResults([YearResults(reorder(deserialize(f))...) for f in files]...);
 ```{julia}
 
 df = loopstruct(data, extract_params);
-## why is that still wrong?
 df = reduce(vcat, df);
 
 plotcoef(df, :α_raw, :age)
 plotcoef(df, :γ_raw, :age)
 plotcoef(df, :ϕ_raw, :age)
 plotcoef(df, :deviance, :age)
-
 
 ```
 
@@ -80,8 +81,6 @@ end
 
 
 ```{julia}
-
-plotyears = [:y2000, :y2001, :y2002, :y2015, :y2016, :y2017]
 
 plts = Plots.Plot[]
 for a in ages
