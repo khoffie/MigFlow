@@ -12,7 +12,7 @@ function loopstruct(s, f, ages = nothing, years = nothing)
     if isnothing(years)
         years = fieldnames(typeof(getfield(s, ages[1])))
     end
-    res = [@suppress f(getfield(getfield(s, a), y)) for a in ages, y in years]
+    res = [f(getfield(getfield(s, a), y)) for a in ages, y in years]
     return res
 end
 
