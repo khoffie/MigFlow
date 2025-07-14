@@ -1,0 +1,50 @@
+---
+title: "Turing Serialization Test"
+format: pdf
+engine: julia
+julia:
+  exeflags: ["--project=@."]
+  env: ["JULIA_NUM_THREADS=2"]
+---
+
+```{julia}
+
+using Turing, Distributions, Serialization, Random
+
+```
+
+ ```{julia}
+
+#| label: simulate-data
+# N = 100
+# x = rand(N)
+# y = x .* 2.0 .+ rand(N)
+
+@model function linear_model(x, y)
+    σ ~ Exponential(1.0)
+    β ~ Normal(0, 5)
+    p = β .* x
+    for i in eachindex(x)
+        y[i] ~ Normal(p[i], σ)
+    end
+    return p
+end
+
+# mdl = linear_model(x, y)
+# mles = maximum_likelihood(mdl)
+
+# chn = Chains(reshape(collect(mles.values), (1, :, 1)), names(mles.values)[1])
+# # chn = Turing.sample(mdl, NUTS(), 10)
+# serialize("model_result", (; mdl, chn))
+
+```
+
+
+
+
+```{julia}
+
+r2 = deserialize("model_result");
+Turing.returned(r2.mdl, r2.chn)
+
+```
