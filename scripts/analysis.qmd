@@ -35,27 +35,18 @@ include("../src/analysis.jl")
 #| label: data
 years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
 ages = Symbol.("age" .* ["18to25", "25to30", "30to50", "50to65", "above65", "below18"])
-
-@eval begin
-    struct YearResults
-        $(years...)
-    end
-end
-
-@eval begin
-    struct AgeResults
-        $(ages...)
-    end
-end
-
 files = readdir("./output"; join = true)
-data = AgeResults([YearResults(reorder(deserialize(f))...) for f in files]...);
+
+data = (; (
+    age => (; zip(years, reorder(deserialize(file)))...)
+    for (age, file) in zip(ages, files)
+)...);
 
 ```
 
 ```{julia}
 
-df = loopstruct(data, extract_params);
+df = @suppress loopstruct(data, extract_params);
 df = reduce(vcat, df);
 
 plotcoef(df, :α_raw, :age)
