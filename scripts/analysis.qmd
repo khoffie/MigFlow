@@ -32,53 +32,61 @@ include("../src/analysis.jl")
 ```
 
 ```{julia}
-#| label: data
-years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
-ages = Symbol.("age" .* ["18to25", "25to30", "30to50", "50to65", "above65", "below18"])
-files = readdir("./output"; join = true)
+#| label: gendata
 
-data = (; (
-    age => (; zip(years, reorder(deserialize(file)))...)
-    for (age, file) in zip(ages, files)
-)...);
+function gendata(ages) 
+    years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
+    files = readdir("./output"; join = true)
 
-```
-
-```{julia}
-
-df = @suppress loopstruct(data, extract_params);
-df = reduce(vcat, df);
-
-plotcoef(df, :α_raw, :age)
-plotcoef(df, :γ_raw, :age)
-plotcoef(df, :ϕ_raw, :age)
-plotcoef(df, :deviance, :age)
-
-```
-
-```{julia}
-
-plotyears = [:y2000, :y2001, :y2002, :y2015, :y2016, :y2017]
-
-plts = Plots.Plot[]
-for a in ages
-    geos = loopstruct(data, x -> plotgeorbf(x, (-.3, .3) ), [a], plotyears)
-    p = plot([g[2] for g in geos]..., size = (1200, 900), plot_title = "$a")
-    display(p)
-    push!(plts, p)
+    data = (; (
+        age => (; zip(years, reorder(deserialize(file)))...)
+        for (age, file) in zip(ages, files)
+            )...)
+    return data
 end
+ages = Symbol.("age" .* ["18to25", "25to30", "30to50", "50to65", "above65", "below18"]);
+
+data = gendata(ages);
+r = data.agebelow18.y2000
+returned(r.mdl.mdl, r.chn)
 
 ```
-
 
 ```{julia}
 
-plts = Plots.Plot[]
-for a in ages
-    dens = loopstruct(data, x -> plotdensrbf(x, (-1, 1)), [a], plotyears)
-    p = plot([d[2] for d in dens]..., size = (1200, 900), plot_title = "$a")
-    display(p)
-    push!(plts, p)
-end
+##df = @suppress loopstruct(data, extract_params);
+# df = reduce(vcat, df);
+
+# plotcoef(df, :α_raw, :age)
+# plotcoef(df, :γ_raw, :age)
+# plotcoef(df, :ϕ_raw, :age)
+# plotcoef(df, :deviance, :age)
 
 ```
+
+<!-- ```{julia} -->
+
+<!-- plotyears = [:y2000, :y2001, :y2002, :y2015, :y2016, :y2017] -->
+
+<!-- plts = Plots.Plot[] -->
+<!-- for a in ages -->
+<!--     geos = loopstruct(data, x -> plotgeorbf(x, (-.3, .3) ), [a], plotyears) -->
+<!--     p = plot([g[2] for g in geos]..., size = (1200, 900), plot_title = "$a") -->
+<!--     display(p) -->
+<!--     push!(plts, p) -->
+<!-- end -->
+
+<!-- ``` -->
+
+
+<!-- ```{julia} -->
+
+<!-- plts = Plots.Plot[] -->
+<!-- for a in ages -->
+<!--     dens = loopstruct(data, x -> plotdensrbf(x, (-1, 1)), [a], plotyears) -->
+<!--     p = plot([d[2] for d in dens]..., size = (1200, 900), plot_title = "$a") -->
+<!--     display(p) -->
+<!--     push!(plts, p) -->
+<!-- end -->
+
+<!-- ``` -->
