@@ -1,50 +1,75 @@
----
+-------------------------------------------------------------------------------
 title: "Turing Serialization Test"
 format: pdf
 engine: julia
 julia:
   exeflags: ["--project=@."]
-  env: ["JULIA_NUM_THREADS=2"]
+  env: ["JULIA_NUM_THREADS=5"]
 ---
 
 ```{julia}
+#| label: packages-scripts
+using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
+using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
+using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
+using BenchmarkTools, IterTools, StatProfilerHTML, ReverseDiff
+using Suppressor, Distributions
+## using Enzyme
 
-using Turing, Distributions, Serialization, Random
-
-```
-
- ```{julia}
-
-#| label: simulate-data
-# N = 100
-# x = rand(N)
-# y = x .* 2.0 .+ rand(N)
-
-@model function linear_model(x, y)
-    σ ~ Exponential(1.0)
-    β ~ Normal(0, 5)
-    p = β .* x
-    for i in eachindex(x)
-        y[i] ~ Normal(p[i], σ)
-    end
-    return p
-end
-
-# mdl = linear_model(x, y)
-# mles = maximum_likelihood(mdl)
-
-# chn = Chains(reshape(collect(mles.values), (1, :, 1)), names(mles.values)[1])
-# # chn = Turing.sample(mdl, NUTS(), 10)
-# serialize("model_result", (; mdl, chn))
+include("../src/utils.jl")
+include("../src/estimation.jl")
+include("../src/loadgermdata.jl")
+include("../src/diag.jl")
+include("../src/diagplots.jl")
+include("../src/diagchain.jl")
+include("../src/diagrbf.jl")
+include("../src/norm.jl")
+include("../src/rbf.jl")
+include("../src/analysis.jl")
+?deserialize
+r = deserialize("output/optim30-50")[1]
+returned(r.mdl.mdl, r.chn)
 
 ```
 
+<!-- ```{julia} -->
+
+<!-- using Turing, Distributions, Serialization, Random -->
+
+<!-- ``` -->
+
+<!--  ```{julia} -->
+
+<!-- #| label: simulate-data -->
+<!-- # N = 100 -->
+<!-- # x = rand(N) -->
+<!-- # y = x .* 2.0 .+ rand(N) -->
+
+<!-- @model function linear_model(x, y) -->
+<!--     σ ~ Exponential(1.0) -->
+<!--     β ~ Normal(0, 5) -->
+<!--     p = β .* x -->
+<!--     for i in eachindex(x) -->
+<!--         y[i] ~ Normal(p[i], σ) -->
+<!--     end -->
+<!--     return p -->
+<!-- end -->
+
+<!-- # mdl = linear_model(x, y) -->
+<!-- # mles = maximum_likelihood(mdl) -->
+
+<!-- # chn = Chains(reshape(collect(mles.values), (1, :, 1)), names(mles.values)[1]) -->
+<!-- # # chn = Turing.sample(mdl, NUTS(), 10) -->
+<!-- # serialize("model_result", (; mdl, chn)) -->
+
+<!-- ``` -->
 
 
 
-```{julia}
 
-r2 = deserialize("model_result");
-Turing.returned(r2.mdl, r2.chn)
+<!-- ```{julia} -->
 
-```
+<!-- r2 = deserialize("model_result"); -->
+<!-- Turing.returned(r2.mdl, r2.chn) -->
+
+<!-- ``` -->
