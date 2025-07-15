@@ -1,4 +1,4 @@
-getdeviance(r) = deviance(r.mdl.mdl.args.Y, returned(r.mdl.mdl, r.chn)[1])
+getdeviance(r) = deviance(r.mdl.mdl.args.Y, r.prd)[1]
 
 function reorder(results)
     years = [Int(r.chn[:year].data[1]) for r in results]
