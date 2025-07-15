@@ -98,8 +98,8 @@ function diagonal!(x, y)
           label = "")
 end
 
-function smoother!(x, y, span = .5)
+function smoother!(x, y, col = "red", span = .5)
     us = range(extrema(x)...; step = .1)
     vs = Loess.predict(loess(x, y; span = span), us)
-    return plot!(us, vs, legend = false, color = "red", linewidth = 4)
+    return plot!(us, vs, legend = false, color = col, linewidth = 4)
 end
