@@ -29,4 +29,4 @@ function extract_params(result)
 end
 
 plotcoef(df, c) = (plot(df.group, df[!, c], title = c); scatter!(df.group, df[!, c]))
-plotcoef(df, c, g) = (plot(df.year, df[!, c], group = df[!, g], title = c))
+plotcoef(df, c, g, lw = 2) = (plot(df.year, df[!, c], group = df[!, g], title = c, linewidth = lw))
