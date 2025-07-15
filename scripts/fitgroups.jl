@@ -34,6 +34,7 @@ function fit_years(a)
         results = deserialize("output/optim$a")
         fittedyears = [Int(r.chn[:year].data[1]) for r in results]
         years = setdiff(allyears, fittedyears)
+        println("output/optim$a already exists, fitting only $(years) years")
     else
         results = NamedTuple[]
         years = allyears
