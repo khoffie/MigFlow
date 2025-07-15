@@ -88,3 +88,19 @@ ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 for a in ages
     fit_years(a)
 end
+
+
+function savepredictions(files)
+    for f in files
+        results = deserialize(f);
+        res = NamedTuple[]
+        for r in results
+            p = invokelatest(Turing.returned, r.mdl.mdl, r.chn)[1]
+            push!(res, (mdl = r.mdl, chn = r.chn, prd = p))
+        end
+        serialize(f, res)
+    end
+end
+
+savepredictions(readdir("output"; join = true))
+
