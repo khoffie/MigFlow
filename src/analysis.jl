@@ -12,7 +12,14 @@ function loopstruct(s, f, ages = nothing, years = nothing)
     if isnothing(years)
         years = fieldnames(typeof(getfield(s, ages[1])))
     end
-    res = [f(getfield(getfield(s, a), y)) for a in ages, y in years]
+    res = Matrix{Any}(undef, length(ages), length(years))
+    Threads.@threads for i in eachindex(ages)
+        for j in eachindex(years)
+            a = ages[i]
+            y = years[j]
+            res[i, j] = f(getfield(getfield(s, a), y))
+        end
+    end
     return res
 end
 
