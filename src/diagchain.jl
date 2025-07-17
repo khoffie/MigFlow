@@ -1,15 +1,18 @@
-function analyze(chn, mdl)
-    p1 = plot(chn[:lp])
-
-    m = argmax(chn[:lp].data)
-    chn = chn[m[1], :, m[2]]
+function analyze(r)
+    data = r.mdl.mdl.args
     df = DataFrame(
-                   fromdist = mdl.mdl.args.from,
-                   todist = mdl.mdl.args.to,
-                   flows = mdl.mdl.args.Y,
-                   preds = returned(mdl.mdl, chn)[1],
-                   dist = mdl.mdl.args.D);
+        fromdist = data.from,
+        todist = data.to,
+        flows = data.Y,
+        preds = r.prd,
+        dist = data.D,
+        A = data.A,
+        P = exp.(data.P[data.to]) ## bec log(P) is saved
+    );
     dev = round(deviance(df.flows, df.preds), digits = 2)
+
+    p1 = plotpop(df.flows, df.preds, df.A, df.P)
+
     p2 = plot(plotfit(df.flows, df.preds),
               title = "Mean deviance: $(dev)")
 
@@ -22,16 +25,16 @@ function analyze(chn, mdl)
     net = calc_net_df(df);
     p4 = plot(plotnet(net), title = "cor: $(corround(net.nmr, net.nmrp))")
 
-    denscoefs = extract_coefs(chn[end, :, 1], "ζ")
+    denscoefs = extract_coefs(r.chn[end, :, 1], "ζ")
     if length(denscoefs) > 0
-        mat, p5 = plotdensrbf(denscoefs, mdl.mdl.args)
+        mat, p5 = plotdensrbf(r, (-1, 1))
     else
         mat, p5 = nothing, nothing
     end
 
-    geocoefs = extract_coefs(chn[end, :, 1], "η")
+    geocoefs = extract_coefs(r.chn[end, :, 1], "η")
     if length(geocoefs) > 0
-        geo, p6 = plotgeorbf(geocoefs, mdl.mdl.args)
+        geo, p6 = plotgeorbf(r, (-.3, .3))
     else
         geo, p6 = nothing, nothing
     end
