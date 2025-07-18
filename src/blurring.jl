@@ -26,7 +26,8 @@ function plotheatmaps()
     maxvalblurred = max(maximum(m1blurred), maximum(m2blurred))
 
     U = ones(1000, 1000)
-    plot(heat(m1, maxval), heat(m1blurred, maxvalblurred), heat(sum(m1) .* U, max(sum(m1), sum(m2))),
-         heat(m2, maxval), heat(m2blurred, maxvalblurred), heat(sum(m2) .* U, max(sum(m1), sum(m2)))
-         )
+    p = plot(heat(m1, maxval), heat(m1blurred, maxvalblurred), heat(sum(m1) .* U, max(sum(m1), sum(m2))),
+             heat(m2, maxval), heat(m2blurred, maxvalblurred), heat(sum(m2) .* U, max(sum(m1), sum(m2)))
+             )
+    return p
 end
