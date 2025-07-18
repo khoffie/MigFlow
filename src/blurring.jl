@@ -1,5 +1,3 @@
-using Plots, StatsBase, ImageFiltering, Random, Distributions
-
 function genmat(N; cx = 500, cy = 500, pmove = .1)
     D = 1000
     m = zeros(Float64, (D, D))
