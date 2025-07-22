@@ -66,13 +66,14 @@ function plotdensrbf_(coefs::Vector{Float64},
                       cx::Vector{Float64},
                       cy::Vector{Float64},
                       scale::Float64,
-                      R::Vector{Float64}, title, clim)
+                      R::Vector{Float64}, title = nothing, clim = nothing)
     Rmin, Rmax = extrema(R)
     vals = range(Rmin, Rmax, 1000)
-    s = Int(sqrt(length(coefs)))
+    ## reversing y-values so we don't have to use heatmap(.., yflip =
+    ## true), because this also flips the axis labels
     mat = [interpolant(rbf, Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale)
-           for Rto in vals, Rfrom in vals];
+           for Rfrom in vals, Rto in vals]';
     mat = mat .- mean(mat)
-    p = plot(heatmap(mat), title = title, clim = clim)
+    p = heatmap(vals, vals, mat, title = title, clim = clim, aspect_ratio = :equal)
     return mat, p
 end

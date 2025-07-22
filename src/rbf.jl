@@ -5,11 +5,12 @@ rbfscale(cx, cy, k) = k * LinearAlgebra.norm([cx[1],cy[1]] - [cx[2],cy[2]])
 
 function interpolant(f, x, y, w, cx, cy, scale)
     res = zero(x)
-    @inbounds for i in reverse(eachindex(cx)), j in eachindex(cy)
+    @inbounds for i in eachindex(cx), j in reverse(eachindex(cy))
         dx = x - cx[i]
-        dy = y - cy[j]
+        dy = y - cy[length(cy) + 1 - j]
+##         dy = y - cy[j]
         r = sqrt(dx * dx + dy * dy) / scale
-        res += w[i, j] * f(r)
+        res += w[j, i] * f(r)
     end
     return res
 end

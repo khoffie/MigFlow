@@ -14,19 +14,6 @@ include("../src/diagrbf.jl")
 include("../src/norm.jl")
 include("../src/rbf.jl")
 
-rbfinits(N, σ, t = 90.0) = clamp.(rand(MvNormal(zeros(N), σ^2 *I(N))), -t, t)
-
-function initialize(a, ndc, ngcx, ngcy)
-    density = rbfinits(ndc, 40.0)
-    geo = rbfinits(ngcx * ngcy, 10.0)
-    a == "below18" && return [-8.0, 25.0, 30.0, density..., geo...]
-    a == "18-25" && return [-7.0, 18.0, 20.0, density..., geo...]
-    a == "25-30" && return [-7.0, 18.0, 20.0, density..., geo...]
-    a == "30-50" && return [-6.5, 20.0, 18.0, density..., geo...]
-    a == "50-65" && return [-7.5, 23.0, 30.0, density..., geo...]
-    a == "above65" && return [-7.5, 23.0, 30.0, density..., geo...]
-end
-
 function fit_years(a)
     ## 2003 has data issues
     allyears = vcat(2000:2002, 2004:2017)
