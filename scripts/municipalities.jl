@@ -46,10 +46,10 @@ function violinplot(munis, districts, distcodes)
     scatter!(string.(di.distcode), di.mean,
             marker = (:red, stroke(0), log.(di.pop) ./ 3),
             label = "")
+    savefig("../../mig-paper/images/density_munis.svg")
 end
 
-ink = readinkar()
-df = munidf(ink)
+df = munidf(readinkar())
 dis = districtdf(df)
 samples = StatsBase.sample(dis[dis.sd .> 0.0, :].distcode, 20)
 violinplot(df, dis, samples)
