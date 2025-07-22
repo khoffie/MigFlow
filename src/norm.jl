@@ -25,13 +25,12 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
     ycoord     = scale_to_unit(districts.ycoord)
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
-    ## Germany's height is about 1.33 times it's with. Of the width,
-    ## we only use 50% as space for the grid, of the height we use
-    ## 70%. For equidistant points we thus need 1.86 = 1.33 * .7 / .5 as many
-    ## different y points as x points
-    ngcy = Int(round(ngcx * 1.86, digits = 0))
-    cxgeo      = [range(-0.6, 0.4, ngcx);]
-    cygeo      = [range(-0.9, 0.6, ngcy);]
+    xlim       = (- .7, .5)
+    ylim       = (- .9, .7)
+    r          = geo_ratio(districts.xcoord, districts.ycoord, xlim, ylim)
+    ngcy       = Int(round(r * ngcx, digits = 0))
+    cxgeo      = [range(xlim[1], xlim[2], ngcx);]
+    cygeo      = [range(ylim[1], ylim[2], ngcy);]
     geo_scale  = rbfscale(cxgeo, cygeo, kgeo)
     fromfull   = lc(dffull.fromdist)
     tofull     = lc(dffull.todist)
