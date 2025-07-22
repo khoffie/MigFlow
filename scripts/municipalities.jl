@@ -3,6 +3,13 @@ district(df, d) = filter(row -> row.distcode ∈ d, df)
 calcdensity(md, ma) = mean(md, Weights(ma))
 gb = DataFrames.groupby
 
+function readinkar()
+    f = "/home/konstantin/Backup/workstation/home/Diss/inst/extdata/clean/inkar/inkar_2021.csv"
+    ink = CSV.read(f, DataFrame)
+    ink = ink[ink.Raumbezug .== "Gemeinden", :]
+    return ink[ink.Zeitbezug .== "2017", :]
+end
+
 function munidf(ink)
     df = unstack(ink[ink.ID .== 425 .|| ink.ID .== 426, :], :Kennziffer, :ID, :Wert)
     rename!(df, "425" => :pop)
@@ -41,16 +48,8 @@ function violinplot(munis, districts, distcodes)
             label = "")
 end
 
-districts = year(CSV.read("../data/districts.csv", DataFrame), 2017)
-
-f = "/home/konstantin/Backup/workstation/home/Diss/inst/extdata/clean/inkar/inkar_2021.csv"
-ink = CSV.read(f, DataFrame)
-ink = ink[ink.Raumbezug .== "Gemeinden", :]
-ink = ink[ink.Zeitbezug .== "2017", :]
-
+ink = readinkar()
 df = munidf(ink)
 dis = districtdf(df)
-
-
 samples = StatsBase.sample(dis[dis.sd .> 0.0, :].distcode, 20)
 violinplot(df, dis, samples)
