@@ -21,17 +21,3 @@ inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.ar
 @time out = estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 m, p = plotdensrbf(out, nothing);
 p
-
-### Check density RBF
-vals = range(-1, 1, 1000)
-cx = collect(range(-1, 1, 4))
-cy = collect(range(-1, 1, 4))
-
-w = [0, 1, 0, 0,
-     0, 0, 0, 0,
-     0, 0, 2, 0,
-     1, 0, 0, 0]
-
-coefmat(w)
-mat, p = plotdensrbf_(Float64.(w), cx, cy, 2.1, Float64.(vals), "test", nothing);
-p
