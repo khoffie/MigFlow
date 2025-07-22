@@ -16,8 +16,10 @@ include("../src/rbf.jl")
 mdl = norm(load_data("18-25", 2014, 1.0, "../data/";
                      only_positive = true,
                      seed = 1234, opf = false),
-           normalize = false, ndc = 9, ngcx = 2);
+           normalize = false, ndc = 9, ngcx = 3);
 inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
 @time out = estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 m, p = plotdensrbf(out, nothing);
+m, p = plotgeorbf(out, nothing);
 p
+out.chn
