@@ -49,6 +49,7 @@ function gendata(ages)
 end
 ages = Symbol.("age" .* ["18to25", "25to30", "30to50", "50to65", "above65", "below18"]);
 data = gendata(ages);
+ages = keys(data)
 
 ```
 
@@ -98,7 +99,7 @@ move, the predicted probability to move and $\alpha$ are plotted in
 
 #| label: fig-pleave
 #| fig-cap: "From left to right: Observed probability to move; predicted probability to move and alpha"
-probs = DataFrame(age = String[], year = Int64[], A = Int64[], T = Float64[], F = Int64[])
+probs = DataFrame(age = String[], year = Int64[], A = Int64[], T = Float64[], F = Int64[]);
 function pleave(r)
     df = DataFrame(; r.mdl.mdl.args.A, r.mdl.mdl.args.from)
     A = sum(unique(df, :from).A)
@@ -106,6 +107,7 @@ function pleave(r)
     F = Int(sum(r.mdl.mdl.args.Y))
     return [r.mdl.data.age, r.mdl.data.year, A, T, F]
 end
+
 loopstruct(data, x -> push!(probs, pleave(x)));
 probs.pleave = probs.F ./ probs.A .* 100;
 probs.pleavepred = probs.T ./ probs.A .* 100;
