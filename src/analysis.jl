@@ -6,16 +6,12 @@ function reorder(results)
 end
 
 function loopstruct(s, f, ages = nothing, years = nothing)
-    if isnothing(ages)
-        ages = fieldnames(typeof(s))
-    end
-    if isnothing(years)
-        years = fieldnames(typeof(getfield(s, ages[1])))
-    end
+    if isnothing(ages); ages = keys(s); end
+    if isnothing(years); years = keys(data[ages[1]]); end
     res = Matrix{Any}(undef, length(ages), length(years))
     for i in eachindex(ages)
+        a = ages[i]
         for j in eachindex(years)
-            a = ages[i]
             y = years[j]
             res[i, j] = f(getfield(getfield(s, a), y))
         end
