@@ -18,6 +18,19 @@ function genfrompop(df, type)
     return leftjoin(df, df2, on = :fromdist).flows_sum
 end
 
+function geo_ratio(xcoord, ycoord, xlim, ylim)
+    ## For equidistant spacing of Geo RBF centers, we need more
+    ## coordinates in y direction, because Germany is about 1.33 times
+    ## longer than wide.
+    xmin, xmax = extrema(xcoord)
+    ymin, ymax = extrema(ycoord)
+    ratio = (ymax - ymin) / (xmax - xmin)
+    ## Also we do not need all the grid, so we want to adjust for that
+    used_x = (xlim[2] - xlim[1]) / 2
+    used_y = (ylim[2] - ylim[1]) / 2
+    return ratio * (used_y / used_x)
+end
+
 function bound(a, ndc, ngcx, ngcy)
     lbdensity = fill(-100.0, ndc)
     lbgeo = fill(-100.0, ngcx * ngcy)
