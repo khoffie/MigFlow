@@ -72,7 +72,7 @@ df = reduce(vcat, df);
 #| label: fig-alpha
 #| fig-cap: "Alpha supposedly estimates the probability to move into a district with median population 100km away, when the density transition function returns 1  and locational desir of origin equals locational desir of destination ."
 coefs = [:α_raw, :γ_raw, :ϕ_raw, :deviance]
-plot([plotcoef(df, c, :age) for c in coefs]...)
+Plots.plot([plotcoef(df, c, :age) for c in coefs]...)
 
 ```
 
@@ -151,7 +151,7 @@ plts = Vector{Any}(undef, length(ages))
 Threads.@threads for i in eachindex(ages)
     a = ages[i]
     dens = loopstruct(data, x -> plotdensrbf(x, (-1, 1)), [a], plotyears)
-    p = plot([d[2] for d in dens]..., size = (1200, 900), plot_title = "$a")
+    p = Plots.plot([d[2] for d in dens]..., size = (1200, 900), plot_title = "$a")
     plts[i] = p
 end
 foreach(display, plts)
