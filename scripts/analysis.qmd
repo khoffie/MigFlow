@@ -52,9 +52,12 @@ data = gendata(ages);
 ages = keys(data)
 
 shp = DataFrame(GeoIO.load("../data/clean/shapes/districts_ext.shp"))
+## we join geo estimates based on coords and there are numerical inaccuracies
 shp.xcoord = round.(scale_to_unit(shp.x), digits = 4)
 shp.ycoord = round.(scale_to_unit(shp.y), digits = 4)
 shp = shp[!, [:AGS, :xcoord, :ycoord, :geometry]];
+
+plotyears = [:y2000, :y2001, :y2002, :y2015, :y2016, :y2017]
 
 ```
 
