@@ -25,8 +25,8 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
     ycoord     = scale_to_unit(districts.ycoord)
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
-    xlim       = (- .7, .5)
-    ylim       = (- .9, .7)
+    xlim       = (- 1.0, 1.0)
+    ylim       = (- 1.0, 1.0)
     r          = geo_ratio(districts.xcoord, districts.ycoord, xlim, ylim)
     ngcy       = Int(round(r * ngcx, digits = 0))
     cxgeo      = [range(xlim[1], xlim[2], ngcx);]
