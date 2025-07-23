@@ -18,8 +18,7 @@ using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
 using BenchmarkTools, IterTools, StatProfilerHTML, ReverseDiff
-using Suppressor, Distributions, Revise
-## using Enzyme
+using Suppressor, Distributions, Revise, GeoStats, GeoIO, CairoMakie
 
 include("../src/utils.jl")
 include("../src/estimation.jl")
@@ -51,6 +50,11 @@ end
 ages = Symbol.("age" .* ["18to25", "25to30", "30to50", "50to65", "above65", "below18"]);
 data = gendata(ages);
 ages = keys(data)
+
+shp = DataFrame(GeoIO.load("../data/clean/shapes/districts_ext.shp"))
+shp.xcoord = round.(scale_to_unit(shp.x), digits = 4)
+shp.ycoord = round.(scale_to_unit(shp.y), digits = 4)
+shp = shp[!, [:AGS, :xcoord, :ycoord, :geometry]];
 
 ```
 
@@ -130,7 +134,7 @@ plts = Plots.Plot[]
 Threads.@threads for i in eachindex(ages)
     a = ages[i]
     geos = loopstruct(data, x -> plotgeorbf(x, (-.3, .3) ), [a], plotyears)
-    p = plot([g[2] for g in geos]..., size = (1200, 900), plot_title = "$a")
+    p = Plots.plot([g[2] for g in geos]..., size = (1200, 900), plot_title = "$a")
     push!(plts, p)
 end
 foreach(display, plts)
