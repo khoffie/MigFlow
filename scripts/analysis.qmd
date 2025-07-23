@@ -31,6 +31,7 @@ include("../src/diagrbf.jl")
 include("../src/norm.jl")
 include("../src/rbf.jl")
 include("../src/analysis.jl")
+include("../src/model_helpers.jl")
 
 ```
 
