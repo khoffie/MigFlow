@@ -66,6 +66,6 @@ function plotdensrbf_(coefs::Vector{Float64},
     mat = [interpolant(rbf, Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale)
            for Rfrom in vals, Rto in vals]';
     mat = mat .- mean(mat)
-    p = heatmap(vals, vals, mat, title = title, clim = clim, aspect_ratio = :equal)
+    p = Plots.heatmap(vals, vals, mat, title = title, clim = clim, aspect_ratio = :equal)
     return mat, p
 end
