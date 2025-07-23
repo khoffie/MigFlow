@@ -1,4 +1,6 @@
 distcode(m) = length(m) == 7 ? SubString(m, 1, 4) : SubString(m, 1, 5)
+statecode(m) = length(m) == 4 ? SubString(m, 1, 1) : SubString(m, 1, 2)
+
 district(df, d) = filter(row -> row.distcode ∈ d, df)
 calcdensity(md, ma) = mean(md, Weights(ma))
 gb = DataFrames.groupby
@@ -53,3 +55,13 @@ df = munidf(readinkar())
 dis = districtdf(df)
 samples = StatsBase.sample(dis[dis.sd .> 0.0, :].distcode, 20)
 violinplot(df, dis, samples)
+
+# areas = combine(gb(df, :distcode), :area => sum => :area)
+# areas.area = areas.area ./ 100
+# areas.diam = 2sqrt.(areas.area ./ pi)
+# areas.statecode = parse.(Int, statecode.(string.(areas.distcode)))
+# areas
+
+# @df areas violin(string.(:statecode), :diam, :area)
+# @df areas dotplot!(string.(:statecode), :diam, marker = (:black, stroke(0), 2), label = "")
+# combine(gb(areas, :statecode), :diam => mean)
