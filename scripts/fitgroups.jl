@@ -13,8 +13,9 @@ include("../src/diagchain.jl")
 include("../src/diagrbf.jl")
 include("../src/norm.jl")
 include("../src/rbf.jl")
+include("../src/model_helpers.jl")
 
-function fit_years(a)
+function fit_years(a, ndc, ngcx)
     ## 2003 has data issues
     allyears = vcat(2000:2002, 2004:2017)
     if isfile("output/optim$a")
@@ -30,9 +31,9 @@ function fit_years(a)
     Threads.@threads for y in years
         println("Starting $a in $y")
         if a == "30-50"
-            out = fit30to50(y)
+            out = fit30to50(y, ndc, ngxx)
         else
-            out = fitage(a, y)
+            out = fitage(a, y, ndc, ngcx)
         end
         println("$a in $y done")
         push!(results, out)
@@ -41,39 +42,38 @@ function fit_years(a)
     return results
 end
 
-function fitage(a, y)
-    mdl = norm(load_data(a, y, 1.0, "../data/";
-                         only_positive = true,
-                         seed = 1234, opf = false),
-               normalize = false, ndc = 9, ngcx = 2);
+function fitage(a, y, ndc, ngcx)
+    mdl = makemodel(a, y, ndc, ngcx)
     inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
     return @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 end
 
-function fit30to50(y)
+function fit30to50(y, ndc, ngcx)
     ## 30-50 is harder to fit so we use MLEs from fit of half the
     ## data, which works better. We maybe could use better inits and
     ## fit full data right away, but we likely would need very
     ## specific inits / weights for the RBFs
-    mdl = norm(load_data("30-50", y, 0.5, "../data/";
-                         only_positive = true,
-                         seed = 1234, opf = false),
-               normalize = false, ndc = 9, ngcx = 2);
+    mdl = makemodel("30-50", y, .5, ndc, ngcx)
     inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
     out = @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 
-    mdl = norm(load_data("30-50", y, 1.0, "../data/";
-                         only_positive = true,
-                         seed = 1234, opf = false),
-               normalize = false, ndc = 9, ngcx = 2);
+    mdl = makemodel("30-50", y, 1.0, ndc, ngcx)
     ## inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
     inits = out.chn[1, 1 : end - 4, 1].value.data
     return  @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = reshape(inits, 20)));
 end
 
+function makemodel(a, y, p, ndc, ngcx)
+    mdl = norm(load_data(a, y, p, "../data/";
+                         only_positive = true,
+                         seed = 1234, opf = false),
+               normalize = false, ndc = ndc, ngcx = ngcx);
+    return mdl
+end
+
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 for a in ages
-    fit_years(a)
+    fit_years(a, 9, 5)
 end
 
 
