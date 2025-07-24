@@ -124,12 +124,12 @@ plotyears = [2000, 2001, 2002, 2015, 2016, 2017]
 #     push!(plts, p)
 # end
 # foreach(display, plts)
-plotgeoyears(dfgeo, shp, st, "below18", plotyears)
-## save("mapbelow18.pdf", plotgeoyears(dfgeo, shp, "below18", plotyears), size = (600, 400))
+
+save("mapbelow18.pdf", plotgeoyears(dfgeo, shp, st, "below18", plotyears), size = (600, 400))
 
 ```
 
-![Geographic desirability](mapbelow18.svg){width=120%}
+![Geographic desirability](mapbelow18.pdf){width=120%}
 
 
 ```{julia}
