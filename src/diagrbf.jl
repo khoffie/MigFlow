@@ -1,3 +1,30 @@
+function plotgeoyears(dfgeo, shp, agegroup, years)
+    df = age(dfgeo, agegroup)
+    clim = extrema(filter(row -> row.year ∈ years, df).geo)
+    years = reshape(years, (3, 2))'
+    fig = Figure()
+    for i in 1:size(years, 1)
+        for j in 1:size(years, 2)
+            yr = years[i, j]
+            g, fig = plotgeo(year(df, yr), shp, fig, i, j, clim)
+        end
+    end
+    Colorbar(fig[1:2, 4], limits = clim, vertical = true)
+    return fig
+end
+
+function plotgeo(geo, shp, fig, x = 1, y = 1, clim = nothing)
+    geo2 = joingeometry(geo, shp)
+    age = unique(geo.agegroup)[1]
+    year = unique(geo.year)[1]
+    if isnothing(clim); clim = extrema(geo.geo); end
+    ax = Axis(fig[x, y], aspect=DataAspect(), title = "$year")
+    hidedecorations!(ax)
+    hidespines!(ax)
+    viz!(ax, geo2.geometry, color=geo2.geo, colorrange = clim)
+    return geo, fig
+end
+
 function getgeo(n::NamedTuple)
     coefs = extract_coefs(n.chn[end, :, 1], "η")
     data = n.mdl.mdl.args
@@ -32,13 +59,6 @@ function joingeometry(geo, shp)
     leftjoin!(geo2, shp2[!, [:xcoord, :ycoord, :geometry]],
               on = [:xcoord, :ycoord])
     return GeoTable(geo2)
-end
-
-function plotgeo(geo, shp, fig, x = 1, y = 1)
-    geo2 = joingeometry(geo, shp)
-    ax2 = Axis(fig[x, y], aspect=DataAspect())
-    viz!(ax2, geo2.geometry, color=geo2.geo, colorrange = (-1.4, .6))
-    return geo, fig
 end
 
 function plotdensrbf(n::NamedTuple, clim)
