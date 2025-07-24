@@ -9,8 +9,8 @@ julia:
     exeflags: ["--project=@."]
     env: ["JULIA_NUM_THREADS=6"]
 execute:
-  cache: false
-  daemon: false
+  cache: true
+  daemon: true
 ---
 
 # Some first analyses
@@ -24,6 +24,7 @@ using BenchmarkTools, IterTools, StatProfilerHTML, ReverseDiff
 using Suppressor, Distributions, Revise
 ## using Enzyme
 
+include("../src/model_helpers.jl")
 include("../src/utils.jl")
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
@@ -34,7 +35,6 @@ include("../src/diagrbf.jl")
 include("../src/norm.jl")
 include("../src/rbf.jl")
 include("../src/analysis.jl")
-include("../src/model_helpers.jl")
 
 ```
 
@@ -131,7 +131,7 @@ plotyears = [:y2000, :y2001, :y2002, :y2015, :y2016, :y2017]
 plts = Plots.Plot[]
 Threads.@threads for i in eachindex(ages)
     a = ages[i]
-    geos = loopstruct(data, x -> plotgeorbf(x, (-.3, .3) ), [a], plotyears)
+    geos = loopstruct(data, x -> plotgeorbf(x, (-.4, .3) ), [a], plotyears)
     p = plot([g[2] for g in geos]..., size = (1200, 900), plot_title = "$a")
     push!(plts, p)
 end
