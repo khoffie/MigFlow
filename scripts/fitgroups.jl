@@ -43,7 +43,7 @@ function fit_years(a, ndc, ngcx)
 end
 
 function fitage(a, y, ndc, ngcx)
-    mdl = makemodel(a, y, ndc, ngcx)
+    mdl = makemodel(a, y, 1.0, ndc, ngcx)
     inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
     return @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 end
@@ -73,7 +73,7 @@ end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 for a in ages
-    fit_years(a, 9, 5)
+    fit_years(a, 16, 5)
 end
 
 
