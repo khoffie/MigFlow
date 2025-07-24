@@ -1,4 +1,5 @@
-function plotgeoyears(dfgeo, shp, agegroup, years)
+function plotgeoyears(dfgeo::DataFrame, shp::DataFrame,
+                      agegroup::String, years::Vector{Int})
     df = age(dfgeo, agegroup)
     clim = extrema(filter(row -> row.year ∈ years, df).geo)
     years = reshape(years, (3, 2))'
@@ -10,6 +11,7 @@ function plotgeoyears(dfgeo, shp, agegroup, years)
         end
     end
     Colorbar(fig[1:2, 4], limits = clim, vertical = true)
+    fig[0, :] = Label(fig, "agegroup")
     return fig
 end
 
