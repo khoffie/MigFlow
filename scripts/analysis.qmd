@@ -18,8 +18,8 @@ execute:
 ```{julia}
 #| label: packages-scripts
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
-using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
-using KernelDensity, Serialization, LinearAlgebra, IterTools
+using CategoricalArrays, NamedArrays, LaTeXStrings, Loess
+using KernelDensity, Serialization, IterTools
 using Suppressor, Distributions, GeoStats, GeoIO, CairoMakie
 
 include("../src/model_helpers.jl")
@@ -40,10 +40,11 @@ include("../src/analysis.jl")
 #| label: gendata
 
 ages = Symbol.("age" .* ["18to25", "25to30", "30to50", "50to65", "above65", "below18"]);
-ages = ages[6]
+ages = [ages[6]]
 ## dangerous bc if I supply wrong age, keys are wrong I think
-data = gendata([ages]);
+data = gendata(ages);
 shp = DataFrame(GeoIO.load("../data/clean/shapes/districts_ext.shp"));
+st = GeoIO.load("../data/clean/shapes/states.shp")
 
 dfcoef = @suppress loopstruct(data, extract_params);
 dfcoef = reduce(vcat, dfcoef);
@@ -112,7 +113,7 @@ Plots.plot(p1, p2, p3, layout = (1, 3))
 
 
 ```{julia}
-
+#| label: fig-maps
 plotyears = [2000, 2001, 2002, 2015, 2016, 2017]
 
 # plts = Plots.Plot[]
@@ -123,10 +124,12 @@ plotyears = [2000, 2001, 2002, 2015, 2016, 2017]
 #     push!(plts, p)
 # end
 # foreach(display, plts)
-
-fig = plotgeoyears(dfgeo, shp, "below18", plotyears)
+plotgeoyears(dfgeo, shp, st, "below18", plotyears)
+## save("mapbelow18.pdf", plotgeoyears(dfgeo, shp, "below18", plotyears), size = (600, 400))
 
 ```
+
+![Geographic desirability](mapbelow18.svg){width=120%}
 
 
 ```{julia}
