@@ -1,21 +1,27 @@
-function plotgeoyears(dfgeo::DataFrame, shp::DataFrame,
+function plotgeoyears(dfgeo::DataFrame, shp::DataFrame, st,
                       agegroup::String, years::Vector{Int})
     df = age(dfgeo, agegroup)
     clim = extrema(filter(row -> row.year ∈ years, df).geo)
     years = reshape(years, (3, 2))'
-    fig = Figure()
+    fig = Figure(size = (600, 400), fontsize = 10)
     for i in 1:size(years, 1)
         for j in 1:size(years, 2)
             yr = years[i, j]
-            g, fig = plotgeo(year(df, yr), shp, fig, i, j, clim)
+            g, fig = plotgeo(year(df, yr), shp, st, fig, i, j, clim)
         end
     end
     Colorbar(fig[1:2, 4], limits = clim, vertical = true)
-    fig[0, :] = Label(fig, "agegroup")
+    fig[0, :] = Label(fig, "$agegroup")
     return fig
 end
 
-function plotgeo(geo, shp, fig, x = 1, y = 1, clim = nothing)
+function plotgeo(geo, shp, stshp, fig, x = 1, y = 1, clim = nothing)
+    geo2, ax = plotgeo_(geo, shp, fig, x, y, clim)
+    overlay_states(ax, stshp)
+    return geo2, fig
+end
+
+function plotgeo_(geo, shp, fig, x, y, clim)
     geo2 = joingeometry(geo, shp)
     age = unique(geo.agegroup)[1]
     year = unique(geo.year)[1]
@@ -24,7 +30,13 @@ function plotgeo(geo, shp, fig, x = 1, y = 1, clim = nothing)
     hidedecorations!(ax)
     hidespines!(ax)
     viz!(ax, geo2.geometry, color=geo2.geo, colorrange = clim)
-    return geo, fig
+    return geo2, ax
+end
+
+function overlay_states(ax, stshp)
+    viz!(ax, stshp.geometry, showsegments = true, alpha = 0,
+         segmentcolor = :white, segmentsize = 0.5)
+    return ax
 end
 
 function getgeo(n::NamedTuple)
