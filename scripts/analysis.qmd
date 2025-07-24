@@ -37,16 +37,6 @@ include("../src/model_helpers.jl")
 ```{julia}
 #| label: gendata
 
-function gendata(ages) 
-    years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
-    files = readdir("./output"; join = true)
-
-    data = (; (
-        age => (; zip(years, reorder(deserialize(file)))...)
-        for (age, file) in zip(ages, files)
-            )...)
-    return data
-end
 ages = Symbol.("age" .* ["18to25", "25to30", "30to50", "50to65", "above65", "below18"]);
 data = gendata(ages);
 ages = keys(data)

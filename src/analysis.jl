@@ -1,3 +1,14 @@
+function gendata(ages)
+    years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
+    files = readdir("./output"; join = true)
+
+    data = (; (
+        age => (; zip(years, reorder(deserialize(file)))...)
+        for (age, file) in zip(ages, files)
+            )...)
+    return data
+end
+
 getdeviance(r) = deviance(r.mdl.mdl.args.Y, r.prd)[1]
 
 function reorder(results)
