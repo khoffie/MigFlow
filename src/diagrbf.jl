@@ -28,6 +28,7 @@ function plotgeo_(geo, shp, fig, x, y, clim)
     year = unique(geo.year)[1]
     if isnothing(clim); clim = extrema(geo.geo); end
     ax = Axis(fig[x, y], aspect=DataAspect(), title = "$year")
+    tightlimits!(ax)
     hidedecorations!(ax)
     hidespines!(ax)
     viz!(ax, geo2.geometry, color=geo2.geo, colorrange = clim)
