@@ -1,3 +1,14 @@
+function gendata(ages)
+    years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
+    files = readdir("./output"; join = true)
+
+    data = (; (
+        age => (; zip(years, reorder(deserialize(file)))...)
+        for (age, file) in zip(ages, files)
+            )...)
+    return data
+end
+
 getdeviance(r) = deviance(r.mdl.mdl.args.Y, r.prd)[1]
 
 function reorder(results)
@@ -32,4 +43,4 @@ function extract_params(result)
 end
 
 plotcoef(df, c) = (plot(df.group, df[!, c], title = c); scatter!(df.group, df[!, c]))
-plotcoef(df, c, g, lw = 2) = (plot(df.year, df[!, c], group = df[!, g], title = c, linewidth = lw))
+plotcoef(df, c, g, lw = 2) = (Plots.plot(df.year, df[!, c], group = df[!, g], title = c, linewidth = lw))

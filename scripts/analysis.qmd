@@ -21,8 +21,7 @@ using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
 using BenchmarkTools, IterTools, StatProfilerHTML, ReverseDiff
-using Suppressor, Distributions, Revise
-## using Enzyme
+using Suppressor, Distributions, Revise, GeoStats, GeoIO, CairoMakie
 
 include("../src/model_helpers.jl")
 include("../src/utils.jl")
@@ -41,19 +40,17 @@ include("../src/analysis.jl")
 ```{julia}
 #| label: gendata
 
-function gendata(ages) 
-    years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
-    files = readdir("./output"; join = true)
-
-    data = (; (
-        age => (; zip(years, reorder(deserialize(file)))...)
-        for (age, file) in zip(ages, files)
-            )...)
-    return data
-end
 ages = Symbol.("age" .* ["18to25", "25to30", "30to50", "50to65", "above65", "below18"]);
 data = gendata(ages);
 ages = keys(data)
+
+shp = DataFrame(GeoIO.load("../data/clean/shapes/districts_ext.shp"))
+## we join geo estimates based on coords and there are numerical inaccuracies
+shp.xcoord = round.(scale_to_unit(shp.x), digits = 4)
+shp.ycoord = round.(scale_to_unit(shp.y), digits = 4)
+shp = shp[!, [:AGS, :xcoord, :ycoord, :geometry]];
+
+plotyears = [:y2000, :y2001, :y2002, :y2015, :y2016, :y2017]
 
 ```
 
@@ -68,7 +65,7 @@ df = reduce(vcat, df);
 #| label: fig-alpha
 #| fig-cap: "Alpha supposedly estimates the probability to move into a district with median population 100km away, when the density transition function returns 1  and locational desir of origin equals locational desir of destination ."
 coefs = [:α_raw, :γ_raw, :ϕ_raw, :deviance]
-plot([plotcoef(df, c, :age) for c in coefs]...)
+Plots.plot([plotcoef(df, c, :age) for c in coefs]...)
 
 ```
 
@@ -119,7 +116,7 @@ probs.pleavepred = probs.T ./ probs.A .* 100;
 p1 = plotcoef(probs, :pleave, :age)
 p2 = plotcoef(probs, :pleavepred, :age)
 p3 = plotcoef(df, :α_raw, :age)
-plot(p1, p2, p3, layout = (1, 3))
+Plots.plot(p1, p2, p3, layout = (1, 3))
 
 ```
 
@@ -131,8 +128,8 @@ plotyears = [:y2000, :y2001, :y2002, :y2015, :y2016, :y2017]
 plts = Plots.Plot[]
 Threads.@threads for i in eachindex(ages)
     a = ages[i]
-    geos = loopstruct(data, x -> plotgeorbf(x, (-.4, .3) ), [a], plotyears)
-    p = plot([g[2] for g in geos]..., size = (1200, 900), plot_title = "$a")
+    geos = loopstruct(data, x -> plotgeorbf(x, (-.3, .3) ), [a], plotyears)
+    p = Plots.plot([g[2] for g in geos]..., size = (1200, 900), plot_title = "$a")
     push!(plts, p)
 end
 foreach(display, plts)
@@ -146,7 +143,7 @@ plts = Vector{Any}(undef, length(ages))
 Threads.@threads for i in eachindex(ages)
     a = ages[i]
     dens = loopstruct(data, x -> plotdensrbf(x, (-1, 1)), [a], plotyears)
-    p = plot([d[2] for d in dens]..., size = (1200, 900), plot_title = "$a")
+    p = Plots.plot([d[2] for d in dens]..., size = (1200, 900), plot_title = "$a")
     plts[i] = p
 end
 foreach(display, plts)
