@@ -10,8 +10,9 @@ function plotgeoyears(dfgeo::DataFrame, shp::DataFrame, st,
             g, fig = plotgeo(year(df, yr), shp, st, fig, i, j, clim)
         end
     end
-    Colorbar(fig[1:2, 4], limits = clim, vertical = true)
-    fig[0, :] = Label(fig, "$agegroup")
+    Colorbar(fig[0, :], limits = clim, vertical = false,
+             height = 5, width = Relative(.5))
+    fig[-1, :] = Label(fig, "$agegroup")
     return fig
 end
 

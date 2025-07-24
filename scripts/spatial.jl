@@ -9,9 +9,12 @@ include("../src/diagchain.jl")
 include("../src/model_helpers.jl")
 include("../src/estimation.jl")
 
-shp = DataFrame(GeoIO.load("../data/clean/shapes/districts_ext.shp"))
-data = gendata([Symbol.("agebelow18")]);
-dfgeo = reduce(vcat, loopstruct(data, getgeo))
+shp = GeoIO.load("../data/clean/shapes/districts_ext.shp")
+st = GeoIO.load("../data/clean/shapes/states.shp")
+typeof(st)
+fig = Figure()
+plotgeo_(year(dfgeo, 2001), DataFrame(shp), fig, nothing, nothing, nothing)
 
 years = [2006, 2007, 2008, 2015, 2016, 2017]
-plotgeoyears(dfgeo, shp, "below18", years)
+F1 = plotgeoyears(dfgeo, DataFrame(shp), st, "below18", years)
+display(F1)
