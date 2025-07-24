@@ -1,28 +1,15 @@
-function plotgeorbf(n::NamedTuple, shp::DataFrame, clim = nothing)
-    geocoefs = extract_coefs(n.chn[end, :, 1], "η")
+function getgeo(n::NamedTuple)
+    coefs = extract_coefs(n.chn[end, :, 1], "η")
     data = n.mdl.mdl.args
-    y = n.chn[:year][1]
-    return plotgeorbf(geocoefs, data, shp, "Year $y", clim)
-end
+    y = Int(n.chn[:year][1])
+    a = recodeage(Int(n.chn[:age][1]))
 
-function plotgeorbf(coefs::Vector{Float64},
-                    data::NamedTuple, shp::DataFrame, title, clim)
     xcoord = data.xcoord
     ycoord = data.ycoord
     cx = data.cxgeo
     cy = data.cygeo
     scale = data.geo_scale
-    return plotgeorbf_(shp, coefs, xcoord, ycoord, cx, cy, scale, title, clim)
-end
 
-function plotgeorbf_(shp::DataFrame, coefs::Vector{Float64},
-                     xcoord::Vector{Float64},
-                     ycoord::Vector{Float64},
-                     cx::Vector{Float64},
-                     cy::Vector{Float64},
-                     scale::Float64,
-                     title::String,
-                     clim)
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
     geo = [interpolant(rbf, xcoord[i], ycoord[i],
@@ -30,12 +17,28 @@ function plotgeorbf_(shp::DataFrame, coefs::Vector{Float64},
                        cx, cy, scale) for i in eachindex(xcoord)];
     geo = geo .- mean(geo)
     dfgeo = DataFrame(; xcoord, ycoord, geo)
-    dfgeo.xcoord = round.(dfgeo.xcoord, digits = 4)
-    dfgeo.ycoord = round.(dfgeo.ycoord, digits = 4)
-    shp2 = leftjoin(shp, dfgeo, on = [:xcoord, :ycoord])
-    shp2 = GeoTable(shp2)
-    p = viz(shp2.geometry, color = shp2.geo)
-    return dfgeo,  p
+    dfgeo.agegroup .= a
+    dfgeo.year .= y
+    return dfgeo[!, [:agegroup, :year, :geo, :xcoord, :ycoord]]
+end
+
+function joingeometry(geo, shp)
+    shp2 = shp[!, [:x, :y, :geometry]]
+    shp2.xcoord = round.(scale_to_unit(shp2.x), digits = 4)
+    shp2.ycoord = round.(scale_to_unit(shp2.y), digits = 4)
+    geo2 = copy(geo)
+    geo2.xcoord = round.(geo2.xcoord, digits = 4)
+    geo2.ycoord = round.(geo2.ycoord, digits = 4)
+    leftjoin!(geo2, shp2[!, [:xcoord, :ycoord, :geometry]],
+              on = [:xcoord, :ycoord])
+    return GeoTable(geo2)
+end
+
+function plotgeo(geo, shp, fig, x = 1, y = 1)
+    geo2 = joingeometry(geo, shp)
+    ax2 = Axis(fig[x, y], aspect=DataAspect())
+    viz!(ax2, geo2.geometry, color=geo2.geo, colorrange = (-1.4, .6))
+    return geo, fig
 end
 
 function plotdensrbf(n::NamedTuple, clim)
