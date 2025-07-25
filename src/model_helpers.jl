@@ -50,7 +50,6 @@ function bound(a, ndc, ngcx, ngcy)
 end
 
 rbfinits(N, σ, t = 90.0) = clamp.(rand(MvNormal(zeros(N), σ^2 *I(N))), -t, t)
-
 function initialize(a, ndc, ngcx, ngcy)
     density = rbfinits(ndc, 40.0)
     geo = rbfinits(ngcx * ngcy, 10.0)
