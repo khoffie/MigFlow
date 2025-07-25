@@ -1,3 +1,23 @@
+rbf(x) = abs(x) < one(x) ? exp(one(x) - one(x) / (one(x) - x^2)) : zero(x)
+rbfscale(cx, cy, k) = k * LinearAlgebra.norm([cx[1],cy[1]] - [cx[2],cy[2]])
+
+function interpolant(f, x, y, w, cx, cy, scale)
+    res = zero(x)
+    @inbounds for i in eachindex(cx), j in reverse(eachindex(cy))
+        dx = x - cx[i]
+        dy = y - cy[length(cy) + 1 - j]
+##         dy = y - cy[j]
+        r = sqrt(dx * dx + dy * dy) / scale
+        res += w[j, i] * f(r)
+    end
+    return res
+end
+
+function scale_to_unit(x)
+    xmin, xmax = extrema(x)
+    return [2 * (xi - xmin) / (xmax - xmin) - 1  for xi in x]
+end
+
 fdist(D, ds) = D / ds
 fradius(P, ρ, ds) = sqrt((P / ρ) / 2π) / ds
 lc(x) = levelcode.(categorical(x))
