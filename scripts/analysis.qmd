@@ -39,7 +39,7 @@ include("../src/analysis.jl")
 ```{julia}
 #| label: gendata
 data, ages = gendata();
-shp = DataFrame(GeoIO.load("../data/clean/shapes/districts_ext.shp"));
+shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp")
 
 dfcoef = reduce(vcat, @suppress loopstruct(data, extract_params);)
@@ -106,21 +106,20 @@ Plots.plot(p1, p2, p3, layout = (1, 3))
 
 ```
 
-
 ```{julia}
 #| label: fig-maps
 plotyears = [2000, 2001, 2002, 2015, 2016, 2017]
 
-for a in [unique(dfgeo.agegroup)[1]]
-    save("age$a.pdf", plotgeoyears(dfgeo, shp, st, a, plotyears),
-         size = (600, 400), px_per_unit = .5)
+Threads.@threads for a in unique(dfgeo.agegroup)
+    save("images/map$a.png", plotgeoyears(dfgeo, shp, st, a, plotyears),
+         size = (600, 400), px_per_unit = 2)
 end
-
 
 ```
 
-![Geographic desirability](mapbelow18.pdf){width=120%}
-
+![Geographic desirability](images/mapbelow18.png){width=120%}
+![Geographic desirability](images/map18-25.png){width=120%}
+![Geographic desirability](images/map25-30.png){width=120%}
 
 ```{julia}
 
@@ -136,4 +135,3 @@ end
 foreach(display, plts)
 
 ```
-
