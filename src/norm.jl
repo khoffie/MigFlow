@@ -69,12 +69,13 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
                                                    interpolant(rbf, R[fromfull[i]], R[tofull[i]], ζ, cx, cy, rbf_scale),
                                                    interpolant(rbf, xcoord[fromfull[i]], ycoord[fromfull[i]], η, cxgeo, cygeo, geo_scale),
                                                    interpolant(rbf, xcoord[tofull[i]], ycoord[tofull[i]], η, cxgeo, cygeo, geo_scale),
-                                                   γ, δ, ϕ)
+                                                   γ, ϕ)
             end
             @inbounds for i in 1:Ndist
-                denom[i] += desirability(P[i], β * radius[i],
+                denom[i] += desirability(P[i], # β *
+                    radius[i],
                                          interpolant(rbf, R[i], R[i], ζ, cx, cy, rbf_scale),
-                                         1, 1, γ, δ, ϕ)
+                                         1, 1, γ, ϕ)
             end
         else
             fill!(denom, one(T))
