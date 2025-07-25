@@ -51,17 +51,7 @@ function violinplot(munis, districts, distcodes)
     savefig("../../mig-paper/images/density_munis.svg")
 end
 
-df = munidf(readinkar())
-dis = districtdf(df)
-samples = StatsBase.sample(dis[dis.sd .> 0.0, :].distcode, 20)
-violinplot(df, dis, samples)
-
-# areas = combine(gb(df, :distcode), :area => sum => :area)
-# areas.area = areas.area ./ 100
-# areas.diam = 2sqrt.(areas.area ./ pi)
-# areas.statecode = parse.(Int, statecode.(string.(areas.distcode)))
-# areas
-
-# @df areas violin(string.(:statecode), :diam, :area)
-# @df areas dotplot!(string.(:statecode), :diam, marker = (:black, stroke(0), 2), label = "")
-# combine(gb(areas, :statecode), :diam => mean)
+# df = munidf(readinkar())
+# dis = districtdf(df)
+# samples = StatsBase.sample(dis[dis.sd .> 0.0, :].distcode, 20)
+# violinplot(df, dis, samples)

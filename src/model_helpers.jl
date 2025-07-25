@@ -13,6 +13,21 @@ function interpolant(f, x, y, w, cx, cy, scale)
     return res
 end
 
+# ### Check density RBF
+# vals = range(-1, 1, 1000)
+# cx = collect(range(-1, 1, 4))
+# cy = collect(range(-1, 1, 4))
+
+# w = [0, 1, 0, 0,
+#      0, 0, 0, 0,
+#      0, 0, 2, 0,
+#      1, 0, 0, 0]
+
+# extract_coefs(out.chn, "ζ")
+
+# coefmat(w)
+# mat, p = plotdensrbf_(Float64.(w), cx, cy, .5, Float64.(vals), "test", nothing);
+
 function scale_to_unit(x)
     xmin, xmax = extrema(x)
     return [2 * (xi - xmin) / (xmax - xmin) - 1  for xi in x]
