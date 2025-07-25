@@ -31,7 +31,7 @@ function fit_years(a, ndc, ngcx)
     Threads.@threads for y in years
         println("Starting $a in $y")
         if a == "30-50"
-            out = fit30to50(y, ndc, ngxx)
+            out = fit30to50(y, ndc, ngcx)
         else
             out = fitage(a, y, ndc, ngcx)
         end
@@ -72,7 +72,7 @@ function makemodel(a, y, p, ndc, ngcx)
 end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
-for a in ages
+for a in ages[4:end]
     fit_years(a, 16, 5)
 end
 
