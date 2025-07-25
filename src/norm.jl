@@ -10,7 +10,7 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
     from       = lc(df.fromdist)
     to         = lc(df.todist)
     A          = genfrompop(df, "joint")
-    P          = log.(districts.pop ./ 153000) # median topop
+    P          = log.((districts.pop .+ 10000) ./ median(districts.pop)) # ϵ
     poporig    = districts.pop
     D          = fdist.(df.dist, ds)
     R          = scale_to_unit(log.(districts.density ./ median(districts.density)))
