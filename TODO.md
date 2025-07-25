@@ -14,6 +14,7 @@
 - If the very dark spots in early years are due to data issues, why is
   there no very bright spot? All the people moving from Göttingen need
   to go somewhere. Did I rm some rows from all the data?
-- Not important cause it works, but rm age and year from chain and save them as
-  metadata of chain, if possible. If not, just return (; chn, mdl,
-  prd, age, year)
+- Not important cause it works, but it triggers a warning. So I added
+  @suppress. rm age and year from chain and save them as metadata
+  of chain, if possible, would help. If not, just return (; chn, mdl, prd, age,
+  year)
