@@ -28,7 +28,7 @@ function runoptim(mdl, lb, ub;
     attempt = 0
     while attempt < 5
         try
-            mles = Turing.maximum_likelihood(mdl; lb = lb, ub = ub,
+            mles = Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub,
                                              adtype = ad,
                                              initial_params = inits,
                                              maxiters = maxiters,
