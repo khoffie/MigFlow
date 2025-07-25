@@ -14,8 +14,6 @@
 - If the very dark spots in early years are due to data issues, why is
   there no very bright spot? All the people moving from Göttingen need
   to go somewhere. Did I rm some rows from all the data?
-- Repo is quite messed, regroup scripts 
-- lower alpha lb for below18
 - Not important cause it works, but rm age and year from chain and save them as
   metadata of chain, if possible. If not, just return (; chn, mdl,
   prd, age, year)
