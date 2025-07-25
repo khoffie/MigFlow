@@ -18,21 +18,19 @@ execute:
 ```{julia}
 #| label: packages-scripts
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
-using CategoricalArrays, NamedArrays, LaTeXStrings, Loess
-using KernelDensity, Serialization, IterTools
-using Suppressor, Distributions, GeoStats, GeoIO, CairoMakie
+using Distributions, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
+using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
+using IterTools, Mooncake, Revise, GeoStats, GeoIO, CairoMakie
 
-include("../src/model_helpers.jl")
-include("../src/utils.jl")
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
-include("../src/diag.jl")
-include("../src/diagplots.jl")
-include("../src/diagchain.jl")
-include("../src/diagrbf.jl")
-include("../src/norm.jl")
-include("../src/rbf.jl")
-include("../src/analysis.jl")
+includet("../src/analyze.jl")
+includet("../src/analyzegeo.jl")
+includet("../src/analyzedensity.jl")
+includet("../src/analyzeresults.jl")
+includet("../src/diagplots.jl")
+include("../src/model.jl")
+include("../src/model_helpers.jl")
 
 ```
 
