@@ -1,18 +1,16 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
-using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
+using Distributions, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
-using BenchmarkTools, IterTools, StatProfilerHTML, ReverseDiff, Distributions
-## using Enzyme
+using IterTools, Mooncake, Revise, GeoStats, GeoIO, CairoMakie, Suppressor
 
-include("../src/utils.jl")
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
-include("../src/diag.jl")
+include("../src/analyze.jl")
+include("../src/analyzegeo.jl")
+include("../src/analyzedensity.jl")
+include("../src/analyzeresults.jl")
 include("../src/diagplots.jl")
-include("../src/diagchain.jl")
-include("../src/diagrbf.jl")
-include("../src/norm.jl")
-include("../src/rbf.jl")
+include("../src/model.jl")
 include("../src/model_helpers.jl")
 
 function fit_years(a, ndc, ngcx)
