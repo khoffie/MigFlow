@@ -16,3 +16,6 @@
   to go somewhere. Did I rm some rows from all the data?
 - Repo is quite messed, regroup scripts 
 - lower alpha lb for below18
+- Not important cause it works, but rm age and year from chain and save them as
+  metadata of chain, if possible. If not, just return (; chn, mdl,
+  prd, age, year)
