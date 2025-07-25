@@ -21,7 +21,7 @@ function format_mles(mles)
 end
 
 function runoptim(mdl, lb, ub;
-                  ad = ADTypes.AutoMoonCake(),
+                  ad = ADTypes.AutoMooncake(),
                   inits = nothing,
                   reltol = nothing,
                   maxiters = nothing,
