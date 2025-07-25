@@ -13,8 +13,8 @@ function analyze(r)
 
     p1 = plotpop(df.flows, df.preds, df.A, df.P)
 
-    p2 = plot(plotfit(df.flows, df.preds),
-              title = "Mean deviance: $(dev)")
+    p2 = Plots.plot(plotfit(df.flows, df.preds),
+                    title = "Mean deviance: $(dev)")
 
     if occursin("dist", names(df)[1])
         p3 = plotdist(df, :preds)
@@ -23,24 +23,11 @@ function analyze(r)
     end
 
     net = calc_net_df(df);
-    p4 = plot(plotnet(net), title = "cor: $(corround(net.nmr, net.nmrp))")
-
-    denscoefs = extract_coefs(r.chn[end, :, 1], "ζ")
-    if length(denscoefs) > 0
-        mat, p5 = plotdensrbf(r, (-1, 1))
-    else
-        mat, p5 = nothing, nothing
-    end
-
-    geocoefs = extract_coefs(r.chn[end, :, 1], "η")
-    if length(geocoefs) > 0
-        geo, p6 = plotgeorbf(r, (-.3, .3))
-    else
-        geo, p6 = nothing, nothing
-    end
-
-    plts = [p1, p2, p3, p4, p5, p6]
-    return (; df, net, mat, geo, plts)
+    p4 = Plots.plot(plotnet(net), title = "cor: $(corround(net.nmr, net.nmrp))")
+    pall = Plots.plot([p2, p4, p3, p1]...)
+    display(pall)
+    plts = [p2, p4, p3, p1, pall]
+    return (; df, net, plts)
 end
 
 function extract_coefs(chn, string)
