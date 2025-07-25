@@ -2,7 +2,9 @@ function estimate(mdl; show_plt = true, optim_kwargs = (;))
     mles = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
     out = format_mles(mles)
     out = add_age_year(out, mdl.data)
-    return (chn = makechain(out), mdl = mdl)
+    chn = makechain(out)
+    prd = Turing.returned(mdl.mdl, chn)[1]
+    return (; chn, mdl, prd)
 end
 
 function add_age_year(out, data)
