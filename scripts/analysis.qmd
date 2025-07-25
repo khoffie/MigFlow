@@ -20,7 +20,7 @@ execute:
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using Distributions, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
-using IterTools, Mooncake, Revise, GeoStats, GeoIO, CairoMakie
+using IterTools, Mooncake, Revise, GeoStats, GeoIO, CairoMakie, Suppressor
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
