@@ -65,7 +65,7 @@ function makemodel(a, y, p, ndc, ngcx)
     mdl = norm(load_data(a, y, p, "../data/";
                          only_positive = true,
                          seed = 1234, opf = false),
-               normalize = false, ndc = ndc, ngcx = ngcx);
+               normalize = false, ndc = ndc, ngcx = ngcx, kgeo = 2.0);
     return mdl
 end
 
