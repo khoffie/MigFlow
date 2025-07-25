@@ -1,15 +1,17 @@
-function gendata(ages)
+function gendata(path = "./output")
     years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
-    files = readdir("./output"; join = true)
+    files = readdir(path; join = true)
+    ## extracting age group
+    ages = string.([s[end] for s in split.(files, "/")])
+    ages = "age" .* ([s[2] for s in split.(ages, "optim")])
+    ages = Symbol.(replace.(ages, "-" => "to"))
 
     data = (; (
         age => (; zip(years, reorder(deserialize(file)))...)
         for (age, file) in zip(ages, files)
             )...)
-    return data
+    return data, ages
 end
-
-getdeviance(r) = deviance(r.mdl.mdl.args.Y, r.prd)[1]
 
 function reorder(results)
     years = [Int(r.chn[:year].data[1]) for r in results]
@@ -44,3 +46,4 @@ end
 
 plotcoef(df, c) = (plot(df.group, df[!, c], title = c); scatter!(df.group, df[!, c]))
 plotcoef(df, c, g, lw = 2) = (Plots.plot(df.year, df[!, c], group = df[!, g], title = c, linewidth = lw))
+getdeviance(r) = deviance(r.mdl.mdl.args.Y, r.prd)[1]
