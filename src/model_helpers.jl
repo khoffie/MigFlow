@@ -41,7 +41,7 @@ function bound(a, ndc, ngcx, ngcy)
     pasteub(c) = vcat(c, ubdensity..., ubgeo...)
     ## ub alpha only makes sense for distscale = 100 and pop /
     ## median(pop). Otherwise base prob to migrate might be very different
-    a == "below18" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 50.0])
+    a == "below18" && return pastelb([-12.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 50.0])
     a == "18-25" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 30.0])
     a == "25-30" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 30.0])
     a == "30-50" && return pastelb([-10.0, 10.0, 1.0]), pasteub([-5.0, 40.0, 40.0])
