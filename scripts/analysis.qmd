@@ -24,11 +24,11 @@ using IterTools, Mooncake, Revise, GeoStats, GeoIO, CairoMakie
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
-includet("../src/analyze.jl")
-includet("../src/analyzegeo.jl")
-includet("../src/analyzedensity.jl")
-includet("../src/analyzeresults.jl")
-includet("../src/diagplots.jl")
+include("../src/analyze.jl")
+include("../src/analyzegeo.jl")
+include("../src/analyzedensity.jl")
+include("../src/analyzeresults.jl")
+include("../src/diagplots.jl")
 include("../src/model.jl")
 include("../src/model_helpers.jl")
 
