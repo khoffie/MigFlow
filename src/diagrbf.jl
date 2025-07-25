@@ -1,4 +1,4 @@
-function plotgeoyears(dfgeo::DataFrame, shp::DataFrame, st,
+function plotgeoyears(dfgeo::DataFrame, shp::GeoTable, st::GeoTable,
                       agegroup::String, years::Vector{Int})
     df = age(dfgeo, agegroup)
     clim = extrema(filter(row -> row.year ∈ years, df).geo)
@@ -23,7 +23,7 @@ function plotgeo(geo, shp, stshp, fig, x = 1, y = 1, clim = nothing)
 end
 
 function plotgeo_(geo, shp, fig, x, y, clim)
-    geo2 = joingeometry(geo, shp)
+    geo2 = joingeometry(geo, DataFrame(shp))
     age = unique(geo.agegroup)[1]
     year = unique(geo.year)[1]
     if isnothing(clim); clim = extrema(geo.geo); end
