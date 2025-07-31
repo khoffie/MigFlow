@@ -20,7 +20,7 @@ end
 
 function loopstruct(s, f, ages = nothing, years = nothing)
     if isnothing(ages); ages = keys(s); end
-    if isnothing(years); years = keys(data[ages[1]]); end
+    if isnothing(years); years = keys(s[ages[1]]); end
     res = Matrix{Any}(undef, length(ages), length(years))
     for i in eachindex(ages)
         a = ages[i]
