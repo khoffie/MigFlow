@@ -4,10 +4,15 @@ rbfscale(cx, cy, k) = k * LinearAlgebra.norm([cx[1],cy[1]] - [cx[2],cy[2]])
 function interpolant(f, x, y, w, cx, cy, scale)
     res = zero(x)
     @inbounds for i in eachindex(cx), j in reverse(eachindex(cy))
+        ## a matrix is indexed starting in top left corner, for plots
+        ## we usually start in bottom left. To make sure that matrix
+        ## and heatmap align we reverse the j-indexing.
         dx = x - cx[i]
+        ## However, we still want to pick the "correct" weight from
+        ## cy, so we start with the last elemet of the reversed vector
+        ## cy. Meaning we pick the first of original cy.
         dy = y - cy[length(cy) + 1 - j]
-##         dy = y - cy[j]
-        r = sqrt(dx * dx + dy * dy) / scale
+        r = sqrt(dx^2 + dy^2) / scale
         res += w[j, i] * f(r)
     end
     return res
