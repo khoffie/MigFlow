@@ -18,3 +18,8 @@
   @suppress. rm age and year from chain and save them as metadata
   of chain, if possible, would help. If not, just return (; chn, mdl, prd, age,
   year)
+- Define new struct OptimResult and declare this type for analyze() and so forth
+- in helpeR there are scripts not actually used, like utils.R, plots.R
+  ..., rm and clean repo before release
+- the cleaning and preprocessing of density data, where did I do this?
+- Same with shapes, where did I download and cleaned them?
