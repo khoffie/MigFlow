@@ -89,6 +89,7 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
                              interpolant(rbf, xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
                               γ, ϕ) / denom[from[i]])
         end
+        ## Y ~ product_distribution(Binomial.(A, ps))
         Y ~ product_distribution(Poisson.(ps))
         return ps
     end
