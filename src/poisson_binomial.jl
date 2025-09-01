@@ -31,6 +31,5 @@ function approx_plot(ps, xlim = nothing)
     p = f!(pois, label = "Poisson", alpha = al)
     p = f!(binom, label = "Binomial", alpha = al)
     p = plot(p, title = "$(ps) \nError Pois $(tvp) Error Binom $(tvb)", titlefontsize = 8)
-    display(p)
     return pb, pois, binom, p
 end
