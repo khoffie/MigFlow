@@ -16,6 +16,12 @@ function topn(df, group, col, N = 10)
     return reduce(vcat, dfg)
 end
 
+function outflux(df, f, group = nothing)
+    group == nothing ? g = :fromdist : g = [:fromdist, group...]
+    out = combine(DataFrames.groupby(df, g), :flows => f)
+    return rename!(out, "flows" * "_$(string(f))" => :outflux)
+end
+
 df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
 di = CSV.read("../data/districts.csv", DataFrame)
 pop = combine(groupby(unique(df, [:fromdist, :year, :agegroup]),
@@ -31,12 +37,11 @@ dft = combine(groupby(df, [:year, :agegroup]), :flows => sum => :total)
 leftjoin!(dft, pop, on = [:year, :agegroup])
 dft.prob = dft.total ./ dft.agepop .* 100
 
-p1 = plot(dft.year, dft.total, group = dft.agegroup, linewidth = 2,
-          ylab = "total flows", label = "")
+p1 = plot(dft.year, dft.total ./ 100e3, group = dft.agegroup, linewidth = 2,
+          ylab = "total flows, 100k", label = "")
 p2 = plot(dft.year, dft.prob, group = dft.agegroup, linewidth = 2,
-          ylab = "probability to move")
-savefig(plot(p1, p2), joinpath(outp, "flows.pdf"))
-
+          ylab = "movement frequency, %")
+savefig(plot(p1, p2, size = (600, 400)), joinpath(outp, "flows.pdf"))
 
 ######################################################################
 ############### ecdf most important regions ##########################
@@ -99,12 +104,6 @@ sort(calc_net(df, :flows), :nmr)
 df1 = destination(origin(df, [3159]), [5978])
 combine(groupby(df1, :year), :flows => sum)
 
-function outflux(df, f, group = nothing)
-    group == nothing ? g = :fromdist : g = [:fromdist, group...]
-    out = combine(DataFrames.groupby(df, g), :flows => f)
-    return rename!(out, "flows" * "_$(string(f))" => :outflux)
-end
-
 sort(outflux(origin(df, 3159), [:year]), :outflux)
 sort(outflux(destination(origin(df, 3159), 5978), [:year]), :outflux)
 
@@ -114,19 +113,19 @@ sort(outflux(destination(origin(df, 3159), 5978), [:year]), :outflux)
 df1 = sort(outflux(df, sum, [:todist]), :outflux)
 flows = df1.outflux ./ length(years)
 
-xs = 0:100
-e = [mean(flows .<= x) for x in xs]
-DataFrame(; xs, e)
-p1 = plot(xs, e, xlab = "Flow Size", ylab = "empirical distribution",
-          title = "How likely are\ncertain flow sizes?", linewidth = 2,
-          label = "")
-
 qs = quantile(flows, range(0, 1, 100))
-flows_qs = [sum(flows[flows .> qs[i-1] .&& flows .< qs[i]]) for i in 2:length(qs)]
-flows_qs = flows_qs ./ sum(flows_qs)
+flows_sum = [sum(flows[flows .> qs[i-1] .&& flows .< qs[i]]) for i in 2:length(qs)]
+ticks = [.25, .5, .75, .9, .95, 1]
+vs = Int.(round.(quantile(flows, ticks), digits = 0))
+vs = string.(Int.(ticks .* 100)) .* "\n" .* "(" .* string.(vs) .* ")"
 
-p2 = bar(flows_qs, label = "",
-         xlab = "Flow percentile", ylab = "Relative Frequency",
-         title = "How important are\nflow quantiles?")
-plot(p1, p2)
-savefig(plot(p1, p2), joinpath(outp, "flowdist.pdf"))
+p1 = bar(flows_sum ./ sum(flows) .* 100, ylim = (0, 50), label = "",
+         xlab = "flow percentile, (flow value)", ylab = "% of total flows",
+         title = "How much does each percentile\ncontribute to total flows?",
+         xticks = (ticks .* 100, tick_vals))
+savefig(p1, joinpath(outp, "flowquantiles.pdf"))
+
+quantile(flows, .5)
+1 - sum(flows[flows .<= quantile(flows, .99)]) ./ sum(flows)
+1 - sum(flows[flows .<= quantile(flows, .9)]) ./ sum(flows)
+sum(flows[flows .<= quantile(flows, .75)]) ./ sum(flows)
