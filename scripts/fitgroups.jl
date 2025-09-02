@@ -58,8 +58,8 @@ function fit30to50(y, ndc, ngcx)
 
     mdl = makemodel("30-50", y, 1.0, ndc, ngcx)
     ## inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
-    inits = out.chn[1, 1 : end - 4, 1].value.data
-    return  @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = reshape(inits, 20)));
+    inits = vec(out.chn[1, 1 : end - 4, 1].value.data)
+    return  @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 end
 
 function makemodel(a, y, p, ndc, ngcx)
@@ -71,6 +71,6 @@ function makemodel(a, y, p, ndc, ngcx)
 end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
-for a in ages
+for a in ages[4:end]
     fit_years(a, 16, 5)
 end
