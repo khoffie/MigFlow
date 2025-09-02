@@ -1,8 +1,10 @@
 using DataFrames, CSV, CairoMakie, Statistics, StatsBase, Revise
-using LaTeXStrings, AlgebraOfGraphics
+using LaTeXStrings, AlgebraOfGraphics, GeoIO, GeoStats
 outp = "/home/konstantin/paper/sections/texdocs/images/"
 
 includet("../src/diagplots.jl")
+includet("../src/analyzegeo.jl")
+includet("../src/model_helpers.jl")
 
 age(df, age) = filter(:agegroup => n -> n ∈ age, df)
 year(df, y) = filter(:year => n -> n ∈ y, df)
@@ -27,9 +29,36 @@ di = CSV.read("../data/districts.csv", DataFrame)
 pop = combine(groupby(unique(df, [:fromdist, :year, :agegroup]),
                       [:year, :agegroup]), :frompop => sum => :agepop)
 ## combine(groupby(pop, :year), :agepop => sum)
+shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
+st = GeoIO.load("../data/clean/shapes/states.shp")
+
 years = unique(df.year)
 ages = unique(df.agegroup)
 
+
+######################################################################
+################# total flows per region  ############################
+net = calc_net(df, :flows);
+net.geo = log.(net.total ./ length(years));
+net.yearly_total = net.total ./ length(years)
+
+leftjoin!(net, year(di, 2017)[!, [:distcode, :name]], on = :fromdist => :distcode)
+sort(net[!, [:yearly_total, :name, :fromdist]], :yearly_total)
+
+
+fig = Figure(size = (400, 400), fontsize = 10)
+ax = Axis(fig[1, 1], aspect=DataAspect(), title = "Influx + Outflux",
+          subtitle = "All age group, yearly average 2000 - 2017")
+tightlimits!(ax)
+hidedecorations!(ax)
+hidespines!(ax)
+viz!(ax, shp.geometry, color = net.geo, colorrange = extrema(net.geo));
+overlay_states(ax, st)
+Colorbar(fig[2, 1], limits = extrema(net.geo), vertical = false,
+         height = 3, width = Relative(.4), label = "log(total flows)")
+resize_to_layout!(fig)
+save(joinpath(outp, "totalmap.pdf"), fig)
+sum(origin(net, [:2000, :9162, :11000]).yearly_total) / 2.2e6
 
 ######################################################################
 ################# total and relative flows ###########################
@@ -38,13 +67,18 @@ leftjoin!(dft, pop, on = [:year, :agegroup])
 dft.prob = dft.total ./ dft.agepop .* 100
 dft.total = dft.total ./ 100e3
 
-f = Figure();
-ax1 = Axis(f[1, 1], title = "Total Flows", ylabel = "Flows (100k)", xlabel = "Year")
-ax2 = Axis(f[1, 2], ylabel = "Movement Frequency (%)", xlabel = "Year")
-p1 = draw!(ax1, data(dft) * mapping(:year, :total, color = :agegroup) * visual(Lines))
-p2 = draw!(ax2, data(dft) * mapping(:year, :prob, color = :agegroup) * visual(Lines))
-legend!(f[1, 3], p1)
-save(joinpath(outp, "flows.pdf"), f)
+function plot()
+    f = Figure(size = (300, 300), fontsize = 10);
+    ax1 = Axis(f[1, 1], title = "Total Flows", ylabel = "Flows (100k)", xlabel = "Year");
+    ax2 = Axis(f[1, 2], title = "Relative Frequency", ylabel = "Movement Frequency (%)", xlabel = "Year");
+    p1 = draw!(ax1, data(dft) * mapping(:year, :total, color = :agegroup) * visual(Lines));
+    p2 = draw!(ax2, data(dft) * mapping(:year, :prob, color = :agegroup) * visual(Lines));
+    legend!(f[0, 1:2], p1; framevisible = true, rowgap = 0, colgap = 0, orientation = :horizontal,
+            markersize = 5, padding = (0, 0, 0, 0), patchlabelgab = 10, patchsize = (10, 10))
+    return f
+end
+
+save(joinpath(outp, "flows.pdf"), plot())
 
 ######################################################################
 ############### ecdf most important regions ##########################
@@ -65,17 +99,21 @@ function condsum(df, y, a)
 end
 
 function condsumage(df, a)
-    df1 = reduce(vcat, [condsum(df, y, a) for y in years])
+    df1 = reduce(vcat, [condsum(df, y, [a]) for y in years])
     df1 = combine(groupby(df1, [:agegroup, :id]), :sum => mean => :sum)
     return df1
 end
 df1 = reduce(vcat, [condsumage(df, a) for a in ages])
-p1 = plot(df1.id, df1.sum, group = df1.agegroup,
-          xlim = (0, 100), ylim = (0, 100),
-          xlab = "Most important destinations",
-          ylab = "cumulated relative flows",
-          title = "How many destinations are needed\nto capture x % of flows?")
-savefig(p1, joinpath(outp, "topdest.pdf"))
+df1 = combine(groupby(df1, :id), :sum => mean => "sum")
+
+p = draw(data(df1) * mapping(
+    :id => "Top Destinations (top to bottom)",
+    :sum => "Cumulated Relative Flows") *
+        visual(Lines); axis = (; limits = ((0, 100), (0, 100))),
+     figure = (; title = "How many destinations are needed\nto capture x% of flows?",
+               subtitle = "2000-2017, all age groups",
+               size = (300, 300), fontsize = 10))
+save(joinpath(outp, "topdest.pdf"), p)
 
 
 ######################################################################
@@ -118,17 +156,23 @@ flows = df1.outflux ./ length(years)
 
 qs = quantile(flows, range(0, 1, 100))
 flows_sum = [sum(flows[flows .> qs[i-1] .&& flows .< qs[i]]) for i in 2:length(qs)]
-ticks = [.25, .5, .75, .9, .95, 1]
-vs = Int.(round.(quantile(flows, ticks), digits = 0))
+flows_sum = flows_sum ./ sum(flows) .* 100
+df1 = DataFrame(qs = 1:(length(qs) - 1), flows = flows_sum)
+ticks = [.25, .5, .75, .9, .95, 1] * 100
+vs = Int.(round.(quantile(flows, ticks ./ 100), digits = 0))
 vs = string.(Int.(ticks .* 100)) .* "\n" .* "(" .* string.(vs) .* ")"
 
-p1 = bar(flows_sum ./ sum(flows) .* 100, ylim = (0, 50), label = "",
-         xlab = "flow percentile, (flow value)", ylab = "% of total flows",
-         title = "How much does each percentile\ncontribute to total flows?",
-         xticks = (ticks .* 100, tick_vals))
-savefig(p1, joinpath(outp, "flowquantiles.pdf"))
+f = Figure(size(300, 300), fontsize = 10);
+ax = Axis(f[1, 1];
+          xticks = (ticks, vs),
+          xlabel = "flow percentile\n(flow value)",
+          ylabel = "% of total flows",
+          title = "How much does each percentile\ncontribute to total flows?")
+draw!(ax, data(df1) * mapping(
+    :qs => "flow percentile\n(flow value)",
+    :flows => "% of total flows") * visual(BarPlot))
+save(joinpath(outp, "flowquantiles.pdf"), f)
 
-quantile(flows, .5)
-1 - sum(flows[flows .<= quantile(flows, .99)]) ./ sum(flows)
-1 - sum(flows[flows .<= quantile(flows, .9)]) ./ sum(flows)
-sum(flows[flows .<= quantile(flows, .75)]) ./ sum(flows)
+1 - sum(flows[flows .<= quantile(flows, 0.99)]) / sum(flows)
+1 - sum(flows[flows .<= quantile(flows, 0.9)]) / sum(flows)
+sum(flows[flows .<= quantile(flows, 0.5)]) / sum(flows)
