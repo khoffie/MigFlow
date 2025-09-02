@@ -1,5 +1,5 @@
-using DataFrames, CSV, StatsPlots, Statistics, StatsBase, Revise
-using LaTeXStrings
+using DataFrames, CSV, CairoMakie, Statistics, StatsBase, Revise
+using LaTeXStrings, AlgebraOfGraphics
 outp = "/home/konstantin/paper/sections/texdocs/images/"
 
 includet("../src/diagplots.jl")
@@ -36,12 +36,15 @@ ages = unique(df.agegroup)
 dft = combine(groupby(df, [:year, :agegroup]), :flows => sum => :total)
 leftjoin!(dft, pop, on = [:year, :agegroup])
 dft.prob = dft.total ./ dft.agepop .* 100
+dft.total = dft.total ./ 100e3
 
-p1 = plot(dft.year, dft.total ./ 100e3, group = dft.agegroup, linewidth = 2,
-          ylab = "total flows, 100k", label = "")
-p2 = plot(dft.year, dft.prob, group = dft.agegroup, linewidth = 2,
-          ylab = "movement frequency, %")
-savefig(plot(p1, p2, size = (600, 400)), joinpath(outp, "flows.pdf"))
+f = Figure();
+ax1 = Axis(f[1, 1], title = "Total Flows", ylabel = "Flows (100k)", xlabel = "Year")
+ax2 = Axis(f[1, 2], ylabel = "Movement Frequency (%)", xlabel = "Year")
+p1 = draw!(ax1, data(dft) * mapping(:year, :total, color = :agegroup) * visual(Lines))
+p2 = draw!(ax2, data(dft) * mapping(:year, :prob, color = :agegroup) * visual(Lines))
+legend!(f[1, 3], p1)
+save(joinpath(outp, "flows.pdf"), f)
 
 ######################################################################
 ############### ecdf most important regions ##########################
