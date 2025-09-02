@@ -1,9 +1,15 @@
-using DataFrames, CSV, StatsPlots, Statistics, StatsBase
+using DataFrames, CSV, StatsPlots, Statistics, StatsBase, Revise
+using LaTeXStrings
 outp = "/home/konstantin/paper/sections/texdocs/images/"
 
-age(df, age) = filter(:agegroup => n -> n == age, df)
-year(df, y) = filter(:year => n -> n == y, df)
+includet("../src/diagplots.jl")
+
+age(df, age) = filter(:agegroup => n -> n ∈ age, df)
+year(df, y) = filter(:year => n -> n ∈ y, df)
 origin(df, o) = filter(:fromdist => n -> n ∈ o, df)
+destination(df, d) = filter(:todist => n -> n ∈ d, df)
+code(df, c) = filter(:distcode => n -> n ∈ c, df)
+
 function topn(df, group, col, N = 10)
     dfg = groupby(sort(df, col, rev = true), group)
     dfg = [dfg[i][1:N, [group..., col]] for i in 1 : length(dfg)]
@@ -17,6 +23,7 @@ pop = combine(groupby(unique(df, [:fromdist, :year, :agegroup]),
 ## combine(groupby(pop, :year), :agepop => sum)
 years = unique(df.year)
 ages = unique(df.agegroup)
+
 
 ######################################################################
 ################# total and relative flows ###########################
@@ -61,3 +68,65 @@ p1 = plot(df1.id, df1.sum, group = df1.agegroup,
           ylab = "cumulated relative flows",
           title = "How many destinations are needed\nto capture x % of flows?")
 savefig(p1, joinpath(outp, "topdest.pdf"))
+
+
+######################################################################
+net = calc_net(df, :flows)
+sort(net, :nmr)
+
+function calc_net2(df, col, group)
+    netf = combine(DataFrames.groupby(df, [:fromdist, group...]), col => sum)
+    rename!(netf, string(col) * "_sum" => :outflux)
+    nett = combine(DataFrames.groupby(df, [:todist, group...]), col => sum)
+    rename!(nett, string(col) * "_sum" => :influx)
+    net = innerjoin(netf, nett, on = [:fromdist => :todist, group...])
+    net.net = net.influx .- net.outflux
+    net.total = net.influx .+ net.outflux
+    net.nmr = net.net ./ net.total
+    return net
+end
+net = calc_net2(df, :flows, [:agegroup, :year])
+sort(net, :nmr)
+origin(net, [7211])
+
+sum(origin(age(year(df, 2006), "18-25"), [7211]).flows)
+sort(destination(age(year(df, 2006), "18-25"), [7211]), :flows)
+
+sort(calc_net(df, :flows), :nmr)
+
+######################################################################
+##################### Data Issues ####################################
+df1 = destination(origin(df, [3159]), [5978])
+combine(groupby(df1, :year), :flows => sum)
+
+function outflux(df, f, group = nothing)
+    group == nothing ? g = :fromdist : g = [:fromdist, group...]
+    out = combine(DataFrames.groupby(df, g), :flows => f)
+    return rename!(out, "flows" * "_$(string(f))" => :outflux)
+end
+
+sort(outflux(origin(df, 3159), [:year]), :outflux)
+sort(outflux(destination(origin(df, 3159), 5978), [:year]), :outflux)
+
+
+######################################################################
+####################### Flow Magnitude ###############################
+df1 = sort(outflux(df, sum, [:todist]), :outflux)
+flows = df1.outflux ./ length(years)
+
+xs = 0:100
+e = [mean(flows .<= x) for x in xs]
+DataFrame(; xs, e)
+p1 = plot(xs, e, xlab = "Flow Size", ylab = "empirical distribution",
+          title = "How likely are\ncertain flow sizes?", linewidth = 2,
+          label = "")
+
+qs = quantile(flows, range(0, 1, 100))
+flows_qs = [sum(flows[flows .> qs[i-1] .&& flows .< qs[i]]) for i in 2:length(qs)]
+flows_qs = flows_qs ./ sum(flows_qs)
+
+p2 = bar(flows_qs, label = "",
+         xlab = "Flow percentile", ylab = "Relative Frequency",
+         title = "How important are\nflow quantiles?")
+plot(p1, p2)
+savefig(plot(p1, p2), joinpath(outp, "flowdist.pdf"))
