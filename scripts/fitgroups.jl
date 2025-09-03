@@ -16,7 +16,7 @@ include("../src/model_helpers.jl")
 function fit_years(a, ndc, ngcx)
     ## 2003 has data issues
     allyears = vcat(2000:2002, 2004:2017)
-    allyears = [2010]
+##    allyears = [2010]
     if isfile("output/optim$a")
         results = deserialize("output/optim$a")
         fittedyears = [Int(r.chn[:year].data[1]) for r in results]
@@ -71,6 +71,6 @@ function makemodel(a, y, p, ndc, ngcx)
 end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
-for a in ages[4:end]
+for a in ages
     fit_years(a, 16, 5)
 end
