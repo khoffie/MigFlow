@@ -1,14 +1,18 @@
 using DataFrames, CSV, CairoMakie, Statistics, StatsBase, Revise
-using LaTeXStrings, AlgebraOfGraphics, GeoIO, GeoStats
+using LaTeXStrings, AlgebraOfGraphics, GeoIO, GeoStats, GLM
+using KernelDensity
 outp = "/home/konstantin/paper/sections/texdocs/images/"
 
 includet("../src/diagplots.jl")
 includet("../src/analyzegeo.jl")
 includet("../src/model_helpers.jl")
 
-age(df, age) = filter(:agegroup => n -> n ∈ age, df)
-year(df, y) = filter(:year => n -> n ∈ y, df)
-origin(df, o) = filter(:fromdist => n -> n ∈ o, df)
+age(df, age::Vector{String}) = filter(:agegroup => n -> n ∈ age, df)
+age(df, age::String) = filter(:agegroup => n -> n == age, df)
+year(df, y::Vector{Int64}) = filter(:year => n -> n ∈ y, df)
+year(df, y::Int64) = filter(:year => n -> n == y, df)
+origin(df, o::Vector{Int64}) = filter(:fromdist => n -> n ∈ o, df)
+origin(df, o::Int64) = filter(:fromdist => n -> n == o, df)
 destination(df, d) = filter(:todist => n -> n ∈ d, df)
 code(df, c) = filter(:distcode => n -> n ∈ c, df)
 
@@ -42,7 +46,6 @@ net = calc_net(df, :flows);
 net.geo = log.(net.total ./ length(years));
 net.yearly_total = net.total ./ length(years)
 leftjoin!(net, year(di, 2017)[!, [:distcode, :name]], on = :fromdist => :distcode)
-sort(net[!, [:yearly_total, :name, :fromdist]], :yearly_total)
 
 fig = Figure(size = (400, 400), fontsize = 10)
 ax = Axis(fig[1, 1], aspect=DataAspect(),
@@ -88,8 +91,11 @@ save(joinpath(outp, "flows_age.pdf"), f)
 
 ######################################################################
 ####################### Flow Magnitude ###############################
-df1 = sort(outflux(df, sum, [:todist]), :outflux)
-flows = df1.outflux ./ length(years)
+dfm = sort(outflux(df, sum, [:todist]), :outflux)
+dfm.yearly_flows = dfm.outflux ./ length(years)
+dfdist = year(age(df, "18-25"), 2017)[!, [:fromdist, :todist, :dist]]
+leftjoin!(dfm, dfdist, on = [:fromdist, :todist])
+flows = dfm.yearly_flows
 
 qs = quantile(flows, range(0, 1, 100))
 flows_sum = [sum(flows[flows .> qs[i-1] .&& flows .< qs[i]]) for i in 2:length(qs)]
@@ -98,11 +104,6 @@ df1 = DataFrame(qs = 1:(length(qs) - 1), flows = flows_sum)
 ticks = [.25, .5, .75, .9, .95, 1] * 100
 vs = Int.(round.(quantile(flows, ticks ./ 100), digits = 0))
 vs = string.(Int.(ticks)) .* "\n" .* "(" .* string.(vs) .* ")"
-
-1 - sum(flows[flows .<= quantile(flows, 0.99)]) / sum(flows)
-1 - sum(flows[flows .<= quantile(flows, 0.9)]) / sum(flows)
-sum(flows[flows .<= quantile(flows, 0.5)]) / sum(flows)
-
 
 ######################################################################
 ############### ecdf most important regions ##########################
@@ -182,3 +183,37 @@ combine(groupby(df1, :year), :flows => sum)
 
 sort(outflux(origin(df, 3159), [:year]), :outflux)
 sort(outflux(destination(origin(df, 3159), 5978), [:year]), :outflux)
+
+######################################################################
+############################# GLM ####################################
+
+df17 = combine(groupby(year(df, 2017), [:fromdist, :todist]),
+               [:flows => sum => :flows,
+                :topop => first => :topop,
+                :dist => first => :dist,
+               :frompop => sum => :frompop])
+
+sum(unique(df17, :topop).topop)
+sum(unique(df17, :frompop).frompop)
+
+m = glm(@formula(flows ~ log(dist)), df17, Poisson(), LogLink())
+m = glm(@formula(flows ~ log(frompop) + log(topop) + log(dist)), df17, Poisson(), LogLink())
+1 - var(df17.flows .- predict(m)) / var(df17.flows)
+
+######################################################################
+########################### Distance #################################
+
+f = Figure(size = (300, 300), fontsize = 10);
+ax = Axis(f[1, 1],
+          title = "Movement Distances",
+          subtitle = "2000-2017, all age groups",
+          xlabel = "Distance (km)",
+          ylabel = "Density",
+          xgridvisible = false, ygridvisible = false)
+
+xs = StatsBase.wsample(df.dist, Weights(df.flows), 10^4)
+lines!(ax, kde(xs, Gamma(1, 10)), label = "Observed", color = :red)
+xs = StatsBase.sample(df.dist, 10^4)
+lines!(ax, kde(xs, Gamma(1, 10)), label = "All insensitive", color = :blue)
+axislegend(ax, framevisible = false)
+f
