@@ -66,18 +66,25 @@ leftjoin!(dft, pop, on = [:year, :agegroup])
 dft.prob = dft.total ./ dft.agepop .* 100
 dft.total = dft.total ./ 100e3
 
-function plot()
-    f = Figure(size = (300, 300), fontsize = 10);
-    ax1 = Axis(f[1, 1], title = "Total Flows", ylabel = "Flows (100k)", xlabel = "Year");
-    ax2 = Axis(f[1, 2], title = "Relative Frequency", ylabel = "Movement Frequency (%)", xlabel = "Year");
-    p1 = draw!(ax1, data(dft) * mapping(:year, :total, color = :agegroup) * visual(Lines));
-    p2 = draw!(ax2, data(dft) * mapping(:year, :prob, color = :agegroup) * visual(Lines));
-    legend!(f[0, 1:2], p1; framevisible = true, rowgap = 0, colgap = 0, orientation = :horizontal,
-            markersize = 5, padding = (0, 0, 0, 0), patchlabelgab = 10, patchsize = (10, 10))
-    return f
-end
+f = Figure(size = (300, 300), fontsize = 10);
+ax1 = Axis(f[1, 1],
+           title = "Total Flows",
+           ylabel = "Flows (100k)",
+           xlabel = "Year",
+           xgridvisible = false, ygridvisible = false);
+ax2 = Axis(f[1, 2],
+           title = "Relative Frequency",
+           ylabel = "Movement Frequency (%)",
+           xlabel = "Year",
+           xgridvisible = false, ygridvisible = false);
+for a in ages
+    df = age(dft, [a])
+    lines!(ax1, df.year, df.total, label = a)
+    lines!(ax2, df.year, df.prob, label = a)
 
-save(joinpath(outp, "flows.pdf"), plot())
+end
+axislegend(ax2, framevisible = false, patchsize = (10, 10), position = (.3, .5))
+save(joinpath(outp, "flows_age.pdf"), f)
 
 ######################################################################
 ####################### Flow Magnitude ###############################
