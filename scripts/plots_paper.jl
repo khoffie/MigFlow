@@ -6,6 +6,7 @@ outp = "/home/konstantin/paper/sections/texdocs/images/"
 includet("../src/diagplots.jl")
 includet("../src/analyzegeo.jl")
 includet("../src/model_helpers.jl")
+includet("../src/samplecircle.jl")
 
 age(df, age::Vector{String}) = filter(:agegroup => n -> n ∈ age, df)
 age(df, age::String) = filter(:agegroup => n -> n == age, df)
@@ -30,6 +31,8 @@ end
 
 df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
 di = CSV.read("../data/districts.csv", DataFrame)
+di.area = di.pop ./ di.density;
+
 pop = combine(groupby(unique(df, [:fromdist, :year, :agegroup]),
                       [:year, :agegroup]), :frompop => sum => :agepop)
 ## combine(groupby(pop, :year), :agepop => sum)
@@ -190,6 +193,14 @@ df17 = combine(groupby(year(df, 2017), [:fromdist, :todist]),
                 :topop => first => :topop,
                 :dist => first => :dist,
                :frompop => sum => :frompop])
+leftjoin!(df17, year(di, 2017)[!, [:distcode, :area]],
+          on = :todist => :distcode)
+df17.toarea = Float64.(df17.area)
+select!(df17, Not(:area))
+leftjoin!(df17, year(di, 2017)[!, [:distcode, :area]],
+          on = :fromdist => :distcode)
+df17.fromarea = Float64.(df17.area)
+select!(df17, Not(:area))
 
 sum(unique(df17, :topop).topop)
 sum(unique(df17, :frompop).frompop)
@@ -200,32 +211,40 @@ m = glm(@formula(flows ~ log(frompop) + log(topop) + log(dist)), df17, Poisson()
 
 ######################################################################
 ########################### Distance #################################
-res, dfres = maincircle(df17, di, false)
-res
-dfres = filter(:fpp => !isnan, dfres)
-dfres.distbin = floor.(dfres.dist ./ 20) .* 20  # Group into bins like [0,1), [1,2), etc.
-dfres.fppop = dfres.flows ./ dfres.topop .* 100000
-leftjoin!(dfres, year(di, 2017)[!, [:distcode, :area]], on = :todist => :distcode)
-dfres.fpp = dfres.flows ./ (dfres.frompop ./ dfres.area )
-
-
-dfres2 = combine(groupby(dfres, :distbin), [:flows, :fpp, :fppop] .=> sum)
-y1 = log.(dfres2.flows_sum)
-y2 = log.(dfres2.fpp_sum)
-y3 = log.(dfres2.fppop_sum)
+res, dfres = maincircle(df17, di, false);
+dfdist = combine(groupby(df17, :dist),
+                 [ nrow => :count,
+                   :flows => sum => :flows,
+                   [:topop, :frompop] => ((x, y) -> sum(log.(x) + log.(y))) => :pop,
+                   [:toarea, :fromarea] => ((x, y) -> sum(log.(x) + log.(y))) => :area
+                   ])
+res = dropmissing(leftjoin(res, dfdist, on = :radius => :dist))
 
 f = Figure(size = (350, 350), fontsize = 10);
 ax = Axis(f[1, 1],
           xlabel = "Distance (km)",
           xgridvisible = false, ygridvisible = false)
 hideydecorations!(ax)
-xs = StatsBase.wsample(dfres.dist, Weights(dfres.pot), 10^4)
-lines!(ax, kde(xs, Gamma(1, 10)), label = L"\text{Potential} ∝ a2πr", color = :purple)
-xs = StatsBase.sample(df.dist, 10^4)
-lines!(ax, kde(xs, Gamma(1, 10)), label = L"\text{Potential} ∝ Pop", color = :green)
-xs = StatsBase.wsample(df.dist, Weights(df.flows), 10^4)
-lines!(ax, kde(xs, Gamma(1, 10)), label = L"\text{Observed}", color = :red)
+xs = StatsBase.sample(res.radius, Weights(res.pop), 10^4);
+lines!(ax, kde(xs, Gamma(1, 10)), color = :red, label = "Pop")
+
+xs = StatsBase.sample(res.radius, Weights(res.area), 10^4);
+lines!(ax, kde(xs, Gamma(1, 10)), color = :blue, label = "Area")
+
+xs = StatsBase.sample(res.radius, Weights(res.pot), 10^4)
+lines!(ax, kde(xs, Gamma(1, 10)), color = :purple, label = "a2πr")
+
+xs = StatsBase.sample(res.radius, Weights(res.count), 10^4)
+lines!(ax, kde(xs, Gamma(1, 10)), color = :green, label = "Unweighted")
+
+xs = StatsBase.sample(res.radius, Weights(res.flows), 10^4)
+lines!(ax, kde(xs, Gamma(1, 10)), color = :yellow, label = "Flows")
+
+xs = StatsBase.sample(res.radius, Weights(res.radius.^(-1.05)), 10^4)
+lines!(ax, kde(xs, Gamma(1, 10)), color = :orange, label = "Model")
+
 axislegend(ax, framevisible = false, patchsize = (5, 10))
+f
 
 ax2 = Axis(f[1, 2],
            xlabel = "Distance (km)",
@@ -261,32 +280,3 @@ rowgap!(titlelayout, 0)
 f
 save(joinpath(outp, "distances.pdf"), f)
 StatsPlots.histogram(year(di, 2017).density)
-
-sum(destination(dfm, 11000).outflux) / sum(dfm.outflux)
-
-test = origin(df, 9663)
-
-destination(origin(df, 9663), 11000)
-
-t = test[test.dist .> 300 .&& test.dist .< 400, :]
-t = outflux(t, sum, [:todist])
-
-sum(destination(t, 11000).flows) / sum(t.flows)
-leftjoin!(t, year(di, 2017)[!, [:distcode, :area, :pop]], on = :todist => :distcode)
-
-t.y = t.outflux ./ t.area
-t
-destination(t, 11000)
-
-mean(log.(t.y))
-
-Plots.scatter(log.(t.pop), log.(t.outflux))
-t
-names(di)
-di.area = di.pop ./ di.density
-StatsPlots.scatter(log.(year(di, 2017).area), log.(year(di, 2017).pop))
-
-code(year(di, 2017), 11000)
-exp(7)
-log(900)
-df[df.dist .> 800, :]
