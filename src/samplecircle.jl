@@ -73,19 +73,19 @@ function plothull(coords, add_pts = true)
     return p
 end
 
-function maincircle(df, districts)
+function maincircle(df, districts, show_plt)
     coords = select(unique(districts, :distcode),
                     [:xcoord => :x, :ycoord => :y])
     hull = makehull(coords)
 
     res = fraction_within(1:821, 10^3, coords, hull)
     res.pot = 2π .* res.radius .* res.frac
-    diagplots(res)
+    if show_plt; diagplots(res); end
 
-    leftjoin!(df, res, on = [:dist => :radius])
-    df.pot = Float64.(df.pot)
-    df.fpp = df.flows ./ df.pot
-    return res
+    df2 = leftjoin(df, res, on = [:dist => :radius])
+    df2.pot = Float64.(df2.pot)
+    df2.fpp = df2.flows ./ df2.pot
+    return res, df2
 end
 
 function makeplots(df, districts)
