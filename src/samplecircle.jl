@@ -83,9 +83,7 @@ function maincircle(df, districts, show_plt)
     if show_plt; diagplots(res); end
 
     df2 = leftjoin(df, res, on = [:dist => :radius])
-    df2.pot = Float64.(df2.pot)
-    df2.fpp = df2.flows ./ df2.pot
-    return res, df2
+    return res
 end
 
 function makeplots(df, districts)
