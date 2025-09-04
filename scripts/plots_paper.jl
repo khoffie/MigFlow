@@ -71,12 +71,10 @@ dft.total = dft.total ./ 100e3
 
 f = Figure(size = (300, 300), fontsize = 10);
 ax1 = Axis(f[1, 1],
-           title = "Total Flows",
            ylabel = "Flows (100k)",
            xlabel = "Year",
            xgridvisible = false, ygridvisible = false);
 ax2 = Axis(f[1, 2],
-           title = "Relative Frequency",
            ylabel = "Movement Frequency (%)",
            xlabel = "Year",
            xgridvisible = false, ygridvisible = false);
@@ -202,18 +200,93 @@ m = glm(@formula(flows ~ log(frompop) + log(topop) + log(dist)), df17, Poisson()
 
 ######################################################################
 ########################### Distance #################################
+res, dfres = maincircle(df17, di, false)
+res
+dfres = filter(:fpp => !isnan, dfres)
+dfres.distbin = floor.(dfres.dist ./ 20) .* 20  # Group into bins like [0,1), [1,2), etc.
+dfres.fppop = dfres.flows ./ dfres.topop .* 100000
+leftjoin!(dfres, year(di, 2017)[!, [:distcode, :area]], on = :todist => :distcode)
+dfres.fpp = dfres.flows ./ (dfres.frompop ./ dfres.area )
 
-f = Figure(size = (300, 300), fontsize = 10);
+
+dfres2 = combine(groupby(dfres, :distbin), [:flows, :fpp, :fppop] .=> sum)
+y1 = log.(dfres2.flows_sum)
+y2 = log.(dfres2.fpp_sum)
+y3 = log.(dfres2.fppop_sum)
+
+f = Figure(size = (350, 350), fontsize = 10);
 ax = Axis(f[1, 1],
-          title = "Movement Distances",
-          subtitle = "2000-2017, all age groups",
           xlabel = "Distance (km)",
-          ylabel = "Density",
           xgridvisible = false, ygridvisible = false)
-
-xs = StatsBase.wsample(df.dist, Weights(df.flows), 10^4)
-lines!(ax, kde(xs, Gamma(1, 10)), label = "Observed", color = :red)
+hideydecorations!(ax)
+xs = StatsBase.wsample(dfres.dist, Weights(dfres.pot), 10^4)
+lines!(ax, kde(xs, Gamma(1, 10)), label = L"\text{Potential} ∝ a2πr", color = :purple)
 xs = StatsBase.sample(df.dist, 10^4)
-lines!(ax, kde(xs, Gamma(1, 10)), label = "All insensitive", color = :blue)
-axislegend(ax, framevisible = false)
+lines!(ax, kde(xs, Gamma(1, 10)), label = L"\text{Potential} ∝ Pop", color = :green)
+xs = StatsBase.wsample(df.dist, Weights(df.flows), 10^4)
+lines!(ax, kde(xs, Gamma(1, 10)), label = L"\text{Observed}", color = :red)
+axislegend(ax, framevisible = false, patchsize = (5, 10))
+
+ax2 = Axis(f[1, 2],
+           xlabel = "Distance (km)",
+           xgridvisible = false, ygridvisible = false)
+hideydecorations!(ax2)
+
+xs = StatsBase.wsample(dfres.dist, Weights(dfres.fpp), 10^4)
+lines!(ax2, kde(xs, Gamma(1, 10)), label = L"\text{Adjusted} a2πr", color = :purple)
+xs = StatsBase.wsample(dfres.dist, Weights(dfres.fppop), 10^4)
+lines!(ax2, kde(xs, Gamma(1, 10)), label = L"\text{Adjusted} Pop", color = :green)
+xs = StatsBase.wsample(dfres.dist, Weights(dfres.flows), 10^4)
+lines!(ax2, kde(xs, Gamma(1, 10)), label = L"\text{Observed}", color = :red)
+axislegend(ax2, framevisible = false, patchsize = (5, 10))
+
+ax3 = Axis(f[1, 3],
+           xlabel = "Distance (km)",
+           ylabel = "Density of log(y)",
+           xgridvisible = false, ygridvisible = false)
+hideydecorations!(ax3)
+lines!(ax3, dfres2.distbin, y2 ./ sum(y2), color = :purple,
+       label = "Adjusted\ny = flows / a2πr"
+       )
+lines!(ax3, dfres2.distbin, y3 ./ sum(abs.(y3)), color = :green,
+       label = "Adjusted\ny = flows / P")
+lines!(ax3, dfres2.distbin, y1 ./ sum(y1), color = :red,
+       label = "Observed\ny = flows")
+axislegend(ax3, framevisible = false, patchsize = (5, 10))
+
+titlelayout = GridLayout(f[0, 1], halign = :left, tellwidth = false)
+Label(titlelayout[1, 1], "Movement Distances", halign = :left, fontsize = 15, font = "TeX Gyre Heros Bold Makie")
+Label(titlelayout[2, 1], "2000-2017, all age groups", halign = :left, fontsize = 10)
+rowgap!(titlelayout, 0)
 f
+save(joinpath(outp, "distances.pdf"), f)
+StatsPlots.histogram(year(di, 2017).density)
+
+sum(destination(dfm, 11000).outflux) / sum(dfm.outflux)
+
+test = origin(df, 9663)
+
+destination(origin(df, 9663), 11000)
+
+t = test[test.dist .> 300 .&& test.dist .< 400, :]
+t = outflux(t, sum, [:todist])
+
+sum(destination(t, 11000).flows) / sum(t.flows)
+leftjoin!(t, year(di, 2017)[!, [:distcode, :area, :pop]], on = :todist => :distcode)
+
+t.y = t.outflux ./ t.area
+t
+destination(t, 11000)
+
+mean(log.(t.y))
+
+Plots.scatter(log.(t.pop), log.(t.outflux))
+t
+names(di)
+di.area = di.pop ./ di.density
+StatsPlots.scatter(log.(year(di, 2017).area), log.(year(di, 2017).pop))
+
+code(year(di, 2017), 11000)
+exp(7)
+log(900)
+df[df.dist .> 800, :]
