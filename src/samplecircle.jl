@@ -1,6 +1,6 @@
 using CSV, Plots, DataFrames, StatsBase, StatsPlots, Random
 using Distributions, LazySets, Turing
-include("utils.jl")
+## include("utils.jl")
 figpath = "/home/konstantin/paper/images/"
 function fraction_within(rs, N, coords, hull)
     res = []
@@ -113,12 +113,12 @@ function makehullplot(districts)
     return phull
 end
 
-df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
-## df = age(year(df, 2017), "30-50")
-districts = CSV.read("../data/districts.csv", DataFrame)
+# df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
+# ## df = age(year(df, 2017), "30-50")
+# districts = CSV.read("../data/districts.csv", DataFrame)
 
-res, dfs, plots = makeplots(df, districts)
-saveageplots(plots)
-savefig(plots[51], joinpath(figpath, "dist_30-50_2017.svg"))
-savefig(diagplots(res), joinpath(figpath, "capacity.svg"))
-makehullplot(districts)
+# res, dfs, plots = makeplots(df, districts)
+# saveageplots(plots)
+# savefig(plots[51], joinpath(figpath, "dist_30-50_2017.svg"))
+# savefig(diagplots(res), joinpath(figpath, "capacity.svg"))
+# makehullplot(districts)
