@@ -36,7 +36,7 @@ qs = quantile(flows, range(0, 1, 100))
 flows_sum = [sum(flows[flows .> qs[i-1] .&& flows .< qs[i]]) for i in 2:length(qs)]
 flows_sum = flows_sum ./ sum(flows) .* 100
 df1 = DataFrame(qs = 1:(length(qs) - 1), flows = flows_sum)
-ticks = [.25, .5, .75, .9, .95, 1] * 100
+ticks = [.25, .5, .75, .9, 1] * 100
 vs = Int.(round.(quantile(flows, ticks ./ 100), digits = 0))
 vs = string.(Int.(ticks)) .* "\n" .* "(" .* string.(vs) .* ")"
 
