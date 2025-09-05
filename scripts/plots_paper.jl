@@ -16,6 +16,14 @@ origin(df, o::Vector{Int64}) = filter(:fromdist => n -> n ∈ o, df)
 origin(df, o::Int64) = filter(:fromdist => n -> n == o, df)
 destination(df, d) = filter(:todist => n -> n ∈ d, df)
 code(df, c) = filter(:distcode => n -> n ∈ c, df)
+rmreg(df::DataFrame, col) = filter(col => n -> n != 3159, df) ## data issues
+rmreg(df::GeoTable, col) = GeoTable(filter(col => n -> n != 3159, DataFrame(df))) ## data issues
+
+function hideall!(ax)
+    tightlimits!(ax)
+    hidedecorations!(ax)
+    hidespines!(ax)
+end
 
 function topn(df, group, col, N = 10)
     dfg = groupby(sort(df, col, rev = true), group)
@@ -46,24 +54,45 @@ ages = unique(df.agegroup)
 ######################################################################
 ################# total flows per region  ############################
 net = calc_net(df, :flows);
+net = rmreg(net, :fromdist)
 net.geo = log.(net.total ./ length(years));
 net.yearly_total = net.total ./ length(years)
-leftjoin!(net, year(di, 2017)[!, [:distcode, :name]], on = :fromdist => :distcode)
 
-fig = Figure(size = (400, 400), fontsize = 10)
+diy = combine(groupby(di, :distcode), [
+    ## should pop be pop of Germans only?
+    :pop => mean => :pop,
+    :name => first => :name
+])
+
+leftjoin!(net, diy, on = :fromdist => :distcode)
+net.flow_share = net.yearly_total ./ net.pop .* 100
+
+fig = Figure(size = (400, 400), fontsize = 10);
 ax = Axis(fig[1, 1], aspect=DataAspect(),
-          title = "Which regions contribute the most to moves?",
+          title = "Influx + Outflux",
           subtitle = "All age group, yearly average 2000 - 2017")
-tightlimits!(ax)
-hidedecorations!(ax)
-hidespines!(ax)
-viz!(ax, shp.geometry, color = net.geo, colorrange = extrema(net.geo));
+viz!(ax, rmreg(shp, :AGS).geometry, color = net.geo, colorrange = extrema(net.geo));
 overlay_states(ax, st)
+
+ax2 = Axis(fig[1, 2], aspect=DataAspect(),
+          title = "(Influx + Outflux) / Population",
+          subtitle = "All age group, yearly average 2000 - 2017")
+viz!(ax2, rmreg(shp, :AGS).geometry, color = net.flow_share, colorrange = extrema(net.flow_share));
+overlay_states(ax2, st)
+
 Colorbar(fig[2, 1], limits = extrema(net.geo), vertical = false,
          height = 3, width = Relative(.4), label = "log(influx + outflux)")
+Colorbar(fig[2, 2], limits = extrema(net.flow_share), vertical = false,
+         height = 3, width = Relative(.4), label = "(influx + outflux) / pop")
+
+hideall!(ax)
+hideall!(ax2)
+fig
 resize_to_layout!(fig)
 save(joinpath(outp, "totalmap.pdf"), fig)
-sum(origin(net, [:2000, :9162, :11000]).yearly_total) / 2.2e6
+
+
+
 
 ######################################################################
 ################# total and relative flows ###########################
