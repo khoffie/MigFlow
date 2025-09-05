@@ -26,3 +26,9 @@ function outflux(df, f, group = nothing)
     out = combine(DataFrames.groupby(df, g), :flows => f)
     return rename!(out, "flows" * "_$(string(f))" => :outflux)
 end
+
+function influx(df, f, group = nothing)
+    group == nothing ? g = :todist : g = [:todist, group...]
+    out = combine(DataFrames.groupby(df, g), :flows => f)
+    return rename!(out, "flows" * "_$(string(f))" => :toflux)
+end
