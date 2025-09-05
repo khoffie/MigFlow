@@ -40,6 +40,13 @@ ticks = [.25, .5, .75, .9, 1] * 100
 vs = Int.(round.(quantile(flows, ticks ./ 100), digits = 0))
 vs = string.(Int.(ticks)) .* "\n" .* "(" .* string.(vs) .* ")"
 
+# qs[end] = qs[end] + 1
+# dfm.binned = cut(dfm.yearly_flows, unique(qs), labels = 1:(length(unique(qs))-1))
+# nreg(from, to) = length(unique(union(from, to)))
+# x = combine(groupby(dfm, :binned), [:fromdist, :todist] => nreg => :N).N
+# combine(groupby(dfm, :binned), :yearly_flows => sum)
+# lines(unique(dfm.binned), x)
+
 ######################################################################
 ############### ecdf most important regions ##########################
 dfsout = combine(groupby(df, [:fromdist, :todist]),
