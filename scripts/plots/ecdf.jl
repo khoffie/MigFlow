@@ -42,22 +42,26 @@ vs = string.(Int.(ticks)) .* "\n" .* "(" .* string.(vs) .* ")"
 
 ######################################################################
 ############### ecdf most important regions ##########################
-out = combine(groupby(df, [:fromdist, :year, :agegroup]), :flows => sum => :outflow)
-leftjoin!(df, out, on = [:fromdist, :year, :agegroup])
-df.cond = df.flows ./ df.outflow .* 100
-
-dfs = combine(groupby(df, [:fromdist, :todist]),
+dfsout = combine(groupby(df, [:fromdist, :todist]),
               [:flows => sum => :flows])
-leftjoin!(dfs, outflux(df, sum), on = :fromdist)
-dfs.cond = dfs.flows ./ dfs.outflux .* 100
-dfs = sort(dfs, [:fromdist, :cond], rev = true)
-dfs.id = repeat(1:399, 400)
+leftjoin!(dfsout, outflux(df, sum), on = :fromdist)
+dfsout.cond = dfsout.flows ./ dfsout.outflux .* 100
+dfsout = sort(dfsout, [:fromdist, :cond], rev = true)
+dfsout.id = repeat(1:399, 400)
 
-function condsum(df)
-    Norigins = length(unique(df.fromdist))
+dfsin = combine(groupby(df, [:todist, :fromdist]),
+              [:flows => sum => :flows])
+leftjoin!(dfsin, influx(df, sum), on = :todist)
+dfsin.cond = dfsin.flows ./ dfsin.toflux .* 100
+dfsin = sort(dfsin, [:todist, :cond], rev = true)
+dfsin.id = repeat(1:399, 400)
+
+function condsum(df, type)
+    col = type == "outflux" ? :fromdist : :todist
+    Norigins = length(unique(df[!, col]))
     if Norigins == 1
         dfss = combine(groupby(df, :id), :cond => mean,
-                       :fromdist => first => :fromdist)
+                       col => first => col)
     else
         dfss = combine(groupby(df, :id), :cond => mean)
     end
@@ -65,8 +69,11 @@ function condsum(df)
     return dfss
 end
 
-f = Figure(size = (400, 300), fontsize = 10);
-ax1 = Axis(f[1, 1];
+condout = condsum(dfsout, "outflux")
+condin = condsum(dfsin, "influx")
+
+f = Figure(size = (400, 400), fontsize = 10);
+ax1 = Axis(f[1, 1:2];
            title = "How much does each percentile\ncontribute to total moves?",
            subtitle = "2000-2017, all age groups",
            xlabel = "flow percentile\n(flow value)",
@@ -75,7 +82,7 @@ ax1 = Axis(f[1, 1];
            xgridvisible = false, ygridvisible = false)
 barplot!(ax1, df1.qs, df1.flows)
 
-ax2 = Axis(f[1, 2],
+ax2 = Axis(f[2, 1],
            title = "How many destinations are needed\nto capture x% of moves?",
            subtitle = "2000-2017, all age groups, all origins",
            xlabel = "Top Destinations (top to bottom)",
@@ -84,12 +91,28 @@ ax2 = Axis(f[1, 2],
 Makie.xlims!(ax2, (0, 100))
 Makie.ylims!(ax2, (0, 100))
 
-for o in unique(dfs.fromdist)
-    foo = condsum(origin(dfs, o))
+for o in unique(dfsout.fromdist)
+    foo = condsum(origin(dfsout, o), "outflux")
     lines!(ax2, foo.id, foo.cond_sum, color = :lightgrey, alpha = .2)
 end
-dfss = condsum(dfs)
+dfss = condsum(dfsout, "outflux")
 lines!(ax2, dfss.id, dfss.cond_sum)
+
+ax3 = Axis(f[2, 2],
+           title = "How many origins are needed\nto capture x% of moves?",
+           subtitle = "2000-2017, all age groups, all destinations",
+           xlabel = "Top Origins (top to bottom)",
+           ylabel = "Cumulated Relative Flows",
+           xgridvisible = false, ygridvisible = false)
+Makie.xlims!(ax3, (0, 100))
+Makie.ylims!(ax3, (0, 100))
+
+for o in unique(dfsin.todist)
+    foo = condsum(destination(dfsin, o), "influx")
+    lines!(ax3, foo.id, foo.cond_sum, color = :lightgrey, alpha = .2)
+end
+dfss = condsum(dfsin, "influx")
+lines!(ax3, dfss.id, dfss.cond_sum)
 save(joinpath(outp, "quantiles_top.pdf"), f)
 
 foo = reduce(vcat, [condsum(origin(dfs, o)) for o in unique(dfs.fromdist)])
