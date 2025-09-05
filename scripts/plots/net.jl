@@ -39,11 +39,34 @@ function calc_net2(df, col, group)
     net.nmr = net.net ./ net.total
     return net
 end
-net = calc_net2(df, :flows, [:agegroup, :year])
-sort(net, :nmr)
-origin(net, [7211])
+net = calc_net2(df, :flows, [:agegroup])
+leftjoin!(net, year(di, 2017)[!, [:distcode, :xcoord, :ycoord]],
+          on = :fromdist => :distcode)
 
-sum(origin(age(year(df, 2006), "18-25"), [7211]).flows)
-sort(destination(age(year(df, 2006), "18-25"), [7211]), :flows)
+function nmrage(f, net, shp, st, a, x, y)
+    df = age(net, a)
+    ax = Axis(f[x, y], aspect=DataAspect(),
+          title = "$a")
+    viz!(ax, rmreg(shp, :AGS).geometry, color = df.nmr, colorrange = extrema(net.nmr));
+    hideall!(ax)
+    overlay_states(ax, st)
+end
 
-sort(calc_net(df, :flows), :nmr)
+f = Figure(size = (700, 700), fontsize = 12);
+nmrage(f, net, shp, st, "below18", 1, 1);
+nmrage(f, net, shp, st, "18-25", 1, 2);
+nmrage(f, net, shp, st, "25-30", 1, 3);
+nmrage(f, net, shp, st, "30-50", 2, 1);
+nmrage(f, net, shp, st, "50-65", 2, 2);
+nmrage(f, net, shp, st, "above65", 2, 3);
+Colorbar(f[3, 1:3], limits = extrema(net.nmr), vertical = false,
+         height = 3, label = "Net Migration Rate", width = Relative(.9))
+
+titlelayout = GridLayout(f[0, 1], tellwidth = false)
+Label(titlelayout[1, 1], "Net Migration Rate", fontsize = 15, font = "TeX Gyre Heros Bold Makie")
+Label(titlelayout[2, 1], "Average 2000-2017", fontsize = 10)
+rowgap!(titlelayout, 0)
+rowgap!(f.layout, 0)
+colgap!(f.layout, -50)
+resize_to_layout!(f)
+save(joinpath(outp, "nmr_age.pdf"), f)
