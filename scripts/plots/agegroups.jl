@@ -31,17 +31,22 @@ leftjoin!(dft, pop, on = [:year, :agegroup])
 dft.prob = dft.total ./ dft.agepop .* 100
 dft.total = dft.total ./ 100e3
 
+ticks = [2000, 2005, 2010, 2015, 2017]
+vs = ["2000", "05", "10", "15", "17"]
+
 f = Figure(size = (300, 300), fontsize = 10);
 ax1 = Axis(f[1, 1],
            ylabel = "Flows (100k)",
            xlabel = "Year",
+           xticks = (ticks, vs),
            xgridvisible = false, ygridvisible = false);
 ax2 = Axis(f[1, 2],
            ylabel = "Movement Frequency (%)",
            xlabel = "Year",
+           xticks = (ticks, vs),
            xgridvisible = false, ygridvisible = false);
 for a in ages
-    foo = age(foot, [a])
+    foo = age(dft, [a])
     lines!(ax1, foo.year, foo.total, label = a)
     lines!(ax2, foo.year, foo.prob, label = a)
 
