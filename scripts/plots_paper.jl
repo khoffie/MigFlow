@@ -57,6 +57,8 @@ net = calc_net(df, :flows);
 net = rmreg(net, :fromdist)
 net.geo = log.(net.total ./ length(years));
 net.yearly_total = net.total ./ length(years)
+net.yearly_influx = net.influx ./ length(years)
+net.yearly_outflux = net.outflux ./ length(years)
 
 diy = combine(groupby(di, :distcode), [
     ## should pop be pop of Germans only?
@@ -66,6 +68,8 @@ diy = combine(groupby(di, :distcode), [
 
 leftjoin!(net, diy, on = :fromdist => :distcode)
 net.flow_share = net.yearly_total ./ net.pop .* 100
+net.influx_share = net.yearly_influx ./ net.pop .* 100
+net.outflux_share = net.yearly_outflux ./ net.pop .* 100
 
 fig = Figure(size = (400, 400), fontsize = 10);
 ax = Axis(fig[1, 1], aspect=DataAspect(),
@@ -91,6 +95,27 @@ fig
 resize_to_layout!(fig)
 save(joinpath(outp, "totalmap.pdf"), fig)
 
+fig = Figure(size = (400, 400), fontsize = 10);
+ax = Axis(fig[1, 1], aspect=DataAspect(),
+          title = "Influx / Pop",
+          subtitle = "All age group, yearly average 2000 - 2017")
+viz!(ax, rmreg(shp, :AGS).geometry, color = net.influx_share, colorrange = extrema(net.influx_share));
+overlay_states(ax, st)
+
+ax2 = Axis(fig[1, 2], aspect=DataAspect(),
+          title = "Outflux / Population",
+          subtitle = "All age group, yearly average 2000 - 2017")
+viz!(ax2, rmreg(shp, :AGS).geometry, color = net.outflux_share, colorrange = extrema(net.outflux_share));
+overlay_states(ax2, st)
+
+Colorbar(fig[2, 1], limits = extrema(net.influx_share), vertical = false,
+         height = 3, width = Relative(.4), label = "influx / pop")
+Colorbar(fig[2, 2], limits = extrema(net.outflux_share), vertical = false,
+         height = 3, width = Relative(.4), label = "outflux / pop")
+
+hideall!(ax)
+hideall!(ax2)
+fig
 
 
 
