@@ -34,7 +34,7 @@ dft.total = dft.total ./ 100e3
 ticks = [2000, 2005, 2010, 2015, 2017]
 vs = ["2000", "05", "10", "15", "17"]
 
-f = Figure(size = (300, 300), fontsize = 10);
+f = Figure(size = (300, 150), fontsize = 10);
 ax1 = Axis(f[1, 1],
            ylabel = "Flows (100k)",
            xlabel = "Year",
@@ -51,5 +51,7 @@ for a in ages
     lines!(ax2, foo.year, foo.prob, label = a)
 
 end
-axislegend(ax2, framevisible = false, patchsize = (10, 10), position = (.3, .5))
+
+Legend(f[1, 3], ax1, patchsize = (2, 10), framevisible = false, labelsize = 10)
+resize_to_layout!(f)
 save(joinpath(outp, "flows_age.pdf"), f)
