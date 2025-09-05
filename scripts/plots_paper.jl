@@ -220,7 +220,7 @@ dfdist = combine(groupby(df17, :dist),
                    ])
 res = dropmissing(leftjoin(res, dfdist, on = :radius => :dist))
 
-model(res, γ, ϵ) = Float64.(res.radius).^γ .+ ϵ
+model(radius, γ, ϵ) = Float64.(radius).^γ .+ ϵ
 
 function plot(res, γ, ϵ)
     res.pred = model(res, γ, ϵ)
