@@ -83,3 +83,59 @@ end
 
 r, f = plot(res, (-2.05), 10^(-5))
 save(joinpath(outp, "distances.pdf"), f)
+
+
+df2 = combine(groupby(df, [:fromdist, :todist, :year]),
+              :flows => sum => :flows,
+              :dist => first => :dist,
+              :frompop => sum => :frompop)
+df2 = combine(groupby(df2, [:fromdist, :todist]),
+              [:flows => mean => :flows,
+               :dist => first => :dist,
+               :frompop => mean => :frompop])
+leftjoin!(df2, year(di, 2017)[!, [:distcode, :pop, :area]], on = :todist => :distcode)
+
+f = Figure(size = (350, 350), fontsize = 10);
+ax1 = Axis(f[1, 1],
+           xlabel = "Distance (km)",
+           xgridvisible = false, ygridvisible = false)
+
+xs = StatsBase.sample(df2.dist, Weights(df2.flows), 10^4)
+lines!(ax1, kde(xs, Gamma(1, 10)), color = :red)
+xs = StatsBase.sample(df2.dist, Weights(df2.flows_std), 10^4)
+lines!(ax1, kde(xs, Gamma(1, 10)), color = :red)
+
+
+xs = StatsBase.sample(df2.dist, Weights(1 ./ df2.dist.^2), 10^4)
+lines!(ax1, kde(xs, Gamma(1, 10)), color = :purple)
+xs = StatsBase.sample(df2.dist, Weights(df2.flows ./ (1 ./ df2.dist.^2)), 10^4)
+lines!(ax1, kde(xs, Gamma(1, 10)), color = :purple)
+
+xs = StatsBase.sample(df2.dist, Weights(1 ./ df2.dist.^3), 10^4)
+lines!(ax1, kde(xs, Gamma(1, 10)), color = :orange)
+xs = StatsBase.sample(df2.dist, Weights(df2.flows ./ (1 ./ df2.dist.^3)), 10^4)
+lines!(ax1, kde(xs, Gamma(1, 10)), color = :orange)
+
+f
+
+df2.flows_std = df2.flows ./ ((df2.frompop ./ 100) .* (df2.pop ./ 100))
+df2
+df2.flows_int = Int.(round.(df2.flows, digits = 0))
+sort(df2, :flows_std)
+
+mean(df2.flows_std)
+
+@model function mdl(Y, D)
+#    α ~ Normal(-5, 1);
+    γ ~ Normal(-2, 1)
+    ## ϵ ~ Gamma(1, 10)
+
+    λ = γ .* log.(D)
+    Y ~ product_distribution(Poisson.(exp.(λ)))
+    return λ
+end
+
+Turing.sample(mdl(df2.flows_std, df2.dist), NUTS(), 100)
+df2
+chn2 = Turing.sample(m2, NUTS(), 1000)
+res2.preds = returned(m2, chn2[end])[1]
