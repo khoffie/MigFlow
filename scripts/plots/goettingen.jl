@@ -1,4 +1,5 @@
 using CSV, DataFrames, Revise, GeoStats, CairoMakie, StatsBase
+outp = "/home/konstantin/paper/sections/texdocs/images/"
 includet("../src/analyzegeo.jl")
 includet("plots/utils.jl")
 function agelines!(df, ax, ages, xcol, ycol)
@@ -46,7 +47,7 @@ ax3 = Axis(f[1, 3],
            xlabel = "Year",
            ylabel = "Flows (in thousands)")
 lines!(ax3, allyears, destination(origin(df2, :3159), :12071).flows ./ 1000)
-
+save(joinpath(outp, "goettingen.pdf"), f)
 
 influx(destination(df2, 3159), sum, [:year])
 influx(destination(df2, 5978), sum, [:year])
