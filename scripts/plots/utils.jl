@@ -22,10 +22,15 @@ function topn(df, group, col, N = 10)
     return reduce(vcat, dfg)
 end
 
-function outflux(df, f, group = nothing)
+function outflux(df, f, group = nothing, name = nothing)
     group == nothing ? g = :fromdist : g = [:fromdist, group...]
     out = combine(DataFrames.groupby(df, g), :flows => f)
-    return rename!(out, "flows" * "_$(string(f))" => :outflux)
+    if isnothing(name)
+        rename!(out, "flows" * "_$(string(f))" => :flows)
+    else
+        rename!(out, "flows" * "_$(string(f))" => name)
+    end
+    return out
 end
 
 function influx(df, f, group = nothing)
