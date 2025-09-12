@@ -63,3 +63,13 @@ for i in 1:size(ags, 1)
     end
 end
 save(joinpath(outp, "late.pdf"), f)
+
+origin(out, 3159)
+destination(origin(df2, 3159), 5978)
+sort(origin(year(df2, 2000), 3159), :flows)
+
+origin(out, 3459)
+destination(origin(df2, 3459), 5978)
+sort(origin(year(df2, 2000), 3459), :flows)
+
+origin(out, 5978)
