@@ -38,3 +38,14 @@ function influx(df, f, group = nothing)
     out = combine(DataFrames.groupby(df, g), :flows => f)
     return rename!(out, "flows" * "_$(string(f))" => :toflux)
 end
+
+function plotgroups!(df, ax, fun, group, xcol, ycol; kwargs...)
+    for g in unique(df[!, group])
+        foo = df[df[!, group] .== g, :]
+        if isnothing(ycol)
+            fun(ax, foo[!, xcol]; label = g, kwargs...)
+        else
+            fun(ax, foo[!, xcol], foo[!, ycol]; label = g, kwargs...)
+        end
+    end
+end
