@@ -51,22 +51,17 @@ ax2 = Axis(f[1, 2], xlabel = "Share of population transferred (2000 - 2018)",
            ylabel = "Counts", limits = (0, 1, 0, 200))
 plotgroups!(year(dfp, 2000.0, 2018.0), ax2, hist!, :group, :conv_p, nothing)
 Legend(f[0, :], ax1, orientation = :horizontal)
-save(joinpath(outp, "share_transferred.pdf"), f)
+save(joinpath(outp, "share-transferred.pdf"), f)
 
-# f <- c(0, 100, 20, 20, 0, 100, 50, 10, 0)
-# fm <- matrix(c(0, 20, 50, 100, 0, 10, 20, 100, 0), ncol = 3)
-# o <- c("A", "A", "A", "B", "B", "B", "C", "C", "C")
-# d <- c("A", "B", "C", "A", "B", "C", "A", "B", "C")
-# flows <- data.table(origin = o, destination = d, flow = f, year = 2017)
+combine(groupby(df, :year), :ags_old => uniqueN)
 
-# c <- c(1, 0, 0, 1, 0, 0, .2, 0, .8)
-# cm <- matrix(c(1, 1, .2, 0, 0, 0, 0, 0, .8), ncol = 3)
-
-# t(cm)
-# fm
-# sum(fm)
-# (t(cm) %*% fm)
-# t(cm) %*% fm %*% cm
+## example adjustment
+f = reshape([0, 100, 10, 50, 0, 10, 100, 100, 0], (3, 3))'
+c = reshape([1, 0, 1, 0, .2, .8], (2, 3))'
+sum(c'*f*c)
+f * c
+c' * f
+c' * f * c
 
 
 # fm2 <- c(0, 10, 10, 100, 0,
