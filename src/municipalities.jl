@@ -67,7 +67,7 @@ ax = Axis(f[1, 1], xlabel = "", ylabel = "Population Density",
           title = "Distribution of population density of\nmunicipalities within districts",
           xgridvisible = false, ygridvisible = false,
           xticksvisible = false )
-ylims!(ax, extrema(mu.density))
+ylims!(ax, 0, nothing)
 violin!(ax, mu.group, mu.density, width = 2.0)
 xjitter = mu.group .+ 0.2 .* (rand(length(mu.group)) .- 0.5)
 scatter!(ax, xjitter, mu.density, color = :black, markersize = log.(mu.pop) ./ 3)
