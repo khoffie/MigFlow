@@ -1,3 +1,6 @@
+using CSV, DataFrames, CairoMakie, StatsBase
+outp = "/home/konstantin/paper/sections/texdocs/images/"
+
 distcode(m) = length(m) == 7 ? SubString(m, 1, 4) : SubString(m, 1, 5)
 statecode(m) = length(m) == 4 ? SubString(m, 1, 1) : SubString(m, 1, 2)
 
@@ -51,7 +54,23 @@ function violinplot(munis, districts, distcodes)
     savefig("../../mig-paper/images/density_munis.svg")
 end
 
-# df = munidf(readinkar())
-# dis = districtdf(df)
-# samples = StatsBase.sample(dis[dis.sd .> 0.0, :].distcode, 20)
-# violinplot(df, dis, samples)
+df = munidf(readinkar())
+dis = districtdf(df)
+samples = StatsBase.sample(dis[dis.sd .> 0.0, :].distcode, 10)
+mu = district(df, samples)
+di = district(dis, samples)
+mu.group = groupindices(groupby(mu, :distcode))
+di.group = groupindices(groupby(di, :distcode))
+
+f = Figure(size = (400, 200), fontsize = 10);
+ax = Axis(f[1, 1], xlabel = "", ylabel = "Population Density",
+          title = "Distribution of population density of\nmunicipalities within districts",
+          xgridvisible = false, ygridvisible = false,
+          xticksvisible = false )
+ylims!(ax, extrema(mu.density))
+violin!(ax, mu.group, mu.density, width = 2.0)
+xjitter = mu.group .+ 0.2 .* (rand(length(mu.group)) .- 0.5)
+scatter!(ax, xjitter, mu.density, color = :black, markersize = log.(mu.pop) ./ 3)
+scatter!(ax, Int.(di.group), di.mean, color = :red, markersize = log.(di.pop) ./ 3)
+hidexdecorations!(ax)
+save(joinpath(outp, "density_munis.pdf"), f)
