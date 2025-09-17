@@ -30,9 +30,13 @@ function analyze(r)
     return (; df, net, plts)
 end
 
-function extract_coefs(chn, string)
+function extract_coefs(chn::Chains, string::String)
     nms = String.(names(chn))
     return chn.value[occursin.(string, nms)].data
+end
+
+function extract_coefs(chn::Chains)
+    return vec(chn.value.data)
 end
 
 function extract_sample(chn, type = "best")
