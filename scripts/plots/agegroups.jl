@@ -3,10 +3,10 @@ using LaTeXStrings, AlgebraOfGraphics, GeoIO, GeoStats, GLM
 using KernelDensity
 outp = "/home/konstantin/paper/sections/texdocs/images/"
 
-includet("../src/diagplots.jl")
-includet("../src/analyzegeo.jl")
-includet("../src/model_helpers.jl")
-includet("../src/samplecircle.jl")
+includet("../../src/diagplots.jl")
+includet("../../src/analyzegeo.jl")
+includet("../../src/model_helpers.jl")
+includet("../../src/samplecircle.jl")
 
 df = CSV.read("../data/FlowDataGermans.csv", DataFrame)
 df = rmreg(df, :fromdist)
@@ -18,11 +18,12 @@ di.area = di.pop ./ di.density;
 pop = combine(groupby(unique(df, [:fromdist, :year, :agegroup]),
                       [:year, :agegroup]), :frompop => sum => :agepop)
 ## combine(groupby(pop, :year), :agepop => sum)
-shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
+shp = GeoIO.load("../../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp")
 
 years = unique(df.year)
 ages = unique(df.agegroup)
+
 
 ######################################################################
 ################# total and relative flows ###########################
