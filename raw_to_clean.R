@@ -29,4 +29,4 @@ rawdata_to_cleandata <- function(raw, clean) {
 rawdata_to_cleandata("./data/raw", "./data/clean")
 
 ## generates data used for modeling: FlowDataGermans.csv and districts.csv
-gen_data("./data", year_min =  2000, year_max = 2017, dist_type = "pos", topop_type = "all")
+helpeR::gen_data("./data", year_min =  2000, year_max = 2017, dist_type = "pos", topop_type = "all")
