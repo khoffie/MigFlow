@@ -38,7 +38,7 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
     tofull     = lc(dffull.todist)
     Dfull      = fdist(dffull.dist, ds)
     Nfull      = length(fromfull)
-    data       = (; age, year)
+    data       = MetaData(age = age, year = year)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},

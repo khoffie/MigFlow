@@ -1,12 +1,20 @@
+ Base.@kwdef mutable struct MetaData
+    age::String
+    year::Int
+    lp::Union{Nothing,Float64} = nothing
+end
+
 struct ModelWrapper
     mdl::Model # Turing Model
     lb::Vector{Float64} # Lower bound for optimization
     ub::Vector{Float64} # Upper bound for optimization
-    data::NamedTuple # Meta data of fit: Age and Year
+    data::MetaData # Meta data of fit: Age, Year, LP
 end
 
 struct EstimationResult
-    chn::Chains # Turing MCMC Chain, optimized parameters are stored here
+    chn::Chains # Turing MCMC Chain, optimized parameters are stored
+                # here, because postprocessing functions like plotting
+                # work with optimization and sampling
     mdl::ModelWrapper
     prd::Vector{Float64} # Model predictions
     maps::Turing.Optimisation.ModeResult
@@ -14,6 +22,7 @@ end
 
 function estimate(mdl::ModelWrapper; show_plt = true, optim_kwargs = (;))
     maps = runoptim(mdl; optim_kwargs...)
+    mdl.data.lp = maps.lp
     chn = makechain(maps)
     prd = Turing.returned(mdl.mdl, chn)[1]
     return EstimationResult(chn, mdl, prd, maps)
