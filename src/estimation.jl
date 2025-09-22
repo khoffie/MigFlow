@@ -19,7 +19,7 @@ struct EstimationResult
                 # work with optimization and sampling
     mdl::ModelWrapper
     prd::Vector{Float64} # Model predictions
-    maps::Turing.Optimisation.ModeResult
+    ses::DataFrame ## standard errors
 end
 
 function estimate(mdl::ModelWrapper; show_plt = true, optim_kwargs = (;))
@@ -27,7 +27,8 @@ function estimate(mdl::ModelWrapper; show_plt = true, optim_kwargs = (;))
     mdl.data.lp = maps.lp
     chn = makechain(maps)
     prd = Turing.returned(mdl.mdl, chn)[1]
-    return EstimationResult(chn, mdl, prd, maps)
+    ses = DataFrame(coeftable(maps))[!, 1:3]
+    return EstimationResult(chn, mdl, prd, ses)
 end
 
 function runoptim(mdl::ModelWrapper;
