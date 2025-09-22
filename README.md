@@ -90,6 +90,6 @@ save("../docs/pgeo.pdf", pgeo)
 
 ```
 
-![check fit](./docs/check.pdf)
-![Density transition function](./docs(pdtf.pdf))
-![Locational Asymmetries](./docs(pgeo.pdf))
+![check fit](./docs/check.png)
+![Density transition function](./docs(pdtf.png))
+![Locational Asymmetries](./docs(pgeo.png))
