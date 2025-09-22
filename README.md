@@ -36,6 +36,8 @@ This will install all libraries needed in the correct version.
 
 ## Basic usage
 
+### Load libraries, functions and data
+
 ```
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots, Distributions
 using CategoricalArrays, NamedArrays, LaTeXStrings, Loess
@@ -56,6 +58,11 @@ include("../src/plotutils.jl")
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp")
 
+```
+
+### Fit baseflow model
+
+```
 mdl = baseflow(
     load_data(
         "30-50", # age group
@@ -77,6 +84,12 @@ mdl = baseflow(
 
 inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
 @time out = estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
+
+```
+
+### Postprocess
+```
+
 ## diagnostic plots
 post = analyze(out)
 ## heatmap of density transition function
@@ -90,8 +103,9 @@ save("../docs/pgeo.pdf", pgeo)
 
 ```
 
+#### Check Model Fit
 ![check fit](./docs/check.png)
-
+#### Density Transition Function
 ![Density transition function](./docs/pdtf.png)
-
+#### Locational Asymmetries
 ![Locational Asymmetries](./docs/pgeo.png)
