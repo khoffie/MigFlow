@@ -47,9 +47,9 @@ function getgeo(r::EstimationResult)
 
     xmin, xmax = extrema(xcoord)
     ymin, ymax = extrema(ycoord)
-    geo = [interpolant(rbf, xcoord[i], ycoord[i],
-                       coefmat(coefs ./ 10, length(cx), length(cy)),
-                       cx, cy, scale) for i in eachindex(xcoord)];
+    geo = [interp(xcoord[i], ycoord[i],
+                  coefmat(coefs ./ 10, length(cx), length(cy)),
+                  cx, cy, scale) for i in eachindex(xcoord)];
     geo = geo .- mean(geo)
     dfgeo = DataFrame(; xcoord, ycoord, geo)
     dfgeo.agegroup .= a

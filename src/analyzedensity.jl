@@ -8,7 +8,7 @@ function dtfmat(r::EstimationResult)
     R = data.R
     Rmin, Rmax = extrema(R)
     vals = range(Rmin, Rmax, 100)
-    m = [interpolant(rbf, Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale)
+    m = [interp(Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale)
          for Rto in vals, Rfrom in vals]';
     return m .- mean(m), a, y
 end
@@ -17,15 +17,15 @@ function plotdtf(r::EstimationResult)
     m, a, y = dtfmat(r)
     fig = Figure(size=(400, 400), fontsize = 10)
     plotdtf(m, a, y, extrema(m), fig, 1, 1)
-    return fig
+    return m, fig
 end
 
 function plotdtf(m::Matrix{Float64}, age::String, year::Int, crange, f, x, y)
     ax = Axis(f[x, y],
               xlabel = "Origin density",
               ylabel = "Destination density",
-              xticks = ([1, 1000], ["low", "high"]),
-              yticks = ([1, 1000], ["low", "high"]),
+              xticks = ([1, 100], ["low", "high"]),
+              yticks = ([1, 100], ["low", "high"]),
               title = string(year), aspect = DataAspect())
     Makie.heatmap!(ax, m, colorrange = crange)
 end
