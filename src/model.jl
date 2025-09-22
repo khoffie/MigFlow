@@ -66,15 +66,15 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
         if normalize
             @inbounds for i in 1:Nfull
                 denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
-                                                   interpolant(rbf, R[fromfull[i]], R[tofull[i]], ζ, cx, cy, rbf_scale),
-                                                   interpolant(rbf, xcoord[fromfull[i]], ycoord[fromfull[i]], η, cxgeo, cygeo, geo_scale),
-                                                   interpolant(rbf, xcoord[tofull[i]], ycoord[tofull[i]], η, cxgeo, cygeo, geo_scale),
+                                                   interp(R[fromfull[i]], R[tofull[i]], ζ, cx, cy, rbf_scale),
+                                                   interp(xcoord[fromfull[i]], ycoord[fromfull[i]], η, cxgeo, cygeo, geo_scale),
+                                                   interp(xcoord[tofull[i]], ycoord[tofull[i]], η, cxgeo, cygeo, geo_scale),
                                                    γ, ϕ)
             end
             @inbounds for i in 1:Ndist
                 denom[i] += desirability(P[i], # β *
                     radius[i],
-                                         interpolant(rbf, R[i], R[i], ζ, cx, cy, rbf_scale),
+                                         interp(R[i], R[i], ζ, cx, cy, rbf_scale),
                                          1, 1, γ, ϕ)
             end
         else
@@ -84,9 +84,9 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
         @inbounds for i in 1:N
             ps[i] = A[i] * exp(α +
                 desirability(P[to[i]], D[i],
-                             interpolant(rbf, R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
-                             interpolant(rbf, xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
-                             interpolant(rbf, xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
+                             interp(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
+                             interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
+                             interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
                               γ, ϕ) / denom[from[i]])
         end
         ## Y ~ product_distribution(Binomial.(A, ps))

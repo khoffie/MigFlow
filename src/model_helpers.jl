@@ -1,7 +1,7 @@
 rbf(x) = abs(x) < one(x) ? exp(one(x) - one(x) / (one(x) - x^2)) : zero(x)
 rbfscale(cx, cy, k) = k * LinearAlgebra.norm([cx[1],cy[1]] - [cx[2],cy[2]])
 
-function interpolant(f, x, y, w, cx, cy, scale)
+function interp(x, y, w, cx, cy, scale)
     res = zero(x)
     @inbounds for i in eachindex(cx), j in reverse(eachindex(cy))
         ## a matrix is indexed starting in top left corner, for plots
@@ -13,7 +13,7 @@ function interpolant(f, x, y, w, cx, cy, scale)
         ## cy. Meaning we pick the first of original cy.
         dy = y - cy[length(cy) + 1 - j]
         r = sqrt(dx^2 + dy^2) / scale
-        res += w[j, i] * f(r)
+        res += w[j, i] * rbf(r)
     end
     return res
 end
