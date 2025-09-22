@@ -1,7 +1,16 @@
-function yearmap(df, col, shp, st, a, yr, fig, x = 1, y = 1, crange = nothing)
+function plotgeo(r::EstimationResult, shp::GeoTable, st::GeoTable)
+    geodf = getgeo(r)
+    a, y = getageyear(r)
+    fig = Figure(size = (400, 400), fontsize = 10)
+    yearmap(geodf, shp, st, a, y, fig)
+    prettytitle!(fig, "Locational Asymmetries, $a")
+    return geodf, fig
+end
+
+function yearmap(df, shp, st, a, yr, fig, x = 1, y = 1, crange = nothing)
     df = year(age(df, a), yr)
     df = joingeometry(df, DataFrame(shp))
-    ax = Axis(f[x, y], aspect=DataAspect(),
+    ax = Axis(fig[x, y], aspect=DataAspect(),
           title = "$yr")
     viz!(ax, df.geometry, color = df.geo, colorrange = crange);
     hideall!(ax)
@@ -26,10 +35,9 @@ function overlay_states(ax, stshp)
 end
 
 function getgeo(r::EstimationResult)
-    coefs = extract_coefs(n.chn[end, :, 1], "η")
-    data = n.mdl.mdl.args
-    y = Int(n.chn[:year][1])
-    a = recodeage(Int(n.chn[:age][1]))
+    coefs = extract_coefs(r.chn[end, :, 1], "η")
+    data = r.mdl.mdl.args
+    a, y = getageyear(r)
 
     xcoord = data.xcoord
     ycoord = data.ycoord
