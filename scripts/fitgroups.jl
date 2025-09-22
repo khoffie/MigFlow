@@ -23,7 +23,7 @@ function fit_years(a, ndc, ngcx, p = 1.0)
         years = setdiff(allyears, fittedyears)
         println("output/optim$a already exists, fitting only $(years) years")
     else
-        results = NamedTuple[]
+        results = EstimationResult[]
         years = allyears
     end
 
