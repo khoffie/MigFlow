@@ -1,38 +1,22 @@
-function plotgeoyears(dfgeo::DataFrame, shp::GeoTable, st::GeoTable,
-                      agegroup::String, years::Vector{Int})
-    df = age(dfgeo, agegroup)
-    clim = extrema(filter(row -> row.year ∈ years, df).geo)
-    years = reshape(years, (3, 2))'
-    fig = Figure(size = (600, 400), fontsize = 10)
-    for i in 1:size(years, 1)
-        for j in 1:size(years, 2)
-            yr = years[i, j]
-            g, fig = plotgeo(year(df, yr), shp, st, fig, i, j, clim)
-        end
+function yearmap(df, col, shp, st, a, yr, fig, x = 1, y = 1, crange = nothing)
+    df = year(age(df, a), yr)
+    df = joingeometry(df, DataFrame(shp))
+    ax = Axis(f[x, y], aspect=DataAspect(),
+          title = "$yr")
+    viz!(ax, df.geometry, color = df.geo, colorrange = crange);
+    hideall!(ax)
+    overlay_states(ax, st)
+end
+
+function plotgeoyears(df, col, shp, st, a, years, fig, crange)
+    for i in eachindex(years)
+        pos = grid_position(i, 3)
+        yearmap(df, col, shp, st, a, years[i], fig, pos[1], pos[2], crange)
     end
-    Colorbar(fig[0, :], limits = clim, vertical = false,
-             height = 5, width = Relative(.5))
-    fig[-1, :] = Label(fig, "$agegroup")
-    return fig
-end
-
-function plotgeo(geo, shp, stshp, fig, x = 1, y = 1, clim = nothing)
-    geo2, ax = plotgeo_(geo, shp, fig, x, y, clim)
-    overlay_states(ax, stshp)
-    return geo2, fig
-end
-
-function plotgeo_(geo, shp, fig, x, y, clim)
-    geo2 = joingeometry(geo, DataFrame(shp))
-    age = unique(geo.agegroup)[1]
-    year = unique(geo.year)[1]
-    if isnothing(clim); clim = extrema(geo.geo); end
-    ax = Axis(fig[x, y], aspect=DataAspect(), title = "$year")
-    tightlimits!(ax)
-    hidedecorations!(ax)
-    hidespines!(ax)
-    viz!(ax, geo2.geometry, color=geo2.geo, colorrange = clim)
-    return geo2, ax
+    Colorbar(f[end + 1, :], colorrange = crange, vertical = false, height = 3,
+             label = "Locational Asymmetries", width = Relative(.9))
+    prettytitle!(f, "Locational Asymmetries, $a")
+    resize_to_layout!(f)
 end
 
 function overlay_states(ax, stshp)
