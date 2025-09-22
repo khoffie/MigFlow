@@ -13,7 +13,7 @@ include("../src/diagplots.jl")
 include("../src/model.jl")
 include("../src/model_helpers.jl")
 
-function fit_years(a, p = 1.0, ndc, ngcx)
+function fit_years(a, ndc, ngcx, p = 1.0)
     ## 2003 has data issues
     allyears = vcat(2000:2002, 2004:2017)
 ##    allyears = [2010]
@@ -72,5 +72,5 @@ end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 for a in ages[1:3]
-    fit_years(a, 16, 5)
+    fit_years(a, 16, 5, .1)
 end
