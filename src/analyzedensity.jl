@@ -1,4 +1,4 @@
-function dtfmat(r)
+function dtfmat(r::EstimationResults)
     a, y = getageyear(r)
     coefs = extract_coefs(r.chn[end, :, 1], "ζ")
     data = r.mdl.mdl.args

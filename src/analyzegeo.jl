@@ -25,7 +25,7 @@ function overlay_states(ax, stshp)
     return ax
 end
 
-function getgeo(n::NamedTuple)
+function getgeo(r::EstimationResult)
     coefs = extract_coefs(n.chn[end, :, 1], "η")
     data = n.mdl.mdl.args
     y = Int(n.chn[:year][1])
