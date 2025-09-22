@@ -13,7 +13,7 @@ struct EstimationResult
 end
 
 function estimate(mdl::ModelWrapper; show_plt = true, optim_kwargs = (;))
-    maps = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
+    maps = runoptim(mdl; optim_kwargs...)
     chn = makechain(maps)
     prd = Turing.returned(mdl.mdl, chn)[1]
     return EstimationResult(chn, mdl, prd, maps)
