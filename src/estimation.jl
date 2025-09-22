@@ -1,10 +1,24 @@
-function estimate(mdl; show_plt = true, optim_kwargs = (;))
+struct ModelWrapper
+    mdl::Model # Turing Model
+    lb::Vector{Float64} # Lower bound for optimization
+    ub::Vector{Float64} # Upper bound for optimization
+    data::NamedTuple # Meta data of fit: Age and Year
+end
+
+struct EstimationResult
+    chn::Chains # Turing MCMC Chain, optimized parameters are stored here
+    mdl::ModelWrapper
+    prd::Vector{Float64} # Model predictions
+    maps::Turing.Optimisation.ModeResult
+end
+
+function estimate(mdl::ModelWrapper; show_plt = true, optim_kwargs = (;))
     maps = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
     out = format_mles(maps)
     out = add_age_year(out, mdl.data)
     chn = makechain(out)
     prd = Turing.returned(mdl.mdl, chn)[1]
-    return (; chn, mdl, prd, maps)
+    return EstimationResult(chn, mdl, prd, maps)
 end
 
 function add_age_year(out, data)

@@ -100,7 +100,7 @@ function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, norm
                 cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
 
     lb, ub = bound(age, ndc, ngcx, ngcy)
-    return (; mdl, lb, ub, data)
+    return ModelWrapper(mdl, lb, ub, data)
 end
 
 # function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
