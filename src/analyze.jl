@@ -1,4 +1,4 @@
-function analyze(r)
+function analyze(r::EstimationResult)
     data = r.mdl.mdl.args
     df = DataFrame(
         fromdist = data.from,
