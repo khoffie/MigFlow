@@ -37,34 +37,59 @@ This will install all libraries needed in the correct version.
 ## Basic usage
 
 ```
-using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
-using ApproxFun, CategoricalArrays, NamedArrays, LaTeXStrings
-using ADTypes, ReverseDiff
-
-include("../src/utils.jl")
+using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots, Distributions
+using CategoricalArrays, NamedArrays, LaTeXStrings, Loess
+using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
+using IterTools, Mooncake, Revise, GeoStats, GeoIO, CairoMakie
+using StatsBase: coeftable
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
-include("../src/diag.jl")
-include("../src/diagplots.jl")
-include("../src/chebies.jl")
-include("../src/gen_mdat.jl")
-## available models
-include("../src/choiceset.jl")
-include("../src/norm.jl")
-include("../src/fullmodel.jl")
-include("../src/fullmodel2.jl")
-include("../src/othermodels.jl")
+includet("../src/analyze.jl")
+includet("../src/analyzegeo.jl")
+includet("../src/analyzedensity.jl")
+includet("../src/analyzeresults.jl")
+includet("../src/diagplots.jl")
+include("../src/model.jl")
+include("../src/model_helpers.jl")
+include("../src/plotutils.jl")
 
-p = .1 # fraction of rows
-data = load_data("30-50", 2017, 1.0, "../data/"; only_positive = true);
+shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
+st = GeoIO.load("../data/clean/shapes/states.shp")
 
-## type = "joint" models the joint choice of leaving origin and
-## choosing destination, type = "conditional" takes outflux as frompop
-## and thus models the conditional choice of destination given origin
-## was left.
-## ndc "Number of density cheby coefs",
-## ngc = "Number of geo cheby coefs"
-mdat = gen_mdat(data; type = "joint", distscale = 100.0, ndc = 28, ngc = 1);
-out1 = @time estimate(norm, mdat); # MLE
+mdl = baseflow(
+    load_data(
+        "30-50", # age group
+        2014, # year
+        0.1, # Fraction of rows to use, e.g. 10%
+        "../data/"; ## path where FlowDataGermans.csv and districts.csv
+        ## are stored
+        only_positive = true, # return only positive flows / drop zero
+        # flows
+        seed = 1234, # Random seed for reproducibility
+        opf = false # depracated, ignore
+    ),
+    normalize = false, ## normalize desirabilities, ## currently only false supported
+    ndc = 16, # number of radial basis centers for density transition function
+    ngcx = 5 # number of radial basis centers for geographical
+             # asymmetries in x direction. y direction is set
+             # automatically
+);
+
+inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
+@time out = estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
+## diagnostic plots
+post = analyze(out)
+## heatmap of density transition function
+m, pdtf = plotdtf(out)
+## Map of Germany showing locational asymmetries
+geo, pgeo = plotgeo(out, shp, st)
+
+savefig(post.plts[end], "../docs/check.pdf")
+save("../docs/pdtf.pdf", pdtf)
+save("../docs/pgeo.pdf", pgeo)
 
 ```
+
+![check fit](./docs/check.pdf)
+![Density transition function](./docs(pdtf.pdf))
+![Locational Asymmetries](./docs(pgeo.pdf))
