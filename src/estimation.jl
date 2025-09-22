@@ -1,10 +1,10 @@
 function estimate(mdl; show_plt = true, optim_kwargs = (;))
-    mles = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
-    out = format_mles(mles)
+    maps = runoptim(mdl.mdl, mdl.lb, mdl.ub; optim_kwargs...)
+    out = format_mles(maps)
     out = add_age_year(out, mdl.data)
     chn = makechain(out)
     prd = Turing.returned(mdl.mdl, chn)[1]
-    return (; chn, mdl, prd)
+    return (; chn, mdl, prd, maps)
 end
 
 function add_age_year(out, data)
