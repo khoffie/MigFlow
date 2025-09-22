@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, normalize = true, ds = 100)
+function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, normalize = true, ds = 100)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
