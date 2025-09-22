@@ -1,4 +1,4 @@
-function dtfmat(r::EstimationResults)
+function dtfmat(r::EstimationResult)
     a, y = getageyear(r)
     coefs = extract_coefs(r.chn[end, :, 1], "ζ")
     data = r.mdl.mdl.args
@@ -13,7 +13,14 @@ function dtfmat(r::EstimationResults)
     return m .- mean(m), a, y
 end
 
-function plotdtf(m, age, year, crange, f, x, y)
+function plotdtf(r::EstimationResult)
+    m, a, y = dtfmat(r)
+    fig = Figure(size=(400, 400), fontsize = 10)
+    plotdtf(m, a, y, extrema(m), fig, 1, 1)
+    return fig
+end
+
+function plotdtf(m::Matrix{Float64}, age::String, year::Int, crange, f, x, y)
     ax = Axis(f[x, y],
               xlabel = "Origin density",
               ylabel = "Destination density",
