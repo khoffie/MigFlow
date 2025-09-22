@@ -39,8 +39,12 @@ mdl = baseflow(
 inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
 @time out = estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 ## diagnostic plots
-analyze(out)
+post = analyze(out)
 ## heatmap of density transition function
-plotdtf(out)
+m, pdtf = plotdtf(out)
 ## Map of Germany showing locational asymmetries
-geo, fig = plotgeo(out, shp, st)
+geo, pgeo = plotgeo(out, shp, st)
+
+savefig(post.plts[end], "../docs/check.pdf")
+save("../docs/pdtf.pdf", pdtf)
+save("../docs/pgeo.pdf", pgeo)
