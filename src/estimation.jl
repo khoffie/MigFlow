@@ -1,7 +1,9 @@
  Base.@kwdef mutable struct MetaData
-    age::String
-    year::Int
-    lp::Union{Nothing,Float64} = nothing
+     ## mutable because age and year are assigned before fitting and
+     ## lp can only be assigned afterwards
+     age::String
+     year::Int
+     lp::Union{Nothing,Float64} = nothing
 end
 
 struct ModelWrapper
