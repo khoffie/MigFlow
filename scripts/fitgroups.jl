@@ -63,7 +63,7 @@ function fit30to50(y, p, ndc, ngcx)
 end
 
 function makemodel(a, y, p, ndc, ngcx)
-    mdl = norm(load_data(a, y, p, "../data/";
+    mdl = baseflow(load_data(a, y, p, "../data/";
                          only_positive = true,
                          seed = 1234, opf = false),
                normalize = false, ndc = ndc, ngcx = ngcx, kgeo = 2.0);
@@ -71,6 +71,6 @@ function makemodel(a, y, p, ndc, ngcx)
 end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
-for a in ages[1:3]
+for a in ages
     fit_years(a, 16, 5, .1)
 end
