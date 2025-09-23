@@ -11,16 +11,16 @@ $ curl -fsSL https://install.julialang.org | sh
 
 For Windows and further advice please look
 [here](https://github.com/JuliaLang/juliaup). This repository uses
-Julia 1.10.4; to get it and make it the default, run
+Julia 1.15.5; to get it and make it the default, run
 
 
 ```
-$ juliaup add 1.10.4
-$ juliaup default 1.10.4
+$ juliaup add 1.11.5
+$ juliaup default 1.11.5
 ```
 
 Whenever you type `'julia'` into a terminal now, it will start Julia
-version 1.10.4.
+version 1.11.5.
 
 ## Getting all needed libraries
 Once you have the correct Julia version, you can clone the repository
