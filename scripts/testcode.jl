@@ -6,21 +6,25 @@ using StatsBase: coeftable
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
 includet("../src/analyze.jl")
-includet("../src/analyzegeo.jl")
-includet("../src/analyzedensity.jl")
-includet("../src/analyzeresults.jl")
-includet("../src/diagplots.jl")
+include("../src/analyzegeo.jl")
+include("../src/analyzedensity.jl")
+include("../src/analyzeresults.jl")
+include("../src/diagplots.jl")
 include("../src/model.jl")
 include("../src/model_helpers.jl")
 include("../src/plotutils.jl")
+include("../src/utils.jl")
+include("plots/utils.jl")
 
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
-st = GeoIO.load("../data/clean/shapes/states.shp")
+st = GeoIO.load("../data/clean/shapes/states.shp");
+
+## run(`tar -xzvf ../data/data.tar.gz ../data`)
 
 mdl = baseflow(
     load_data(
         "30-50", # age group
-        2014, # year
+        2017, # year
         0.1, # Fraction of rows to use, e.g. 10%
         "../data/"; ## path where FlowDataGermans.csv and districts.csv
         ## are stored
@@ -36,15 +40,12 @@ mdl = baseflow(
              # automatically
 );
 
-inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
+inits = initialize(mdl);
 @time out = estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
-## diagnostic plots
-post = analyze(out)
-## heatmap of density transition function
-m, pdtf = plotdtf(out)
-## Map of Germany showing locational asymmetries
-geo, pgeo = plotgeo(out, shp, st)
+post = analyze(out) ## diagnostic plots
+m, pdtf = plotdtf(out) ## heatmap of density transition function
+geo, pgeo = plotgeo(out, shp, st) ## Map of locational asymmetries
 
-savefig(post.plts[end], "../docs/check.png")
-save("../docs/pdtf.png", pdtf)
-save("../docs/pgeo.png", pgeo)
+# savefig(post.plts[end], "../docs/check.png")
+# save("../docs/pdtf.png", pdtf)
+# save("../docs/pgeo.png", pgeo)
