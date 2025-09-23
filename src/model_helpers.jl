@@ -91,10 +91,10 @@ end
 
 rbfinits(N, σ, t = 90.0) = clamp.(rand(MvNormal(zeros(N), σ^2 *I(N))), -t, t)
 function initialize(m::ModelWrapper)
-    a = mdl.data.age
-    ndc = mdl.mdl.args.ndc
-    ngcx = mdl.mdl.args.ngcx
-    ngcy = mdl.mdl.args.ngcy
+    a = m.data.age
+    ndc = m.mdl.args.ndc
+    ngcx = m.mdl.args.ngcx
+    ngcy = m.mdl.args.ngcy
 
     density = rbfinits(ndc, 40.0)
     geo = rbfinits(ngcx * ngcy, 10.0)
