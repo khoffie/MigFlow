@@ -19,8 +19,6 @@ include("plots/utils.jl")
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp");
 
-## run(`tar -xzvf ../data/data.tar.gz ../data`)
-
 mdl = baseflow(
     load_data(
         "30-50", # age group

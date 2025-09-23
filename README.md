@@ -30,6 +30,7 @@ and install all needed Julia libraries.
 $ git clone https://github.com/khoffie/MigFlow.git
 $ cd MigFlow
 $ julia --project=. -e 'using Pkg; Pkg.instantiate()'
+$ tar -xvf data/data.tar.gz -C data
 ```
 
 This will install all libraries needed in the correct version.
