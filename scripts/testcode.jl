@@ -45,6 +45,6 @@ m, pdtf = plotdtf(out)
 ## Map of Germany showing locational asymmetries
 geo, pgeo = plotgeo(out, shp, st)
 
-savefig(post.plts[end], "../docs/check.pdf")
-save("../docs/pdtf.pdf", pdtf)
-save("../docs/pgeo.pdf", pgeo)
+savefig(post.plts[end], "../docs/check.png")
+save("../docs/pdtf.png", pdtf)
+save("../docs/pgeo.png", pgeo)
