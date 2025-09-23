@@ -90,7 +90,12 @@ function bound(a, ndc, ngcx, ngcy)
 end
 
 rbfinits(N, σ, t = 90.0) = clamp.(rand(MvNormal(zeros(N), σ^2 *I(N))), -t, t)
-function initialize(a, ndc, ngcx, ngcy)
+function initialize(m::ModelWrapper)
+    a = mdl.data.age
+    ndc = mdl.mdl.args.ndc
+    ngcx = mdl.mdl.args.ngcx
+    ngcy = mdl.mdl.args.ngcy
+
     density = rbfinits(ndc, 40.0)
     geo = rbfinits(ngcx * ngcy, 10.0)
     a == "below18" && return [-8.0, 25.0, 30.0, density..., geo...]
