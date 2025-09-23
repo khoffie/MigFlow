@@ -1,5 +1,5 @@
 rbf(x) = abs(x) < one(x) ? exp(one(x) - one(x) / (one(x) - x^2)) : zero(x)
-rbfscale(cx, cy, k) = k * LinearAlgebra.norm([cx[1],cy[1]] - [cx[2],cy[2]])
+rbfscale(cx, cy, k) = k * (sqrt((cx[1] - cy[1])^2 + (cx[2] - cy[2])^2))
 
 function interp(x, y, w, cx, cy, scale)
     res = zero(x)
