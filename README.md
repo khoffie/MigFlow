@@ -30,12 +30,18 @@ and install all needed Julia libraries.
 $ git clone https://github.com/khoffie/MigFlow.git
 $ cd MigFlow
 $ julia --project=. -e 'using Pkg; Pkg.instantiate()'
-$ tar -xvf data/data.tar.gz -C data
 ```
 
 This will install all libraries needed in the correct version.
 
 ## Basic usage
+First extract the archive with the data. Mainly, the archive contains
+flows of the age group 18-25 in 2017. Shapefiles and additional data
+about districts is provided as well.
+
+```
+$ tar -xvf data/data.tar.gz -C data
+```
 
 ### Load libraries, functions and data
 
@@ -110,3 +116,5 @@ save("../docs/pgeo.pdf", pgeo)
 ![Density transition function](./docs/pdtf.png)
 #### Locational Asymmetries
 ![Locational Asymmetries](./docs/pgeo.png)
+#### Estimates
+![Locational Asymmetries](./docs/pcoefs.png)

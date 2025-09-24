@@ -21,9 +21,9 @@ st = GeoIO.load("../data/clean/shapes/states.shp");
 
 mdl = baseflow(
     load_data(
-        "30-50", # age group
+        "18-25", # age group
         2017, # year
-        0.1, # Fraction of rows to use, e.g. 10%
+        1.0, # Fraction of rows to use, e.g. 10%
         "../data/"; ## path where FlowDataGermans.csv and districts.csv
         ## are stored
         only_positive = true, # return only positive flows / drop zero
@@ -43,7 +43,8 @@ inits = initialize(mdl);
 post = analyze(out) ## diagnostic plots
 m, pdtf = plotdtf(out) ## heatmap of density transition function
 geo, pgeo = plotgeo(out, shp, st) ## Map of locational asymmetries
-
-# savefig(post.plts[end], "../docs/check.png")
-# save("../docs/pdtf.png", pdtf)
-# save("../docs/pgeo.png", pgeo)
+pcoefs = coefplot(out)
+savefig(post.plts[end], "../docs/check.png")
+save("../docs/pdtf.png", pdtf)
+save("../docs/pgeo.png", pgeo)
+save("../docs/pcoefs.png", pcoefs)
