@@ -117,4 +117,4 @@ save("../docs/pgeo.pdf", pgeo)
 #### Locational Asymmetries
 ![Locational Asymmetries](./docs/pgeo.png)
 #### Estimates
-![Locational Asymmetries](./docs/pcoefs.png)
+![Estimates](./docs/pcoefs.png)
