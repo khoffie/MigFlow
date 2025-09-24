@@ -4,6 +4,8 @@ function plotgeo(r::EstimationResult, shp::GeoTable, st::GeoTable)
     fig = Figure(size = (400, 400), fontsize = 10)
     yearmap(geodf, shp, st, a, y, fig)
     prettytitle!(fig, "Locational Asymmetries, $a")
+    Colorbar(fig[end + 1, :], colorrange = extrema(geodf.geo), vertical = false, height = 3,
+             width = Relative(.5))
     return geodf, fig
 end
 

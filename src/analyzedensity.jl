@@ -20,14 +20,16 @@ function plotdtf(r::EstimationResult)
     return m, fig
 end
 
-function plotdtf(m::Matrix{Float64}, age::String, year::Int, crange, f, x, y)
-    ax = Axis(f[x, y],
+function plotdtf(m::Matrix{Float64}, age::String, year::Int, crange, fig, x, y)
+    ax = Axis(fig[x, y],
               xlabel = "Origin density",
               ylabel = "Destination density",
               xticks = ([1, 100], ["low", "high"]),
               yticks = ([1, 100], ["low", "high"]),
               title = string(year), aspect = DataAspect())
-    Makie.heatmap!(ax, m, colorrange = crange)
+    hm = Makie.heatmap!(ax, m, colorrange = crange)
+    Colorbar(fig[:, y + 1], hm, vertical = true, width = 5)
+    prettytitle!(fig, "Density Transition Function, $age")
 end
 
 function plotdtfyears(results, age, years, f, crange = nothing)
