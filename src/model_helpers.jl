@@ -1,5 +1,20 @@
 rbf(x) = abs(x) < one(x) ? exp(one(x) - one(x) / (one(x) - x^2)) : zero(x)
-rbfscale(cx, cy, k) = k * (sqrt((cx[1] - cy[1])^2 + (cx[2] - cy[2])^2))
+function rbfscale(cx, cy, k)
+    ## computes shape parameter for radial basis interpolation.
+    ## Expresses parameter in distance units
+    ## cx is the vector of x coordinates of the centers. cy is the
+    ## vector of y coordinates.
+    ## [p for p in IterTools.product(reverse(cy), cx)]
+    ## thus gives the centers.
+    ## The scaling factor k is used to scale the norm before it is
+    ## passed into rbf(), however, we express the scaling in units of
+    ## distance between centers, such that the same k works for
+    ## different numbers of centers. cx and cy will held typically more
+    ## then two elements, but because the coordinates are equidistantly
+    ## spaced we can calculate the distance between centers based on
+    ## first two entries only
+    return k * (sqrt((cx[1] - cx[2])^2 + (cy[1] - cy[2])^2))
+end
 
 function interp(x, y, w, cx, cy, scale)
     res = zero(x)
