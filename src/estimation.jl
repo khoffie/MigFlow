@@ -27,7 +27,7 @@ function estimate(mdl::ModelWrapper; show_plt = true, optim_kwargs = (;))
     mdl.data.lp = maps.lp
     chn = makechain(maps)
     prd = Turing.returned(mdl.mdl, chn)[1]
-    ses = DataFrame(coeftable(maps))[!, 1:3]
+    ses = setable(maps)
     return EstimationResult(chn, mdl, prd, ses)
 end
 
@@ -67,4 +67,13 @@ function makechain(maps::Turing.Optimisation.ModeResult)
     estims = maps.values.array
     nms  = names(maps.values)[1]
     return Chains(reshape(estims, (1, :, 1)), nms)
+end
+
+function setable(maps)
+    ses = DataFrame(coeftable(maps))[!, 1:3]
+    ses = rename(ses, ["Name", "Coef.", "Std. Error"] .=> ["name", "coef", "se"])
+    ses.name = replace.(ses.name, "_raw" => "")
+    ses.name = replace.(ses.name, "[" => "")
+    ses.name = replace.(ses.name, "]" => "")
+    return ses
 end
