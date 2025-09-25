@@ -72,8 +72,6 @@ end
 function setable(maps)
     ses = DataFrame(coeftable(maps))[!, 1:3]
     ses = rename(ses, ["Name", "Coef.", "Std. Error"] .=> ["name", "coef", "se"])
-    ses.name = replace.(ses.name, "_raw" => "")
-    ses.name = replace.(ses.name, "[" => "")
-    ses.name = replace.(ses.name, "]" => "")
+    ses.name = replace.(ses.name, "_raw" => "", "[" => "", "]" => "")
     return ses
 end
