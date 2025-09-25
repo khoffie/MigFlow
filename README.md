@@ -1,7 +1,44 @@
 # MigFlow
+This repository contains the code for the **baseflow model of internal migration**.  
+We model internal migration flows of six age groups between German districts from 2000 to 2017.  
+The model provides:
 
+- an accurate estimation of the effect of distance (unbiased across all distances)
+- an interpretable functional form grounded in scientific reasoning
+- good predictions that can be aggregated to quantities such as net migration
+- flexible yet regularized estimates of the effect of population density
+- flexible yet regularized estimates of geographical asymmetries
+  (i.e., factors influencing migration that are not related to
+  density).
 
-## Getting Julia
+This repository includes the code to fit the model and visualize its results.  
+It also provides flow data for the age group **18–25 in 2017**, along
+with supplementary district-level information and shapefiles.
+
+In total, six age groups are available:
+- Below 18
+- 18–25
+- 25–30
+- 30–50
+- 50–65
+- above 65
+
+Data are available for the years 2000–2017 (with 2003 omitted due to
+data issues).
+
+### Access to additional data
+This repository contains only a sample dataset (18–25, 2017).  
+If you would like to analyze other age groups or years, please [open
+an issue](../../issues) in this repository. We can provide you either
+- the already cleaned and preprocessed data for all age groups and years, or
+- the raw data
+
+If you wish to analyze the raw data you can execute `raw_to_clean.R`.
+You will need `R` and the package that contains the code to clean the
+data: [R-cleaning-package](https://github.com/khoffie/MigFlow-helpeR).
+
+## Usage
+### Getting Julia
 
 If you're on Linux, run
 
@@ -13,13 +50,12 @@ For Windows and further advice please look
 [here](https://github.com/JuliaLang/juliaup). This repository uses
 Julia 1.15.5; to get it and make it the default, run
 
-
 ```
 $ juliaup add 1.11.5
 $ juliaup default 1.11.5
 ```
 
-Whenever you type `'julia'` into a terminal now, it will start Julia
+Whenever you now type `'julia'` into a terminal, it will start Julia
 version 1.11.5.
 
 ## Getting all needed libraries
@@ -34,7 +70,7 @@ $ julia --project=. -e 'using Pkg; Pkg.instantiate()'
 
 This will install all libraries needed in the correct version.
 
-## Basic usage
+### Fitting the model
 First extract the archive with the data. Mainly, the archive contains
 flows of the age group 18-25 in 2017. Shapefiles and additional data
 about districts is provided as well.
@@ -43,7 +79,7 @@ about districts is provided as well.
 $ tar -xvf data/data.tar.gz -C data
 ```
 
-### Load libraries, functions and data
+#### Load libraries, functions and data
 
 ```
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots, Distributions
@@ -70,7 +106,7 @@ st = GeoIO.load("../data/clean/shapes/states.shp")
 
 ```
 
-### Fit baseflow model
+#### Fit baseflow model
 
 ```
 mdl = baseflow(
@@ -97,7 +133,7 @@ inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.ar
 
 ```
 
-### Postprocess
+#### Postprocess
 ```
 
 ## diagnostic plots
@@ -111,11 +147,10 @@ pcoefs = coefplot(out)
 
 ```
 
-#### Check Model Fit
+
 ![check fit](./docs/check.png)
-#### Density Transition Function
 ![Density transition function](./docs/pdtf.png)
-#### Locational Asymmetries
 ![Locational Asymmetries](./docs/pgeo.png)
-#### Estimates
 ![Estimates](./docs/pcoefs.png)
+
+## Issues
