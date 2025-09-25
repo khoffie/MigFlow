@@ -13,11 +13,11 @@ function analyze(r::EstimationResult)
     net = calc_net_df(df);
     r2nmr = round(cor(net.nmr, net.nmrp)^2, digits = 2)
 
-    fig = Figure(size = (400, 400), fontsize = 10);
+    fig = Figure(size = (700, 700), fontsize = 12);
     ax1 = Axis(fig[1, 1],
                xlabel = L"\log(\hat{y})",
                ylabel = L"\log(y)",
-               title = "Mean deviance $dev",
+               title = L"\text{Mean deviance:} %$dev",
                aspect = DataAspect())
     plotfit!(ax1, df.flows, df.preds)
 
@@ -31,7 +31,7 @@ function analyze(r::EstimationResult)
     plotnet!(ax2, net)
 
     ax3 = Axis(fig[2, 1],
-               xlabel = "Distance (km)",
+               xlabel = L"\text{Distance (km)}",
                ylabel = L"\log(y / \hat{y})")
     plotdist!(ax3, df.flows, df.preds, df.dist)
 
