@@ -65,7 +65,7 @@ end
 function makemodel(a, y, p, ndc, ngcx)
     mdl = baseflow(load_data(a, y, p, "../data/";
                          only_positive = true,
-                         seed = 1234, opf = false),
+                         seed = 1234),
                normalize = false, ndc = ndc, ngcx = ngcx, kgeo = 2.0);
     return mdl
 end
