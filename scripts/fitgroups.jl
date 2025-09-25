@@ -63,10 +63,10 @@ function fit30to50(y, p, ndc, ngcx)
 end
 
 function makemodel(a, y, p, ndc, ngcx)
-    mdl = baseflow(load_data(a, y, p, "../data/";
-                         only_positive = true,
-                         seed = 1234),
-               normalize = false, ndc = ndc, ngcx = ngcx, kgeo = 2.0);
+    mdl = baseflow(
+        load_data(a, y, p, "../data/"; only_positive = true, seed = 1234),
+        normalize = false, ndc = ndc, ngcx = ngcx, kgeo = 2.0
+    );
     return mdl
 end
 
