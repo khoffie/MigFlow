@@ -28,9 +28,7 @@ mdl = baseflow(
         only_positive = true, # return only positive flows / drop zero
         # flows
         seed = 1234, # Random seed for reproducibility
-        opf = false # depracated, ignore
     ),
-    normalize = false, ## normalize desirabilities, ## currently only false supported
     ndc = 16, # number of radial basis centers for density transition function
     ngcx = 5 # number of radial basis centers for geographical
              # asymmetries in x direction. y direction is set
