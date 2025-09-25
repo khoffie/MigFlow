@@ -40,11 +40,11 @@ mdl = baseflow(
 
 inits = initialize(mdl);
 @time out = estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
-post = analyze(out) ## diagnostic plots
+df, net, pcheck = analyze(out); ## diagnostic plots
 m, pdtf = plotdtf(out) ## heatmap of density transition function
 geo, pgeo = plotgeo(out, shp, st) ## Map of locational asymmetries
 pcoefs = coefplot(out)
-savefig(post.plts[end], "../docs/check.png")
+save("../docs/pcheck.png", pcheck)
 save("../docs/pdtf.png", pdtf)
 save("../docs/pgeo.png", pgeo)
 save("../docs/pcoefs.png", pcoefs)
