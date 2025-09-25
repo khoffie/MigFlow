@@ -23,11 +23,9 @@ mdl = baseflow(
         "18-25", # age group
         2017, # year
         0.1, # Fraction of rows to use, e.g. 10%
-        "../data/"; ## path where FlowDataGermans.csv and districts.csv
-        ## are stored
-        only_positive = true, # return only positive flows / drop zero
-        # flows
-        seed = 1234, # Random seed for reproducibility
+        "../data/"; ## path of FlowDataGermans.csv and districts.csv
+        only_positive = true, # use only positive flows / drop zero flows
+        seed = 1234, # for reproducibility
     ),
     ndc = 16, # number of radial basis centers for density transition function
     ngcx = 5 # number of radial basis centers for geographical
