@@ -36,9 +36,6 @@ function addlrd!(districts::DataFrame)
     return districts
 end
 
-pos(df) = df[df.flows .> 0.0, :]
-age(df, age) = filter(:agegroup => n -> n == age, df)
-year(df, y) = filter(:year => n -> n == y, df)
 lrd(x) = log.(x ./ median(x))
 radius(pop, dens) = sqrt.(pop ./ dens ./ 2π)
 
