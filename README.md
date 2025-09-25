@@ -11,32 +11,6 @@ The model provides:
   (i.e., factors influencing migration that are not related to
   density).
 
-This repository includes the code to fit the model and visualize its results.  
-It also provides flow data for the age group **18–25 in 2017**, along
-with supplementary district-level information and shapefiles.
-
-In total, six age groups are available:
-- Below 18
-- 18–25
-- 25–30
-- 30–50
-- 50–65
-- above 65
-
-Data are available for the years 2000–2017 (with 2003 omitted due to
-data issues).
-
-### Access to additional data
-This repository contains only a sample dataset (18–25, 2017).  
-If you would like to analyze other age groups or years, please [open
-an issue](../../issues) in this repository. We can provide you either
-- the already cleaned and preprocessed data for all age groups and years, or
-- the raw data
-
-If you wish to analyze the raw data you can execute `raw_to_clean.R`.
-You will need `R` and the package that contains the code to clean the
-data: [R-cleaning-package](https://github.com/khoffie/MigFlow-helpeR).
-
 ## Usage
 ### Getting Julia
 
@@ -154,3 +128,26 @@ pcoefs = coefplot(out)
 ![Estimates](./docs/pcoefs.png)
 
 ## Issues
+
+## Additional Data
+This repository contains only a sample dataset (18–25, 2017) as well
+as additional data about districts and shapefiles. If you would like
+to analyze other age groups or years, please [open an
+issue](../../issues) in this repository. We can provide you either
+- the already cleaned and preprocessed data for all age groups and years, or
+- the raw data
+
+In total, six age groups are available:
+- Below 18
+- 18–25
+- 25–30
+- 30–50
+- 50–65
+- above 65
+
+Data are available for the years 2000–2017 (with 2003 omitted due to
+data issues).
+
+If you wish to analyze the raw data you can execute `raw_to_clean.R`.
+You will need `R` and the package that contains the code to clean the
+data: [R-cleaning-package](https://github.com/khoffie/MigFlow-helpeR).
