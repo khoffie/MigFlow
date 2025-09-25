@@ -1,8 +1,7 @@
-function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, normalize = true, ds = 100)
+function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, ds = 100)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
-    dffull    = sort(data.dffull, [:fromdist, :todist])
     age       = unique(df.agegroup)[1]
     year      = unique(df.year)[1]
 
@@ -34,10 +33,6 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
     cxgeo      = [range(xlim[1], xlim[2], ngcx);]
     cygeo      = [range(ylim[1], ylim[2], ngcy);]
     geo_scale  = rbfscale(cxgeo, cygeo, kgeo)
-    fromfull   = lc(dffull.fromdist)
-    tofull     = lc(dffull.todist)
-    Dfull      = fdist(dffull.dist, ds)
-    Nfull      = length(fromfull)
     data       = MetaData(age = age, year = year)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
@@ -46,10 +41,8 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
                           xcoord::Vector{Float64}, ycoord::Vector{Float64},
                           xmin::Float64, xmax::Float64, ymin::Float64, ymax::Float64,
                           Rmin::Float64, Rmax::Float64,
-                          fromfull::Vector{Int}, tofull::Vector{Int},
-                          Dfull::Vector{Float64}, Nfull::Int,
                           ndc::Int, ngcx::Int, ngcy::Int,
-                          normalize::Bool, cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
+                          cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
         # β_raw ~ Gamma(1, 1);     β = β_raw
@@ -60,26 +53,7 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
         η_raw ~ StMvN(ngcx * ngcy, 10.0);  η = coefmat(η_raw / 10, ngcx, ngcy)
 
         T = eltype(γ)  # to get dual data type for AD
-        denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
-
-        if normalize
-            @inbounds for i in 1:Nfull
-                denom[fromfull[i]] += desirability(P[tofull[i]], Dfull[i],
-                                                   interp(R[fromfull[i]], R[tofull[i]], ζ, cx, cy, rbf_scale),
-                                                   interp(xcoord[fromfull[i]], ycoord[fromfull[i]], η, cxgeo, cygeo, geo_scale),
-                                                   interp(xcoord[tofull[i]], ycoord[tofull[i]], η, cxgeo, cygeo, geo_scale),
-                                                   γ, ϕ)
-            end
-            @inbounds for i in 1:Ndist
-                denom[i] += desirability(P[i], # β *
-                    radius[i],
-                                         interp(R[i], R[i], ζ, cx, cy, rbf_scale),
-                                         1, 1, γ, ϕ)
-            end
-        else
-            fill!(denom, one(T))
-        end
 
         @inbounds for i in 1:N
             ps[i] = A[i] * exp(α +
@@ -87,18 +61,15 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
                              interp(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
                              interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
                              interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
-                              γ, ϕ) / denom[from[i]])
+                              γ, ϕ))
         end
-        ## Y ~ product_distribution(Binomial.(A, ps))
         Y ~ product_distribution(Poisson.(ps))
         return ps
     end
 
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
-                fromfull, tofull, Dfull, Nfull, ndc, ngcx, ngcy, normalize,
-                cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
-
+                ndc, ngcx, ngcy, cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
     lb, ub = bound(age, ndc, ngcx, ngcy)
     return ModelWrapper(mdl, lb, ub, data)
 end
