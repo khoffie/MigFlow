@@ -14,6 +14,7 @@ include("../src/model.jl")
 include("../src/modelutils.jl")
 include("../src/plotutils.jl")
 include("../src/utils.jl")
+include("../src/coefplot.jl")
 
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp");
