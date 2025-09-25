@@ -1,8 +1,7 @@
-using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots, Distributions
-using CategoricalArrays, NamedArrays, LaTeXStrings, Loess
-using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
-using IterTools, Mooncake, GeoStats, GeoIO, CairoMakie
-using StatsBase: coeftable
+using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
+    CategoricalArrays, NamedArrays, LaTeXStrings, Loess, ADTypes, KernelDensity,
+    IterTools, GeoStats, GeoIO, CairoMakie
+
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
 include("../src/analyze.jl")
@@ -22,7 +21,7 @@ mdl = baseflow(
     load_data(
         "18-25", # age group
         2017, # year
-        0.1, # Fraction of rows to use, e.g. 10%
+        .1, # Fraction of rows to use, e.g. 10%
         "../data/"; ## path of FlowDataGermans.csv and districts.csv
         only_positive = true, # use only positive flows / drop zero flows
         seed = 1234, # for reproducibility

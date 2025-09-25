@@ -1,6 +1,6 @@
-using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
+using CSV, DataFrames, Turing, StatsBase, Random,
 using Distributions, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
-using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
+using ADTypes, KernelDensity, Serialization, DynamicPPL
 using IterTools, Mooncake, GeoStats, GeoIO, CairoMakie, Suppressor
 
 include("../src/estimation.jl")
