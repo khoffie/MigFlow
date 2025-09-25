@@ -1,17 +1,17 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots
 using Distributions, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
-using IterTools, Mooncake, Revise, GeoStats, GeoIO, CairoMakie, Suppressor
+using IterTools, Mooncake, GeoStats, GeoIO, CairoMakie, Suppressor
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
 include("../src/analyze.jl")
-include("../src/analyzegeo.jl")
-include("../src/analyzedensity.jl")
-include("../src/analyzeresults.jl")
+include("../src/georbf.jl")
+include("../src/densityrbf.jl")
+include("../src/results.jl")
 include("../src/diagplots.jl")
 include("../src/model.jl")
-include("../src/model_helpers.jl")
+include("../src/modelutils.jl")
 
 function fit_years(a, ndc, ngcx, p = 1.0)
     ## 2003 has data issues

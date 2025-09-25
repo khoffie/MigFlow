@@ -1,20 +1,19 @@
 using CSV, DataFrames, Turing, StatsBase, Random, Plots, StatsPlots, Distributions
 using CategoricalArrays, NamedArrays, LaTeXStrings, Loess
 using ADTypes, KernelDensity, Serialization, DynamicPPL, LinearAlgebra
-using IterTools, Mooncake, Revise, GeoStats, GeoIO, CairoMakie
+using IterTools, Mooncake, GeoStats, GeoIO, CairoMakie
 using StatsBase: coeftable
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
-includet("../src/analyze.jl")
-include("../src/analyzegeo.jl")
-include("../src/analyzedensity.jl")
-include("../src/analyzeresults.jl")
+include("../src/analyze.jl")
+include("../src/georbf.jl")
+include("../src/densityrbf.jl")
+include("../src/results.jl")
 include("../src/diagplots.jl")
 include("../src/model.jl")
-include("../src/model_helpers.jl")
+include("../src/modelutils.jl")
 include("../src/plotutils.jl")
 include("../src/utils.jl")
-include("plots/utils.jl")
 
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp");
@@ -23,7 +22,7 @@ mdl = baseflow(
     load_data(
         "18-25", # age group
         2017, # year
-        1.0, # Fraction of rows to use, e.g. 10%
+        0.1, # Fraction of rows to use, e.g. 10%
         "../data/"; ## path where FlowDataGermans.csv and districts.csv
         ## are stored
         only_positive = true, # return only positive flows / drop zero
