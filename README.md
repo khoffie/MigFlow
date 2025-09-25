@@ -83,19 +83,16 @@ st = GeoIO.load("../data/clean/shapes/states.shp")
 #### Fit baseflow model
 
 ```
+
 mdl = baseflow(
     load_data(
         "18-25", # age group
-        2014, # year
+        2017, # year
         0.1, # Fraction of rows to use, e.g. 10%
-        "../data/"; ## path where FlowDataGermans.csv and districts.csv
-        ## are stored
-        only_positive = true, # return only positive flows / drop zero
-        # flows
-        seed = 1234, # Random seed for reproducibility
-        opf = false # depracated, ignore
+        "../data/"; ## path of FlowDataGermans.csv and districts.csv
+        only_positive = true, # use only positive flows / drop zero flows
+        seed = 1234, # for reproducibility
     ),
-    normalize = false, ## normalize desirabilities, ## currently only false supported
     ndc = 16, # number of radial basis centers for density transition function
     ngcx = 5 # number of radial basis centers for geographical
              # asymmetries in x direction. y direction is set
@@ -122,7 +119,7 @@ pcoefs = coefplot(out)
 ```
 
 
-![check fit](./docs/check.png)
+![check fit](./docs/pcheck.png)
 ![Density transition function](./docs/pdtf.png)
 ![Locational Asymmetries](./docs/pgeo.png)
 ![Estimates](./docs/pcoefs.png)
