@@ -1,17 +1,13 @@
 using CSV, DataFrames, Turing, StatsBase, Random,
-using Distributions, CategoricalArrays, NamedArrays, LaTeXStrings, Loess
-using ADTypes, KernelDensity, Serialization, DynamicPPL
-using IterTools, Mooncake, GeoStats, GeoIO, CairoMakie, Suppressor
+    Distributions, CategoricalArrays, NamedArrays, LaTeXStrings, Loess,
+    ADTypes, KernelDensity, Serialization, DynamicPPL,
+    IterTools, Mooncake, GeoStats, GeoIO, CairoMakie, Suppressor
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
-include("../src/analyze.jl")
-include("../src/georbf.jl")
-include("../src/densityrbf.jl")
-include("../src/results.jl")
-include("../src/diagplots.jl")
 include("../src/model.jl")
 include("../src/modelutils.jl")
+include("../src/utils.jl")
 
 function fit_years(a, ndc, ngcx, p = 1.0)
     ## 2003 has data issues
@@ -43,7 +39,7 @@ end
 
 function fitage(a, y, p, ndc, ngcx)
     mdl = makemodel(a, y, p, ndc, ngcx)
-    inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
+    inits = initialize(mdl);
     return @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 end
 
@@ -53,24 +49,24 @@ function fit30to50(y, p, ndc, ngcx)
     ## fit full data right away, but we likely would need very
     ## specific inits / weights for the RBFs
     mdl = makemodel("30-50", y, p / 2, ndc, ngcx)
-    inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
+    inits = initialize(mdl);
     out = @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 
     mdl = makemodel("30-50", y, p, ndc, ngcx)
     ## inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
-    inits = vec(out.chn[1, 1 : end - 4, 1].value.data)
+    inits = vec(out.chn.value.data)
     return  @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 end
 
 function makemodel(a, y, p, ndc, ngcx)
     mdl = baseflow(
         load_data(a, y, p, "../data/"; only_positive = true, seed = 1234),
-        normalize = false, ndc = ndc, ngcx = ngcx, kgeo = 2.0
+        ndc = ndc, ngcx = ngcx, kgeo = 2.0
     );
     return mdl
 end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 for a in ages
-    fit_years(a, 16, 5, .1)
+    fit_years(a, 16, 5, .2)
 end
