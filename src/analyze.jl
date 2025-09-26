@@ -5,7 +5,7 @@ function analyze(r::EstimationResult)
         todist = data.to,
         flows = data.Y,
         preds = r.prd,
-        dist = data.D,
+        dist = 100data.D, ## scaling back to original, better grab ds?
         A = data.A,
         P = exp.(data.P[data.to]) ## bec log(P) is saved
     );
