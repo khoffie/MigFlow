@@ -20,7 +20,8 @@ function plotdtf(r::EstimationResult)
     return m, fig
 end
 
-function plotdtf(m::Matrix{Float64}, age::String, year::Int, crange, fig, x, y)
+function plotdtf(m::Matrix{Float64}, age::String, year::Int, crange,
+                 fig, x, y, legend = true)
     ax = Axis(fig[x, y],
               xlabel = "Origin density",
               ylabel = "Destination density",
@@ -28,24 +29,8 @@ function plotdtf(m::Matrix{Float64}, age::String, year::Int, crange, fig, x, y)
               yticks = ([1, 100], ["low", "high"]),
               title = string(year), aspect = DataAspect())
     hm = Makie.heatmap!(ax, m, colorrange = crange)
-    Colorbar(fig[:, y + 1], hm, vertical = true, width = 5)
-    prettytitle!(fig, "Density Transition Function, $age")
-end
-
-function plotdtfyears(results, age, years, f, crange = nothing)
-    o = loopstruct(results, dtfmat, age, years)
-    if isnothing(crange)
-        crange = extrema(reduce(vcat, [o[i][1] for i in eachindex(o)]))
+    if legend
+        Colorbar(fig[:, y + 1], hm, vertical = true, width = 5)
+        prettytitle!(fig, "Density Transition Function, $age")
     end
-#     ncols = length(years) > 9 ? 3 : 2
-    for i in eachindex(years)
-        pos = grid_position(i, 3)
-        m, a, y = dtfmat(results[age[1]][years[i]])
-        plotdtf(m, a, y, crange, f, pos[1], pos[2])
-    end
-    Colorbar(f[:, end + 1], colorrange = crange)
-    a = replace(string(age[1]), "age" => "")
-    Label(f[0, :], "Density transition function, $a",
-          fontsize = 20, tellwidth = false)
-    return f
 end
