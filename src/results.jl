@@ -1,4 +1,4 @@
-function gendata(path = "./output")
+function readresults(path = "./output")
     years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
     files = readdir(path; join = true)
     ## extracting age group
@@ -14,7 +14,7 @@ function gendata(path = "./output")
 end
 
 function reorder(results)
-    years = [Int(r.chn[:year].data[1]) for r in results]
+    years = [r.mdl.data.year for r in results]
     return results[sortperm(years)]
 end
 
@@ -38,6 +38,7 @@ function extract_params(r::EstimationResult)
     df.deviance .= getdeviance(r)
     df.year .= r.mdl.data.age
     df.age .= r.mdl.data.year
+    df.lp .= r.mdl.data.lp
     first = ["age", "year", "α_raw", "γ_raw", "ϕ_raw", "lp"]
     last = setdiff(names(df), first)
     select!(df, vcat(first, last))
@@ -46,4 +47,4 @@ end
 
 plotcoef(df, c) = (plot(df.group, df[!, c], title = c); scatter!(df.group, df[!, c]))
 plotcoef(df, c, g, lw = 2) = (Plots.plot(df.year, df[!, c], group = df[!, g], title = c, linewidth = lw))
-getdeviance(r) = deviance(r.mdl.mdl.args.Y, r.prd)[1]
+getdeviance(r) = deviance2(r.mdl.mdl.args.Y, r.prd)[1]
