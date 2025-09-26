@@ -7,8 +7,9 @@ function grid_position(k::Int, ncols::Int=2)
 end
 
 function prettytitle!(f, title)
-    titlelayout = GridLayout(f[0, 1], tellwidth = false)
-    Label(titlelayout[1, 1], title, fontsize = 15, font = "TeX Gyre Heros Bold Makie")
+    titlelayout = GridLayout(f[0, 1:end], tellwidth = false)
+    Label(titlelayout[1, 1], title, fontsize = 15,
+          font = "TeX Gyre Heros Bold Makie", halign = :center)
     rowgap!(titlelayout, 0)
     # rowgap!(f.layout, 0)
     # colgap!(f.layout, -50)
