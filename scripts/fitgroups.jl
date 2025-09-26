@@ -12,7 +12,6 @@ include("../src/utils.jl")
 function fit_years(a, ndc, ngcx, p = 1.0)
     ## 2003 has data issues
     allyears = vcat(2000:2002, 2004:2017)
-##    allyears = [2010]
     if isfile("output/optim$a")
         results = deserialize("output/optim$a")
         fittedyears = [r.mdl.data.year for r in results]
@@ -53,7 +52,6 @@ function fit30to50(y, p, ndc, ngcx)
     out = @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 
     mdl = makemodel("30-50", y, p, ndc, ngcx)
-    ## inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
     inits = vec(out.chn.value.data)
     return  @time estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
 end
