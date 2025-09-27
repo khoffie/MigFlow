@@ -13,10 +13,12 @@ function dtfmat(r::EstimationResult)
     return m .- mean(m), a, y
 end
 
-function plotdtf(r::EstimationResult)
-    m, a, y = dtfmat(r)
-    fig = Figure(size=(400, 400), fontsize = 10)
-    plotdtf(m, a, y, extrema(m), fig, 1, 1)
+function plotdtf(r::EstimationResult, crange = nothing;
+                 fig = Figure(size=(400, 400), fontsize = 10),
+                 x = 1, y = 1, legend = true)
+    m, a, yr = dtfmat(r)
+    if isnothing(crange); crange = extrema(m); end
+    plotdtf(m, a, yr, crange, fig, x, y, legend)
     return m, fig
 end
 
