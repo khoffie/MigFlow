@@ -1,12 +1,27 @@
-function plotgeo(r::EstimationResult, shp::GeoTable, st::GeoTable)
+function plotgeo(r::EstimationResult, shp::GeoTable, st::GeoTable,
+                 crange = nothing,
+                 fig = Figure(size = (400, 400), fontsize = 10),
+                 x = 1, y = 1, legend = true)
     geodf = getgeo(r)
-    a, y = getageyear(r)
-    fig = Figure(size = (400, 400), fontsize = 10)
-    yearmap(geodf, shp, st, a, y, fig)
-    prettytitle!(fig, "Locational Asymmetries, $a")
-    Colorbar(fig[end + 1, :], colorrange = extrema(geodf.geo), vertical = false, height = 3,
-             width = Relative(.5))
+    a, yr = getageyear(r)
+    if isnothing(crange); crange = extrema(geodf.geo); end
+    plotgeo(geodf, shp, st, crange, a, yr, fig, x, y, legend)
     return geodf, fig
+end
+
+function plotgeo(df::DataFrame, shp, st, crange, a, yr, fig,
+                 x = 1, y = 1, legend = true)
+    df = year(age(df, a), yr)
+    df = joingeometry(df, DataFrame(shp))
+    ax = Axis(fig[x, y], aspect=DataAspect(), title = "$yr")
+    viz!(ax, df.geometry, color = df.geo, colorrange = crange);
+    hideall!(ax)
+    overlay_states(ax, st)
+    if legend
+        prettytitle!(fig, "Locational Asymmetries, $a")
+        Colorbar(fig[end + 1, :], colorrange = crange,
+                 vertical = false, height = 3, width = Relative(.5))
+    end
 end
 
 function overlay_states(ax, stshp)
