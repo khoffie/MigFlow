@@ -1,18 +1,3 @@
-function dtfmat(r::EstimationResult)
-    a, y = getageyear(r)
-    coefs = extract_coefs(r.chn[end, :, 1], "ζ")
-    data = r.mdl.mdl.args
-    cx = data.cx
-    cy = data.cy
-    scale = data.rbf_scale
-    R = data.R
-    Rmin, Rmax = extrema(R)
-    vals = range(Rmin, Rmax, 100)
-    m = [interp(Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale)
-         for Rto in vals, Rfrom in vals]';
-    return m .- mean(m), a, y
-end
-
 function plotdtf(r::EstimationResult, crange = nothing;
                  fig = Figure(size=(400, 400), fontsize = 10),
                  x = 1, y = 1, legend = true)
@@ -35,4 +20,19 @@ function plotdtf(m::Matrix{Float64}, age::String, year::Int, crange,
         Colorbar(fig[:, y + 1], hm, vertical = true, width = 5)
         prettytitle!(fig, "Density Transition Function, $age")
     end
+end
+
+function dtfmat(r::EstimationResult)
+    a, y = getageyear(r)
+    coefs = extract_coefs(r.chn[end, :, 1], "ζ")
+    data = r.mdl.mdl.args
+    cx = data.cx
+    cy = data.cy
+    scale = data.rbf_scale
+    R = data.R
+    Rmin, Rmax = extrema(R)
+    vals = range(Rmin, Rmax, 100)
+    m = [interp(Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale)
+         for Rto in vals, Rfrom in vals]';
+    return m .- mean(m), a, y
 end
