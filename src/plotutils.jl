@@ -1,5 +1,13 @@
 getageyear(r) = r.mdl.data.age, r.mdl.data.year
 
+function addlines!(ax, df, group, xcol, ycol)
+    groups = unique(df[!, group])
+    for g in groups
+        foo = df[df[!, group] .== g, :]
+        lines!(ax, foo[!, xcol], foo[!, ycol], label = g)
+    end
+end
+
 function grid_position(k::Int, ncols::Int=2)
     i = div(k - 1, ncols) + 1   # row index
     j = mod(k - 1, ncols) + 1   # column index
