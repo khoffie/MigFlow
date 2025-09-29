@@ -1,4 +1,4 @@
-function plotdtf(r::EstimationResult, crange = nothing;
+function plotdtf(r::EstimationResult, crange = nothing,
                  fig = Figure(size=(400, 400), fontsize = 10),
                  x = 1, y = 1, legend = true)
     m, a, yr = dtfmat(r)
