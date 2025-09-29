@@ -66,5 +66,5 @@ end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 for a in ages
-    fit_years(a, 16, 5, .2)
+    fit_years(a, 16, 5, 1.0)
 end
