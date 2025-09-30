@@ -1,10 +1,18 @@
 getageyear(r) = r.mdl.data.age, r.mdl.data.year
 
-function addlines!(ax, df, group, xcol, ycol)
+function addlines!(ax, df, group, xcol, ycol, lw = 1)
     groups = unique(df[!, group])
     for g in groups
         foo = df[df[!, group] .== g, :]
-        lines!(ax, foo[!, xcol], foo[!, ycol], label = g)
+        kwargs = Dict{Symbol, Any}()
+        if "col" in names(foo)
+            kwargs[:color] = foo.col
+        end
+        if "lw" in names(foo)
+            kwargs[:linewidth] = foo.lw
+        end
+        lines!(ax, foo[!, xcol], foo[!, ycol], label = g, linewidth = lw; kwargs...)
+        end
     end
 end
 
