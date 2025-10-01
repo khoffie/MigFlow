@@ -37,9 +37,9 @@ function extract_params(r::EstimationResult)
     df = DataFrame([Symbol(p) => r.chn[p].data[1] for p in params])
     df.deviance .= getdeviance(r)
     df.year .= r.mdl.data.year
-    df.age .= r.mdl.data.age
+    df.agegroup .= r.mdl.data.age
     df.lp .= r.mdl.data.lp
-    first = ["year", "age", "α_raw", "γ_raw", "ϕ_raw", "lp"]
+    first = ["year", "agegroup", "α_raw", "γ_raw", "ϕ_raw", "lp"]
     last = setdiff(names(df), first)
     select!(df, vcat(first, last))
     return df
