@@ -59,6 +59,6 @@ function norm(data::NamedTuple; ds = 100)
 
     mdl = model(Y, from, to, A, P, D, Ndist, N, radius)
     lb = [-12.0, 0.0, 10.0, 1.0]
-    ub = [-5.0,  10.0, 40.0, 50.0]
+    ub = [0.0,   10.0, 40.0, 50.0]
     return ModelWrapper(mdl, lb, ub, data)
 end
