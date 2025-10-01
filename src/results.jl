@@ -39,7 +39,7 @@ function extract_params(r::EstimationResult)
     df.year .= r.mdl.data.year
     df.agegroup .= r.mdl.data.age
     df.lp .= r.mdl.data.lp
-    first = ["year", "agegroup", "α_raw", "γ_raw", "ϕ_raw", "lp"]
+    first = ["year", "agegroup", "lp"]
     last = setdiff(names(df), first)
     select!(df, vcat(first, last))
     return df
