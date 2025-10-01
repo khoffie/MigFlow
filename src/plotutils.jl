@@ -12,7 +12,6 @@ function addlines!(ax, df, group, xcol, ycol, lw = 1)
             kwargs[:linewidth] = foo.lw
         end
         lines!(ax, foo[!, xcol], foo[!, ycol], label = g, linewidth = lw; kwargs...)
-        end
     end
 end
 
