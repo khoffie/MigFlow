@@ -1,4 +1,5 @@
 function analyze(r::EstimationResult)
+    a, y = getageyear(r)
     data = r.mdl.mdl.args
     df = DataFrame(
         fromdist = data.from,
@@ -10,7 +11,7 @@ function analyze(r::EstimationResult)
         P = exp.(data.P[data.to]) ## bec log(P) is saved
     );
     dev = round(deviance2(df.flows, df.preds), digits = 2)
-    net = calc_net_df(df);
+    net = add_age_year(r, calc_net_df(df));
     r2nmr = round(cor(net.nmr, net.nmrp)^2, digits = 2)
 
     fig = Figure(size = (700, 700), fontsize = 12);
@@ -63,6 +64,15 @@ function calc_net_df(df)
     rename!(netp, names(netp) .=> new)
     net = innerjoin(net, netp, on = :fromdist => :fromdistp)
     return net
+end
+
+function add_age_year(r, df)
+    a, y = getageyear(r)
+    df.agegroup .= a
+    df.year .= y
+    first = ["agegroup", "year"]
+    last = setdiff(names(df), first)
+    select!(df, vcat(first, last))
 end
 
 subset(x, n) = StatsBase.sample(1:length(x), n)
