@@ -1,4 +1,4 @@
-function fundamental(data::NamedTuple; ds = 100)
+function gravity(data::NamedTuple; ds = 100)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -23,28 +23,22 @@ function fundamental(data::NamedTuple; ds = 100)
                           N::Int)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
+        β_raw ~ Gamma(10, 1);    β = β_raw / 10
+        δ_raw ~ Gamma(10, 1);    δ = δ_raw / 10
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
-        ϕ_raw ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
 
         T = eltype(γ)  # to get dual data type for AD
         ps = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
-            ps[i] = A[i] * exp(α + P + log(ϕ + (1 - ϕ) / (D + .01) ^ γ))
+            ps[i] = A[i]^β * exp(α + δ * P[to[i]] + log(1 / (D[i] + .01) ^ γ))
         end
         Y ~ product_distribution(Poisson.(ps))
         return ps
     end
 
     mdl = model(Y, from, to, A, P, D, N)
-    lb, ub = bound(age, ndc, ngcx, ngcy)
+    lb = [-12.0, 1.0, 1.0, 10.0]
+    ub = [-5.0 , 40.0, 40.0, 40.0]
     return ModelWrapper(mdl, lb, ub, data)
-end
-
-# function desirability(P, D, Q, Gfrom, Gto, γ, δ, ϕ)
-#     P * (ϕ + (1 - ϕ) / ((D + δ) ^ γ) * Q * (Gto / Gfrom))
-# end
-
-function desirability(P, D, Q, Gfrom, Gto, γ, ϕ)
-    P + log(ϕ + (1 - ϕ) / ((D + 0.01) ^ γ)) + Q + (Gto - Gfrom)
 end
