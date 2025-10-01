@@ -33,35 +33,25 @@ function norm(data::NamedTuple; ds = 100)
         T = eltype(γ)  # to get dual data type for AD
         denom = zeros(T, Ndist)
         ps = Vector{T}(undef, N)
+        des_by_origin = Vector{Vector{T}}(undef, Ndist)
+        logden = zeros(T, Ndist)
 
         for o in 1:Ndist
             des_by_origin[o] = Vector{T}()
         end
-
-        # fill with desirabilities for observed flows:
         @inbounds for i in 1:N
             push!(des_by_origin[from[i]], desirability(P[to[i]], D[i], γ, ϕ))
         end
-        # add the self/other term (the "radius" term) for each origin as you had:
         @inbounds for i in 1:Ndist
             push!(des_by_origin[i], desirability(P[i], β * radius[i], γ, ϕ))
         end
 
-        # compute log denom (logsumexp) per origin
-        logden = zeros(T, Ndist)
         for o in 1:Ndist
             logden[o] = logsumexp(des_by_origin[o])
         end
 
         @inbounds for i in 1:N
-            denom[from[i]] += desirability(P[to[i]], D[i], γ, ϕ)
-        end
-        @inbounds for i in 1:Ndist
-            denom[i] += desirability(P[i], β * radius[i], γ, ϕ)
-        end
-
-        @inbounds for i in 1:N
-            ps[i] = A[i] * exp(α + desirability(P[to[i]], D[i], γ, ϕ) / denom[from[i]])
+            ps[i] = A[i] * exp(α + desirability(P[to[i]], D[i], γ, ϕ) - logden[from[i]])
         end
         Y ~ product_distribution(Poisson.(ps))
         return ps
