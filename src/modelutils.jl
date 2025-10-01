@@ -48,6 +48,11 @@ end
 # coefmat(w)
 # mat, p = plotdensrbf_(Float64.(w), cx, cy, .5, Float64.(vals), "test", nothing);
 
+function logsumexp(v::AbstractVector{T}) where T
+    m = maximum(v)
+    return m + log(sum(exp.(v .- m)))
+end
+
 function scale_to_unit(x)
     xmin, xmax = extrema(x)
     return [2 * (xi - xmin) / (xmax - xmin) - 1  for xi in x]
