@@ -1,6 +1,6 @@
 using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
     CategoricalArrays, NamedArrays, LaTeXStrings, Loess, ADTypes, KernelDensity,
-    IterTools, GeoStats, GeoIO, CairoMakie
+    IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
@@ -8,7 +8,9 @@ include("../src/analyze.jl")
 include("../src/georbf.jl")
 include("../src/densityrbf.jl")
 include("../src/results.jl")
-include("../src/model.jl")
+include("../src/baseflow.jl")
+include("../src/fundamental.jl")
+include("../src/gravity.jl")
 include("../src/modelutils.jl")
 include("../src/plotutils.jl")
 include("../src/utils.jl")
@@ -21,10 +23,10 @@ mdl = baseflow(
     load_data(
         "18-25", # age group
         2017, # year
-        .1, # Fraction of rows to use, e.g. 10%
+        1.0, # Fraction of rows to use, e.g. 10%
         "../data/"; ## path of FlowDataGermans.csv and districts.csv
         only_positive = true, # use only positive flows / drop zero flows
-        seed = 1234, # for reproducibility
+        seed = 1234, # for reproducibility when sampling rows
     ),
     ndc = 16, # number of radial basis centers for density transition function
     ngcx = 5 # number of radial basis centers for geographical
@@ -32,13 +34,37 @@ mdl = baseflow(
              # automatically
 );
 
-inits = initialize(mdl);
-@time out = estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
-df, net, pcheck = analyze(out); ## diagnostic plots
+mdl = fundamental(
+    load_data(
+        "18-25", # age group
+        2017, # year
+        1.0, # Fraction of rows to use, e.g. 10%
+        "../data/"; ## path of FlowDataGermans.csv and districts.csv
+        only_positive = true, # use only positive flows / drop zero flows
+        seed = 1234, # for reproducibility when sampling rows
+    )
+);
+
+@time out = estimate(mdl);
+df, net, figs = analyze(out); ## diagnostic plots
+figs
 m, pdtf = plotdtf(out) ## heatmap of density transition function
 geo, pgeo = plotgeo(out, shp, st) ## Map of locational asymmetries
 pcoefs = coefplot(out)
-save("../docs/pcheck.png", pcheck)
-save("../docs/pdtf.png", pdtf)
-save("../docs/pgeo.png", pgeo)
-save("../docs/pcoefs.png", pcoefs)
+
+mdl2 = gravity(
+    load_data(
+        "18-25", # age group
+        2017, # year
+        1.0, # Fraction of rows to use, e.g. 10%
+        "../data/"; ## path of FlowDataGermans.csv and districts.csv
+        only_positive = true, # use only positive flows / drop zero flows
+        seed = 1234, # for reproducibility when sampling rows
+    )
+);
+
+@time out2 = estimate(mdl2);
+df2, net2, figs2 = analyze(out2); ## diagnostic plots
+figs2
+pcoefs2 = coefplot(out2)
+pcoefs
