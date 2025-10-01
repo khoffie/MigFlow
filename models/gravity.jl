@@ -23,15 +23,15 @@ function gravity(data::NamedTuple; ds = 100)
                           N::Int)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
-        β_raw ~ Gamma(10, 1);    β = β_raw / 10
         δ_raw ~ Gamma(10, 1);    δ = δ_raw / 10
+        κ_raw ~ Gamma(10, 1);    κ = κ_raw / 10
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
 
         T = eltype(γ)  # to get dual data type for AD
         ps = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
-            ps[i] = A[i]^β * exp(α + δ * P[to[i]] + log(1 / (D[i] + .01) ^ γ))
+            ps[i] = A[i]^δ * exp(α + κ * P[to[i]] + log(1 / (D[i] + .01) ^ γ))
         end
         Y ~ product_distribution(Poisson.(ps))
         return ps
@@ -39,6 +39,6 @@ function gravity(data::NamedTuple; ds = 100)
 
     mdl = model(Y, from, to, A, P, D, N)
     lb = [-12.0, 1.0, 1.0, 10.0]
-    ub = [-5.0 , 40.0, 40.0, 40.0]
+    ub = [-0.0 , 40.0, 40.0, 40.0]
     return ModelWrapper(mdl, lb, ub, data)
 end
