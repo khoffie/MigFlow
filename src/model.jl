@@ -1,5 +1,7 @@
 function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, ds = 100)
-
+    ## why sort?
+    ## Ndist and radius not needed anymore
+    ## poporig also not needed?
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
     age       = unique(df.agegroup)[1]
