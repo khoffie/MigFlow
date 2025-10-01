@@ -68,3 +68,20 @@ df2, net2, figs2 = analyze(out2); ## diagnostic plots
 figs2
 pcoefs2 = coefplot(out2)
 pcoefs
+
+mdl3 = norm(
+    load_data(
+        "18-25", # age group
+        2017, # year
+        1.0, # Fraction of rows to use, e.g. 10%
+        "../data/"; ## path of FlowDataGermans.csv and districts.csv
+        only_positive = true, # use only positive flows / drop zero flows
+        seed = 1234, # for reproducibility when sampling rows
+    )
+);
+
+@time out3 = estimate(mdl3);
+df2, net2, figs2 = analyze(out2); ## diagnostic plots
+figs2
+pcoefs2 = coefplot(out2)
+pcoefs
