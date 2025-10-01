@@ -7,7 +7,7 @@
 end
 
 struct ModelWrapper
-    mdl::Model # Turing Model
+    mdl::DynamicPPL.Model # Turing Model
     lb::Vector{Float64} # Lower bound for optimization
     ub::Vector{Float64} # Upper bound for optimization
     data::MetaData # Meta data of fit: Age, Year, LP
