@@ -12,7 +12,7 @@ function analyze(r::EstimationResult)
     );
     dev = round(deviance2(df.flows, df.preds), digits = 2)
     net = add_age_year(r, calc_net_df(df));
-    r2nmr = round(cor(net.nmra, net.nmrap)^2, digits = 2)
+    err = round(asymerr(net.asym, net.asymp), digits = 2)
 
     fig = Figure(size = (700, 700), fontsize = 12);
     ax1 = Axis(fig[1, 1],
@@ -25,11 +25,11 @@ function analyze(r::EstimationResult)
     ax2 = Axis(fig[1, 2],
                xlabel = L"(\hat{i} - \hat{o}) / (\hat{i} + \hat{o})",
                ylabel = L"(i - o) / (i + o)",
-               title = L"R^2 = %$r2nmr",
+               title = L"\frac{\textrm{MAE}}{\textrm{SD}} = %$err",
                aspect = DataAspect())
     Makie.ylims!(ax2, (-1, 1))
     Makie.xlims!(ax2, (-1, 1))
-    plotnet!(ax2, net)
+    plotasym!(ax2, net)
 
     ax3 = Axis(fig[2, 1],
                xlabel = L"\text{Distance (km)}",
@@ -107,10 +107,10 @@ function plotfit!(ax, flows, preds)
     smoother!(ax, df.x, df.y)
 end
 
-function plotnet!(ax, net)
-    Makie.scatter!(ax, net.nmrap, net.nmra, alpha = .5)
-    diagonal!(ax, net.nmrap, net.nmra)
-    smoother!(ax, net.nmrap, net.nmra)
+function plotasym!(ax, net)
+    Makie.scatter!(ax, net.asymp, net.asym, alpha = .5)
+    diagonal!(ax, net.asymp, net.asym)
+    smoother!(ax, net.asymp, net.asym)
 end
 
 function plotdist!(ax, flows, preds, dist)
@@ -155,3 +155,5 @@ function deviance2(y, p)
     end
     return 2mean(loss)
 end
+
+asymerr(y, p) = mean(abs.(y .- p)) / std(y)
