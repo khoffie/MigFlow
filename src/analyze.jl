@@ -12,7 +12,7 @@ function analyze(r::EstimationResult)
     );
     dev = round(deviance2(df.flows, df.preds), digits = 2)
     net = add_age_year(r, calc_net_df(df));
-    r2nmr = round(cor(net.nmr, net.nmrp)^2, digits = 2)
+    r2nmr = round(cor(net.nmra, net.nmrap)^2, digits = 2)
 
     fig = Figure(size = (700, 700), fontsize = 12);
     ax1 = Axis(fig[1, 1],
@@ -49,9 +49,12 @@ function calc_net(df, col)
     nett = combine(DataFrames.groupby(df, :todist), col => sum)
     rename!(nett, string(col) * "_sum" => :influx)
     net = innerjoin(netf, nett, on = [:fromdist => :todist])
+    pop = unique(df, :fromdist)[!, [:fromdist, :A]]
+    net = innerjoin(net, pop, on = [:fromdist])
     net.net = net.influx .- net.outflux
     net.total = net.influx .+ net.outflux
-    net.nmr = net.net ./ net.total
+    net.asym = net.net ./ net.total
+    net.nmra = net.net ./ net.A
     return net
 end
 
@@ -105,9 +108,9 @@ function plotfit!(ax, flows, preds)
 end
 
 function plotnet!(ax, net)
-    Makie.scatter!(ax, net.nmrp, net.nmr, alpha = .5)
-    diagonal!(ax, net.nmrp, net.nmr)
-    smoother!(ax, net.nmrp, net.nmr)
+    Makie.scatter!(ax, net.nmrap, net.nmra, alpha = .5)
+    diagonal!(ax, net.nmrap, net.nmra)
+    smoother!(ax, net.nmrap, net.nmra)
 end
 
 function plotdist!(ax, flows, preds, dist)
