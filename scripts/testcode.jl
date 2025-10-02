@@ -35,20 +35,29 @@ mdl = baseflow(
 
 serialize("./output/anchored", @time estimate(mdl))
 
-# out = deserialize("../output/anchored");
-# df, net, figs = analyze(out)
-# coefplot(out)
-# m, pdtf = plotdtf(out)
-# geo, pgeo = plotgeo(out, shp, st)
-# extract_params(out)
+out = deserialize("./output/anchored");
+rename!(out.ses, [:coef => :coef_a, :se => :se_a])
+out2 = deserialize("./output/optim18-25")[17];
+df = leftjoin(out.ses, out2.ses, on = :name, makeunique = true)
+df.diff = df.coef_a .- df.coef
+fig = Figure(size = (1000, 400));
+ax = Axis(fig[1, 1],
+          xticks = (1:54, df.name),
+          xgridvisible = false, ygridvisible = false,
+          title = "Differences in estimates: anchored - non-anchored",
+          ylabel = "Difference")
+lines!(ax, 1:54, df.diff)
+hlines!(ax, 0, color = :darkred)
+fig
+df
+fig = Figure(size = (800, 400));
+plotdtf(out, (-1, 1), fig, 1, 1, false)
+plotdtf(out2, (-1, 1), fig, 1, 2)
+prettytitle!(fig, "Left: Anchord, Right: Not anchored", -1)
+fig
 
-# out.ses
-# out2[17].ses
-# out2.ses
-# out2 = deserialize("./output/optim18-25");
-
-# cdf, net, figs = analyze(out)
-# coefplot(out)
-# m, pdtf = plotdtf(out)
-# geo, pgeo = plotgeo(out, shp, st)
-# extract_params(out)
+fig = Figure(size = (600, 400));
+plotgeo(out, shp, st, (-.2, .6), fig, 1, 1, false)
+plotgeo(out2, shp, st, (-.2, .6), fig, 1, 2)
+prettytitle!(fig, "Left: Anchord, Right: Not anchored", -1)
+fig
