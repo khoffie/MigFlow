@@ -8,16 +8,15 @@ include("../src/analyze.jl")
 include("../src/georbf.jl")
 include("../src/densityrbf.jl")
 include("../src/results.jl")
-include("../src/baseflow.jl")
-include("../src/fundamental.jl")
-include("../src/gravity.jl")
 include("../src/modelutils.jl")
 include("../src/plotutils.jl")
 include("../src/utils.jl")
 include("../src/coefplot.jl")
 
-shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
-st = GeoIO.load("../data/clean/shapes/states.shp");
+include("../models/baseflow.jl")
+
+# shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
+# st = GeoIO.load("../data/clean/shapes/states.shp");
 
 mdl = baseflow(
     load_data(
@@ -28,7 +27,7 @@ mdl = baseflow(
         only_positive = true, # use only positive flows / drop zero flows
         seed = 1234, # for reproducibility when sampling rows
     ),
-    ndc = 3, # number of radial basis centers for density transition function
+    ndc = 9, # number of radial basis centers for density transition function
     ngcx = 4 # number of radial basis centers for geographical
              # asymmetries in x direction. y direction is set
              # automatically
