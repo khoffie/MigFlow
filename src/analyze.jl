@@ -40,7 +40,8 @@ function analyze(r::EstimationResult)
                xlabel = L"\log(Pop_d \cdot Pop_o)",
                ylabel = L"\log(y / \hat{y})")
     plotpop!(ax4, df.flows, df.preds, df.A, df.P)
-    return (; df, net, fig)
+    quick = DataFrame(agegroup = a, year = y, deviance = dev, asymerr = err)
+    return (; df, net, quick, fig)
 end
 
 function calc_net(df, col)
