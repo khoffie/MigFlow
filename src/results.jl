@@ -4,7 +4,7 @@ function readresults(path = "./output", pattern = nothing)
     files = files[contains.(files, pattern)]
     ## extracting age group
     ages = string.([s[end] for s in split.(files, "/")])
-    ages = "age" .* ([s[2] for s in split.(ages, "optim")])
+    ages = "age" .* ([s[2] for s in split.(ages, pattern)])
     ages = Symbol.(replace.(ages, "-" => "to"))
 
     data = (; (
