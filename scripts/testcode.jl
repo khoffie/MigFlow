@@ -15,8 +15,8 @@ include("../src/coefplot.jl")
 
 include("../models/baseflow.jl")
 
-# shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
-# st = GeoIO.load("../data/clean/shapes/states.shp");
+shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
+st = GeoIO.load("../data/clean/shapes/states.shp");
 
 mdl = baseflow(
     load_data(
@@ -27,10 +27,28 @@ mdl = baseflow(
         only_positive = true, # use only positive flows / drop zero flows
         seed = 1234, # for reproducibility when sampling rows
     ),
-    ndc = 9, # number of radial basis centers for density transition function
-    ngcx = 4 # number of radial basis centers for geographical
+    ndc = 16, # number of radial basis centers for density transition function
+    ngcx = 5 # number of radial basis centers for geographical
              # asymmetries in x direction. y direction is set
              # automatically
 );
 
-serialize("../output/anchored", estimate(mdl))
+serialize("./output/anchored", @time estimate(mdl))
+
+# out = deserialize("../output/anchored");
+# df, net, figs = analyze(out)
+# coefplot(out)
+# m, pdtf = plotdtf(out)
+# geo, pgeo = plotgeo(out, shp, st)
+# extract_params(out)
+
+# out.ses
+# out2[17].ses
+# out2.ses
+# out2 = deserialize("./output/optim18-25");
+
+# cdf, net, figs = analyze(out)
+# coefplot(out)
+# m, pdtf = plotdtf(out)
+# geo, pgeo = plotgeo(out, shp, st)
+# extract_params(out)
