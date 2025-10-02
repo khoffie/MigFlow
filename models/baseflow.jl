@@ -17,6 +17,7 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
     poporig    = districts.pop
     D          = fdist.(df.dist, ds)
     R          = scale_to_unit(log.(districts.density ./ median(districts.density)))
+    anchor     = median(R)
     Rmin, Rmax = extrema(R)
     cx         = [range(Rmin, Rmax, Int(sqrt(ndc)));]
     cy         = [range(Rmin, Rmax, Int(sqrt(ndc)));]
@@ -44,7 +45,7 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
                           xmin::Float64, xmax::Float64, ymin::Float64, ymax::Float64,
                           Rmin::Float64, Rmax::Float64,
                           ndc::Int, ngcx::Int, ngcy::Int,
-                          cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
+                          cx, cy, rbf_scale, cxgeo, cygeo, geo_scale, anchor)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
         # β_raw ~ Gamma(1, 1);     β = β_raw
@@ -60,7 +61,7 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
         @inbounds for i in 1:N
             ps[i] = A[i] * exp(α +
                 desirability(P[to[i]], D[i],
-                             interp(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale),
+                             interp_anchor(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale, anchor),
                              interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
                              interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
                               γ, ϕ))
@@ -71,7 +72,8 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
 
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
-                ndc, ngcx, ngcy, cx, cy, rbf_scale, cxgeo, cygeo, geo_scale)
+                ndc, ngcx, ngcy, cx, cy, rbf_scale, cxgeo, cygeo,
+                geo_scale, anchor)
     lb, ub = bound(age, ndc, ngcx, ngcy)
     return ModelWrapper(mdl, lb, ub, data)
 end

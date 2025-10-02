@@ -33,6 +33,28 @@ function interp(x, y, w, cx, cy, scale)
     return res
 end
 
+function interp_anchor(x, y, w, cx, cy, scale, anchor)
+    # value at (x,y)
+    res = zero(x)
+    @inbounds for i in eachindex(cx), j in reverse(eachindex(cy))
+        dx = x - cx[i]
+        dy = y - cy[length(cy) + 1 - j]
+        r = sqrt(dx^2 + dy^2) / scale
+        res += w[j, i] * rbf(r)
+    end
+
+    # baseline at anchor
+    baseline = zero(res)
+    @inbounds for i in eachindex(cx), j in reverse(eachindex(cy))
+        dx = anchor - cx[i]
+        dy = anchor - cy[length(cy) + 1 - j]
+        r = sqrt(dx^2 + dy^2) / scale
+        baseline += w[j, i] * rbf(r)
+    end
+
+    return res .- baseline
+end
+
 # ### Check density RBF
 # vals = range(-1, 1, 1000)
 # cx = collect(range(-1, 1, 4))
