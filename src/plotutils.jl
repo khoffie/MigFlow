@@ -35,3 +35,9 @@ function hideall!(ax)
     hidedecorations!(ax)
     hidespines!(ax)
 end
+
+function axlims(x)
+    min = minimum(x)
+    max = maximum(x)
+    return min - .1min, max + .1max
+end

@@ -12,7 +12,8 @@ function analyze(r::EstimationResult)
     );
     dev = round(deviance2(df.flows, df.preds), digits = 2)
     net = add_age_year(r, calc_net_df(df));
-    r2nmr = round(cor(net.nmr, net.nmrp)^2, digits = 2)
+    err = round(asymerr(net.asym, net.asymp), digits = 2)
+    trivial = round(asymerr(net.asym, 0), digits = 2)
 
     fig = Figure(size = (700, 700), fontsize = 12);
     ax1 = Axis(fig[1, 1],
@@ -25,11 +26,11 @@ function analyze(r::EstimationResult)
     ax2 = Axis(fig[1, 2],
                xlabel = L"(\hat{i} - \hat{o}) / (\hat{i} + \hat{o})",
                ylabel = L"(i - o) / (i + o)",
-               title = L"R^2 = %$r2nmr",
+               title = L"\frac{\textrm{MAE}}{\textrm{SD}} = %$err",
                aspect = DataAspect())
     Makie.ylims!(ax2, (-1, 1))
     Makie.xlims!(ax2, (-1, 1))
-    plotnet!(ax2, net)
+    plotasym!(ax2, net)
 
     ax3 = Axis(fig[2, 1],
                xlabel = L"\text{Distance (km)}",
@@ -40,7 +41,9 @@ function analyze(r::EstimationResult)
                xlabel = L"\log(Pop_d \cdot Pop_o)",
                ylabel = L"\log(y / \hat{y})")
     plotpop!(ax4, df.flows, df.preds, df.A, df.P)
-    return (; df, net, fig)
+    quick = DataFrame(agegroup = a, year = y, deviance = dev,
+                      asymerr = err, asymtriv = trivial)
+    return (; df, net, quick, fig)
 end
 
 function calc_net(df, col)
@@ -49,9 +52,12 @@ function calc_net(df, col)
     nett = combine(DataFrames.groupby(df, :todist), col => sum)
     rename!(nett, string(col) * "_sum" => :influx)
     net = innerjoin(netf, nett, on = [:fromdist => :todist])
+    pop = unique(df, :fromdist)[!, [:fromdist, :A]]
+    net = innerjoin(net, pop, on = [:fromdist])
     net.net = net.influx .- net.outflux
     net.total = net.influx .+ net.outflux
-    net.nmr = net.net ./ net.total
+    net.asym = net.net ./ net.total
+    net.nmra = net.net ./ net.A
     return net
 end
 
@@ -104,10 +110,10 @@ function plotfit!(ax, flows, preds)
     smoother!(ax, df.x, df.y)
 end
 
-function plotnet!(ax, net)
-    Makie.scatter!(ax, net.nmrp, net.nmr, alpha = .5)
-    diagonal!(ax, net.nmrp, net.nmr)
-    smoother!(ax, net.nmrp, net.nmr)
+function plotasym!(ax, net)
+    Makie.scatter!(ax, net.asymp, net.asym, alpha = .5)
+    diagonal!(ax, net.asymp, net.asym)
+    smoother!(ax, net.asymp, net.asym)
 end
 
 function plotdist!(ax, flows, preds, dist)
@@ -152,3 +158,5 @@ function deviance2(y, p)
     end
     return 2mean(loss)
 end
+
+asymerr(y, p) = mean(abs.(y .- p)) / std(y)

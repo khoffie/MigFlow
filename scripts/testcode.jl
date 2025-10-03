@@ -14,6 +14,8 @@ include("../src/utils.jl")
 include("../src/coefplot.jl")
 
 include("../models/baseflow.jl")
+include("../models/fundamental.jl")
+include("../models/gravity.jl")
 
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp");
@@ -33,31 +35,28 @@ mdl = baseflow(
              # automatically
 );
 
-serialize("./output/anchored", @time estimate(mdl))
+out = @time estimate(mdl; ret_maps = true);
+cm = vcov(out[2])
+cormat =  cov2cor(cm)
+nms = out[1].ses.name
 
-out = deserialize("./output/anchored");
-rename!(out.ses, [:coef => :coef_a, :se => :se_a])
-out2 = deserialize("./output/optim18-25")[17];
-df = leftjoin(out.ses, out2.ses, on = :name, makeunique = true)
-df.diff = df.coef_a .- df.coef
-fig = Figure(size = (1000, 400));
+fig = Figure(resolution = (800, 800));
 ax = Axis(fig[1, 1],
-          xticks = (1:54, df.name),
-          xgridvisible = false, ygridvisible = false,
-          title = "Differences in estimates: anchored - non-anchored",
-          ylabel = "Difference")
-lines!(ax, 1:54, df.diff)
-hlines!(ax, 0, color = :darkred)
-fig
-df
-fig = Figure(size = (800, 400));
-plotdtf(out, (-1, 1), fig, 1, 1, false)
-plotdtf(out2, (-1, 1), fig, 1, 2)
-prettytitle!(fig, "Left: Anchord, Right: Not anchored", -1)
+    title = "Correlation Matrix",
+    xticks = (1:54, nms),
+    yticks = (1:54, nms)
+    #xticklabelrotation = π/2,  # rotate to avoid overlap
+)
+
+hm = heatmap!(ax, Matrix(cormat))
+Colorbar(fig[1, 2], hm, label = "Correlation")
 fig
 
-fig = Figure(size = (600, 400));
-plotgeo(out, shp, st, (-.2, .6), fig, 1, 1, false)
-plotgeo(out2, shp, st, (-.2, .6), fig, 1, 2)
-prettytitle!(fig, "Left: Anchord, Right: Not anchored", -1)
-fig
+fig2 = Figure(size = (1000, 400));
+ax = Axis(fig2[1, 1],
+          xticks = (1:53, nms[2:end]),
+          xgridvisible = false, ygridvisible = false,
+          title = "correlations with alpha",
+          xticklabelrotation = -π/4)
+barplot!(ax, 1:53, cormat[1, 2 : end].array)
+fig2

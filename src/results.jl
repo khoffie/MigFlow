@@ -1,9 +1,10 @@
-function readresults(path = "./output")
+function readresults(path = "./output", pattern = nothing)
     years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
     files = readdir(path; join = true)
+    files = files[contains.(files, pattern)]
     ## extracting age group
     ages = string.([s[end] for s in split.(files, "/")])
-    ages = "age" .* ([s[2] for s in split.(ages, "optim")])
+    ages = "age" .* ([s[2] for s in split.(ages, pattern)])
     ages = Symbol.(replace.(ages, "-" => "to"))
 
     data = (; (
