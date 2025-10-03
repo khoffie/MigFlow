@@ -1,6 +1,6 @@
 using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
     CategoricalArrays, NamedArrays, LaTeXStrings, Loess, ADTypes, KernelDensity,
-    IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL
+    IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
@@ -8,13 +8,14 @@ include("../src/analyze.jl")
 include("../src/georbf.jl")
 include("../src/densityrbf.jl")
 include("../src/results.jl")
-include("../src/baseflow.jl")
-include("../src/fundamental.jl")
-include("../src/gravity.jl")
 include("../src/modelutils.jl")
 include("../src/plotutils.jl")
 include("../src/utils.jl")
 include("../src/coefplot.jl")
+
+include("../models/baseflow.jl")
+include("../models/fundamental.jl")
+include("../models/gravity.jl")
 
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp");
@@ -34,54 +35,28 @@ mdl = baseflow(
              # automatically
 );
 
-mdl = fundamental(
-    load_data(
-        "18-25", # age group
-        2017, # year
-        1.0, # Fraction of rows to use, e.g. 10%
-        "../data/"; ## path of FlowDataGermans.csv and districts.csv
-        only_positive = true, # use only positive flows / drop zero flows
-        seed = 1234, # for reproducibility when sampling rows
-    )
-);
+out = @time estimate(mdl; ret_maps = true);
+cm = vcov(out[2])
+cormat =  cov2cor(cm)
+nms = out[1].ses.name
 
-@time out = estimate(mdl);
-df, net, figs = analyze(out); ## diagnostic plots
-figs
-m, pdtf = plotdtf(out) ## heatmap of density transition function
-geo, pgeo = plotgeo(out, shp, st) ## Map of locational asymmetries
-pcoefs = coefplot(out)
+fig = Figure(resolution = (800, 800));
+ax = Axis(fig[1, 1],
+    title = "Correlation Matrix",
+    xticks = (1:54, nms),
+    yticks = (1:54, nms)
+    #xticklabelrotation = π/2,  # rotate to avoid overlap
+)
 
-mdl2 = gravity(
-    load_data(
-        "18-25", # age group
-        2017, # year
-        1.0, # Fraction of rows to use, e.g. 10%
-        "../data/"; ## path of FlowDataGermans.csv and districts.csv
-        only_positive = true, # use only positive flows / drop zero flows
-        seed = 1234, # for reproducibility when sampling rows
-    )
-);
+hm = heatmap!(ax, Matrix(cormat))
+Colorbar(fig[1, 2], hm, label = "Correlation")
+fig
 
-@time out2 = estimate(mdl2);
-df2, net2, figs2 = analyze(out2); ## diagnostic plots
-figs2
-pcoefs2 = coefplot(out2)
-pcoefs
-
-mdl3 = norm(
-    load_data(
-        "18-25", # age group
-        2017, # year
-        1.0, # Fraction of rows to use, e.g. 10%
-        "../data/"; ## path of FlowDataGermans.csv and districts.csv
-        only_positive = true, # use only positive flows / drop zero flows
-        seed = 1234, # for reproducibility when sampling rows
-    )
-);
-
-@time out3 = estimate(mdl3);
-df2, net2, figs2 = analyze(out2); ## diagnostic plots
-figs2
-pcoefs2 = coefplot(out2)
-pcoefs
+fig2 = Figure(size = (1000, 400));
+ax = Axis(fig2[1, 1],
+          xticks = (1:53, nms[2:end]),
+          xgridvisible = false, ygridvisible = false,
+          title = "correlations with alpha",
+          xticklabelrotation = -π/4)
+barplot!(ax, 1:53, cormat[1, 2 : end].array)
+fig2
