@@ -13,6 +13,7 @@ function analyze(r::EstimationResult)
     dev = round(deviance2(df.flows, df.preds), digits = 2)
     net = add_age_year(r, calc_net_df(df));
     err = round(asymerr(net.asym, net.asymp), digits = 2)
+    trivial = round(asymerr(net.asym, 0), digits = 2)
 
     fig = Figure(size = (700, 700), fontsize = 12);
     ax1 = Axis(fig[1, 1],
@@ -40,7 +41,8 @@ function analyze(r::EstimationResult)
                xlabel = L"\log(Pop_d \cdot Pop_o)",
                ylabel = L"\log(y / \hat{y})")
     plotpop!(ax4, df.flows, df.preds, df.A, df.P)
-    quick = DataFrame(agegroup = a, year = y, deviance = dev, asymerr = err)
+    quick = DataFrame(agegroup = a, year = y, deviance = dev,
+                      asymerr = err, asymtriv = trivial)
     return (; df, net, quick, fig)
 end
 
