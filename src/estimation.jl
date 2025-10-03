@@ -20,6 +20,7 @@ struct EstimationResult
     mdl::ModelWrapper
     prd::Vector{Float64} # Model predictions
     ses::DataFrame ## standard errors
+    cvm::NamedMatrix ## covariance matrix
 end
 
 function estimate(mdl::ModelWrapper; ret_maps = false, optim_kwargs = (;))
@@ -28,7 +29,8 @@ function estimate(mdl::ModelWrapper; ret_maps = false, optim_kwargs = (;))
     chn = makechain(maps)
     prd = Turing.returned(mdl.mdl, chn)[1]
     ses = setable(maps)
-    res = EstimationResult(chn, mdl, prd, ses)
+    cvm = vcov(maps)
+    res = EstimationResult(chn, mdl, prd, ses, cvm)
     if ret_maps; res = res, maps; end
     return res
 end
