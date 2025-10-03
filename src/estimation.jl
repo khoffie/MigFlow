@@ -22,13 +22,15 @@ struct EstimationResult
     ses::DataFrame ## standard errors
 end
 
-function estimate(mdl::ModelWrapper; show_plt = true, optim_kwargs = (;))
+function estimate(mdl::ModelWrapper; ret_maps = false, optim_kwargs = (;))
     maps = runoptim(mdl; optim_kwargs...)
     mdl.data.lp = maps.lp
     chn = makechain(maps)
     prd = Turing.returned(mdl.mdl, chn)[1]
     ses = setable(maps)
-    return EstimationResult(chn, mdl, prd, ses)
+    res = EstimationResult(chn, mdl, prd, ses)
+    if ret_maps; res = res, maps; end
+    return res
 end
 
 function runoptim(mdl::ModelWrapper;
