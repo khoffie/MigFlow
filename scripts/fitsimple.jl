@@ -20,7 +20,7 @@ end
 function fitmodels(models, ages, years)
     for  m in models
         for a in ages
-            name = "$(m)$(a)"
+            name = "$(m)_$(a)"
             results = Vector{EstimationResult}(undef, length(years))
             Threads.@threads for i in eachindex(years)
                 results[i] = estimate(defmodel(m, a, years[i]))
@@ -35,4 +35,4 @@ ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 years = vcat(2000:2002, 2004:2017)
 models =  [fundamental, norm, gravity]
 
-fitmodels(models, ages, years)
+fitmodels([fundamental], [ages[1]], years)
