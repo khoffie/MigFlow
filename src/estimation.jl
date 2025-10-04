@@ -15,8 +15,8 @@ end
 
 struct EstimationResult
     chn::Chains # Turing MCMC Chain, optimized parameters are stored
-                # here, because postprocessing functions like plotting
-                # work with optimization and sampling
+                # here, because then postprocessing functions like
+                # plotting work with optimization and sampling
     mdl::ModelWrapper
     prd::Vector{Float64} # Model predictions
     ses::DataFrame ## standard errors
