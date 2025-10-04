@@ -1,4 +1,5 @@
 getageyear(r) = r.mdl.meta.age, r.mdl.meta.year
+getmodel(r) = r.mdl.meta.model
 
 function addlines!(ax, df, group, xcol, ycol, lw = 1)
     groups = unique(df[!, group])
