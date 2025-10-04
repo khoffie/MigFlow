@@ -22,8 +22,8 @@ st = GeoIO.load("../data/clean/shapes/states.shp");
 
 mdl = baseflow(
     load_data(
-        "18-25", # age group
-        2017, # year
+        "25-30", # age group
+        2002, # year
         1.0, # Fraction of rows to use, e.g. 10%
         "../data/"; ## path of FlowDataGermans.csv and districts.csv
         only_positive = true, # use only positive flows / drop zero flows
@@ -35,22 +35,15 @@ mdl = baseflow(
              # automatically
 );
 
-out = @time estimate(mdl; ret_maps = true);
-cm = vcov(out[2])
-cormat =  cov2cor(cm)
-nms = out[1].ses.name
+out = @time estimate(mdl);
+df, net, quick, figs = analyze(out)
+m, p1 = plotdtf(out)
+g, p2 = plotgeo(out, shp, st)
+figs
+p1
+p2
 
-fig = Figure(resolution = (800, 800));
-ax = Axis(fig[1, 1],
-    title = "Correlation Matrix",
-    xticks = (1:54, nms),
-    yticks = (1:54, nms)
-    #xticklabelrotation = π/2,  # rotate to avoid overlap
-)
-
-hm = heatmap!(ax, Matrix(cormat))
-Colorbar(fig[1, 2], hm, label = "Correlation")
-fig
+p3  = plotcovcor(out)
 
 fig2 = Figure(size = (1000, 400));
 ax = Axis(fig2[1, 1],
@@ -60,3 +53,4 @@ ax = Axis(fig2[1, 1],
           xticklabelrotation = -π/4)
 barplot!(ax, 1:53, cormat[1, 2 : end].array)
 fig2
+cormat
