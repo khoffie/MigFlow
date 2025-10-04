@@ -1,6 +1,7 @@
  Base.@kwdef mutable struct MetaData
      ## mutable because age and year are assigned before fitting and
      ## lp can only be assigned afterwards
+     model:: String # model, on of [baseflow, fundamental, normalized, gravity]
      age::String
      year::Int
      lp::Union{Nothing,Float64} = nothing
@@ -10,7 +11,7 @@ struct ModelWrapper
     mdl::DynamicPPL.Model # Turing Model
     lb::Vector{Float64} # Lower bound for optimization
     ub::Vector{Float64} # Upper bound for optimization
-    data::MetaData # Meta data of fit: Age, Year, LP
+    meta::MetaData # Meta data of fit: Age, Year, LP
 end
 
 struct EstimationResult
@@ -25,7 +26,7 @@ end
 
 function estimate(mdl::ModelWrapper; ret_maps = false, optim_kwargs = (;))
     maps = runoptim(mdl; optim_kwargs...)
-    mdl.data.lp = maps.lp
+    mdl.meta.lp = maps.lp
     chn = makechain(maps)
     prd = Turing.returned(mdl.mdl, chn)[1]
     ses = setable(maps)
