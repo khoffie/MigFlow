@@ -14,7 +14,8 @@ include("../models/norm.jl")
 outp = "./output/"
 
 function defmodel(m, age, year)
-    return m(load_data(age, year, 1.0, "../data/"; only_positive = true));
+    return m(load_data(age, year, 1.0, "../data/"; only_positive = true);
+             ndc = 16, ngcx = 5);
 end
 
 function fitmodels(models, ages, years)
@@ -23,7 +24,8 @@ function fitmodels(models, ages, years)
             name = "$(m)_$(a)"
             results = Vector{EstimationResult}(undef, length(years))
             Threads.@threads for i in eachindex(years)
-                results[i] = estimate(defmodel(m, a, years[i]))
+                mdl = defmodel(m, a, years[i])
+                results[i] = @time estimate(mdl)
             end
             serialize(joinpath(outp, name), results)
             println("$name done")
@@ -33,6 +35,6 @@ end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 years = vcat(2000:2002, 2004:2017)
-models =  [fundamental, norm, gravity]
+models =  [baseflow, fundamental, norm, gravity]
 
-fitmodels([fundamental], [ages[1]], years)
+fitmodels([baseflow], ages, years)
