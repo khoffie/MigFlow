@@ -36,7 +36,7 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
     cxgeo      = [range(xlim[1], xlim[2], ngcx);]
     cygeo      = [range(ylim[1], ylim[2], ngcy);]
     geo_scale  = rbfscale(cxgeo, cygeo, kgeo)
-    data       = MetaData(age = age, year = year)
+    meta       = MetaData(model = "baseflow", age = age, year = year)
 
     function desirability(P, D, Q, Gfrom, Gto, γ, ϕ)
         P + log(ϕ + (1 - ϕ) / ((D + 0.01) ^ γ)) + Q + (Gto - Gfrom)
@@ -79,5 +79,5 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
                 ndc, ngcx, ngcy, cx, cy, rbf_scale, cxgeo, cygeo,
                 geo_scale, anchor)
     lb, ub = bound(age, ndc, ngcx, ngcy)
-    return ModelWrapper(mdl, lb, ub, data)
+    return ModelWrapper(mdl, lb, ub, meta)
 end

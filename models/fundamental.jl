@@ -16,7 +16,7 @@ function fundamental(data::NamedTuple; ds = 100)
     D          = fdist.(df.dist, ds)
     Ndist      = length(districts.distcode)
     N          = length(Y)
-    data       = MetaData(age = age, year = year)
+    meta       = MetaData(model = "fundamental", age = age, year = year)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
@@ -39,5 +39,5 @@ function fundamental(data::NamedTuple; ds = 100)
     mdl = model(Y, from, to, A, P, D, N)
     lb = [-12.0, 10.0, 1.0]
     ub = [-5.0 , 40.0, 50.0]
-    return ModelWrapper(mdl, lb, ub, data)
+    return ModelWrapper(mdl, lb, ub, meta)
 end

@@ -17,7 +17,7 @@ function norm(data::NamedTuple; ds = 100)
     N          = length(Y)
     Ndist      = length(districts.distcode)
     radius     = fradius.(districts.pop, districts.density, ds)
-    data       = MetaData(age = age, year = year)
+    meta       = MetaData(model = "normalized", age = age, year = year)
 
     desirability(P, D, γ, ϕ) = P + log(ϕ + (1 - ϕ) / ((D + 0.01) ^ γ))
 
@@ -60,5 +60,5 @@ function norm(data::NamedTuple; ds = 100)
     mdl = model(Y, from, to, A, P, D, Ndist, N, radius)
     lb = [-12.0, 0.0, 10.0, 1.0]
     ub = [0.0,   100.0, 40.0, 50.0]
-    return ModelWrapper(mdl, lb, ub, data)
+    return ModelWrapper(mdl, lb, ub, meta)
 end
