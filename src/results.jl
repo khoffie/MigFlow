@@ -1,4 +1,15 @@
-function readresults(path = "./output", pattern = nothing)
+function readresults(patterns::Vector{<:AbstractString}, path="./output")
+    results = NamedTuple()
+    for pat in patterns
+        res, ages = readresults(pat, path)  # call your old function
+        m = res[1][1].mdl.meta.model        # extract model name string
+        results = merge(results, (; Symbol(m) => res))
+    end
+    ages = intersect([keys(r) for r in results])[1]
+    return results, ages
+end
+
+function readresults(pattern::AbstractString, path = "./output")
     years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
     files = readdir(path; join = true)
     files = files[contains.(files, pattern)]
