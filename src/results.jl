@@ -1,8 +1,8 @@
 function readresults(patterns::Vector{<:AbstractString}, path="./output")
     results = NamedTuple()
     for pat in patterns
-        res, ages = readresults(pat, path)  # call your old function
-        m = res[1][1].mdl.meta.model        # extract model name string
+        res, ages = readresults(pat, path)
+        m = res[1][1].mdl.meta.model  # extract model name string
         results = merge(results, (; Symbol(m) => res))
     end
     ages = intersect([keys(r) for r in results])[1]
@@ -30,15 +30,19 @@ function reorder(results)
     return results[sortperm(years)]
 end
 
-function loopstruct(s, f, ages = nothing, years = nothing)
-    if isnothing(ages); ages = keys(s); end
-    if isnothing(years); years = keys(s[ages[1]]); end
-    res = Matrix{Any}(undef, length(ages), length(years))
-    for i in eachindex(ages)
-        a = ages[i]
-        for j in eachindex(years)
-            y = years[j]
-            res[i, j] = f(getfield(getfield(s, a), y))
+function loopstruct(s, f, models = nothing, ages = nothing, years = nothing)
+    if isnothing(models); models = keys(s); end
+    if isnothing(ages); ages = keys(s[models[1]]); end
+    if isnothing(years); years = keys(s[models[1]][ages[1]]); end
+    res = Array{Any}(undef, length(models), length(ages), length(years))
+    for k in eachindex(models)
+        m = models[k]
+        for i in eachindex(ages)
+            a = ages[i]
+            for j in eachindex(years)
+                y = years[j]
+                res[k, i, j] = f(getfield(getfield(getfield(s, m), a), y))
+            end
         end
     end
     return res
