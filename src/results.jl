@@ -15,7 +15,7 @@ function readresults(path = "./output", pattern = nothing)
 end
 
 function reorder(results)
-    years = [r.mdl.data.year for r in results]
+    years = [r.mdl.meta.year for r in results]
     return results[sortperm(years)]
 end
 
