@@ -1,4 +1,5 @@
 function plotcovcor(r::EstimationResult)
+    a, y = getageyear(r)
     crm =  cov2cor(r.cvm)
     nms = r.ses.name
     n = length(nms)
@@ -20,5 +21,6 @@ function plotcovcor(r::EstimationResult)
               )
     hm = heatmap!(ax2, Matrix(r.cvm))
     Colorbar(fig[2, 2], hm, label = "Covariance", vertical = false)
+    prettytitle!(fig, "$a, $y")
     return fig
 end
