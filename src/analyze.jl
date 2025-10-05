@@ -38,7 +38,7 @@ function analyze(r::EstimationResult)
     plotdist!(ax3, df.flows, df.preds, df.dist)
 
     ax4 = Axis(fig[2, 2],
-               xlabel = L"\log(Pop_d \cdot Pop_o)",
+               xlabel = L"\log(A_o  P_d)",
                ylabel = L"\log(y / \hat{y})")
     plotpop!(ax4, df.flows, df.preds, df.A, df.P)
     quick = DataFrame(agegroup = a, year = y, deviance = dev,
@@ -134,21 +134,6 @@ function plotpop!(ax, flows, preds, frompop, topop)
     Makie.scatter!(ax, x, y, alpha = .5)
     Makie.hlines!(ax, [0], color = :darkred, linewidth = 2)
     smoother!(ax, x, y)
-end
-
-function diagonal!(ax, x, y)
-    xmin, xmax = extrema(x)
-    ymin, ymax = extrema(y)
-    low = min(xmin, ymin)
-    high = max(xmax, ymax)
-    Makie.lines!(ax, [low, high], [low, high],
-          color = :darkred, linewidth = 2)
-end
-
-function smoother!(ax, x, y, col = "red", span = .5)
-    us = range(extrema(x)...; step = .1)
-    vs = Loess.predict(loess(x, y; span = span), us)
-    return Makie.lines!(ax, us, vs, color = col, linewidth = 4)
 end
 
 function deviance2(y, p)

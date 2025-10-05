@@ -42,3 +42,18 @@ function axlims(x)
     max = maximum(x)
     return min - .1min, max + .1max
 end
+
+function diagonal!(ax, x, y)
+    xmin, xmax = extrema(x)
+    ymin, ymax = extrema(y)
+    low = min(xmin, ymin)
+    high = max(xmax, ymax)
+    Makie.lines!(ax, [low, high], [low, high],
+          color = :darkred, linewidth = 2)
+end
+
+function smoother!(ax, x, y, col = "red", span = .5)
+    us = range(extrema(x)...; step = .1)
+    vs = Loess.predict(loess(x, y; span = span), us)
+    return Makie.lines!(ax, us, vs, color = col, linewidth = 4)
+end
