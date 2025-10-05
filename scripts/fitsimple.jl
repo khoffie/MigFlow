@@ -14,8 +14,8 @@ include("../models/norm.jl")
 outp = "./output/"
 
 function defmodel(m, age, year)
-    return m(load_data(age, year, 1.0, "../data/"; only_positive = true);
-             ndc = 16, ngcx = 5);
+    data = load_data(age, year, 1.0, "../data/"; only_positive = true)
+    return m == baseflow ? m(data; ndc = 16, ngcx = 5) : m(data)
 end
 
 function fitmodels(models, ages, years)
