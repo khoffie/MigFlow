@@ -1,4 +1,4 @@
-function fundamental(data::NamedTuple; ds = 100)
+function fundamental(data::NamedTuple; ds = 100, custom)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -20,23 +20,33 @@ function fundamental(data::NamedTuple; ds = 100)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
-                          N::Int)
+                          N::Int, custom)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
 
         T = eltype(γ)  # to get dual data type for AD
-        ps = Vector{T}(undef, N)
-
+        λ = Vector{T}(undef, N)
         @inbounds for i in 1:N
-            ps[i] = A[i] * exp(α + P[to[i]] + log(ϕ + (1 - ϕ) / (D[i] + .01) ^ γ))
+            λ[i] = A[i] * exp(α + P[to[i]] + log(ϕ + (1 - ϕ) / (D[i] + .01) ^ γ))
         end
-        Y ~ product_distribution(Poisson.(ps))
-        return ps
+
+        if custom == "no"
+            for i in 1:N
+                logp = Y[i] * log(λ[i]) - λ[i] - logfactorial(Y[i]) - log1mexp(-λ[i])
+                Turing.@addlogprob! logp
+            end
+        else
+            ## Y ~ product_distribution(TruncatedPoisson.(ps))
+            @inbounds for i in 1:N
+            Y[i] ~ TruncatedPoisson(λ[i])
+            end
+        end
+        return λ ./ (1 .- exp.(-λ))
     end
 
-    mdl = model(Y, from, to, A, P, D, N)
+    mdl = model(Y, from, to, A, P, D, N, custom)
     lb = [-12.0, 10.0, 1.0]
     ub = [-5.0 , 40.0, 50.0]
     return ModelWrapper(mdl, lb, ub, meta)
