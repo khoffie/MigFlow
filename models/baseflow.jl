@@ -1,4 +1,4 @@
-function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, ds = 100)
+function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 16, ngcx = 5, ds = 100)
     ## why sort?
     ## Ndist and radius not needed anymore
     ## poporig also not needed?
@@ -60,18 +60,18 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
         η_raw ~ StMvN(ngcx * ngcy, 10.0);  η = coefmat(η_raw / 10, ngcx, ngcy)
 
         T = eltype(γ)  # to get dual data type for AD
-        ps = Vector{T}(undef, N)
+        λ = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
-            ps[i] = A[i] * exp(α +
+            λ[i] = A[i] * exp(α +
                 desirability(P[to[i]], D[i],
                              interp_anchor(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale, anchor),
                              interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
                              interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
                               γ, ϕ))
         end
-        Y ~ product_distribution(Poisson.(ps))
-        return ps
+        Y ~ product_distribution(TruncatedPoisson.(λ))
+        return λ ./ (1 .- exp.(-λ))
     end
 
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,

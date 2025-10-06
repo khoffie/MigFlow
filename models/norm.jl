@@ -32,7 +32,7 @@ function norm(data::NamedTuple; ds = 100)
 
         T = eltype(γ)  # to get dual data type for AD
         denom = zeros(T, Ndist)
-        ps = Vector{T}(undef, N)
+        λ = Vector{T}(undef, N)
         des_by_origin = Vector{Vector{T}}(undef, Ndist)
         logden = zeros(T, Ndist)
 
@@ -51,10 +51,10 @@ function norm(data::NamedTuple; ds = 100)
         end
 
         @inbounds for i in 1:N
-            ps[i] = A[i] * exp(α + desirability(P[to[i]], D[i], γ, ϕ) - logden[from[i]])
+            λ[i] = A[i] * exp(α + desirability(P[to[i]], D[i], γ, ϕ) - logden[from[i]])
         end
-        Y ~ product_distribution(Poisson.(ps))
-        return ps
+        Y ~ product_distribution(TruncatedPoisson.(λ))
+        return λ ./ (1 .- exp.(-λ))
     end
 
     mdl = model(Y, from, to, A, P, D, Ndist, N, radius)
