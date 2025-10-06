@@ -1,6 +1,7 @@
 using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
     CategoricalArrays, NamedArrays, LaTeXStrings, Loess, ADTypes, KernelDensity,
-    IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization
+    IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization, SpecialFunctions,
+    LogExpFunctions
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
@@ -20,4 +21,8 @@ include("../models/gravity.jl")
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp");
 
-results, ages = readresults(["fundamental", "norm", "gravity"]);
+mdl = baseflow(load_data("18-25", 2017, 1.0, "../data/"));
+out = @time estimate(mdl);
+df, net, quick, figs = analyze(out)
+m, p1 = plotdtf(out)
+dfgeo, p2 = plotgeo(out, shp, st)
