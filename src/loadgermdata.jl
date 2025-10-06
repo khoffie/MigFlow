@@ -1,11 +1,10 @@
 function load_data(a::String, y::Int, p::Float64, path::String;
-                   only_positive::Bool, seed::Int = 123)
+                   seed::Int = 123)
     di = CSV.read(joinpath(path, "districts.csv"), DataFrame)
     di = addlrd!(year(di, y))
     df = CSV.read(joinpath(path, "FlowDataGermans.csv"), DataFrame)
-    df = year(age(df, a), y)
+    df = pos(year(age(df, a), y))
     Random.seed!(seed)
-    if only_positive; df = pos(df); end
     if p < 1.0; df = sample_flows(df, p); end
     return (df = df, districts = di)
 end
