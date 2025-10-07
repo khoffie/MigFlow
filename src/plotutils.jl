@@ -16,6 +16,30 @@ function addlines!(ax, df, group, xcol, ycol, lw = 1)
     end
 end
 
+function addlines!(ax, df, group, xcol, ycol, lw = 1)
+    return addgroups!(ax, lines!, df, group, xcol, ycol, lw)
+end
+
+function addgroups!(ax, f, df, group, xcol, ycol, lw = 1; kwargs...)
+    groups = unique(df[!, group])
+    for g in groups
+        foo = df[df[!, group] .== g, :]
+        inner_kwargs = Dict{Symbol, Any}()
+        if "col" in names(foo)
+            inner_kwargs[:color] = foo.col
+        end
+        if "lw" in names(foo)
+            inner_kwargs[:linewidth] = foo.lw
+        end
+        kwargs = merge(inner_kwargs, Dict(kwargs...))
+        if isnothing(ycol)
+            f(ax, foo[!, xcol], label = g; kwargs...)
+        else
+            f(ax, foo[!, xcol], foo[!, ycol], label = g, linewidth = lw; kwargs...)
+        end
+    end
+end
+
 function grid_position(k::Int, ncols::Int=2)
     i = div(k - 1, ncols) + 1   # row index
     j = mod(k - 1, ncols) + 1   # column index
