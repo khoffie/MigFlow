@@ -19,6 +19,9 @@ function defmodel(m, age, year)
 end
 
 function fitmodels(models, ages, years, outp = "./output", suffix = nothing)
+    if !isdir(outp)
+        mkdir(outp)
+    end
     for  m in models
         for a in ages
             name = isnothing(suffix) ? "$(m)_$(a)" : "$(m)_$(a)_$(suffix)"
@@ -37,4 +40,4 @@ ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 years = vcat(2000:2002, 2004:2017)
 models =  [baseflow, fundamental, norm, gravity]
 
-fitmodels([baseflow], ages, years)
+fitmodels([baseflow], ages, years, "./output_trunc")
