@@ -18,10 +18,10 @@ function defmodel(m, age, year)
     return m == baseflow ? m(data; ndc = 16, ngcx = 5) : m(data)
 end
 
-function fitmodels(models, ages, years)
+function fitmodels(models, ages, years, outp = "./output", suffix = nothing)
     for  m in models
         for a in ages
-            name = "$(m)_$(a)"
+            name = isnothing(suffix) ? "$(m)_$(a)" : "$(m)_$(a)_$(suffix)"
             results = Vector{EstimationResult}(undef, length(years))
             Threads.@threads for i in eachindex(years)
                 mdl = defmodel(m, a, years[i])
