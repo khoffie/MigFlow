@@ -1,32 +1,20 @@
 function analyze(r::EstimationResult)
-    a, y = getageyear(r)
-    data = r.mdl.mdl.args
-    df = DataFrame(
-        fromdist = data.from,
-        todist = data.to,
-        flows = data.Y,
-        preds = r.prd,
-        dist = 100data.D, ## scaling back to original, better grab ds?
-        A = data.A,
-        P = exp.(data.P[data.to]) ## bec log(P) is saved
-    );
-    dev = round(deviance2(df.flows, df.preds), digits = 2)
-    net = add_age_year(r, calc_net_df(df));
-    err = round(asymerr(net.asym, net.asymp), digits = 2)
-    trivial = round(asymerr(net.asym, 0), digits = 2)
+    df = modeldf(r)
+    net = netdf(r)
+    quick = quickdf(r)
 
     fig = Figure(size = (700, 700), fontsize = 12);
     ax1 = Axis(fig[1, 1],
                xlabel = L"\log(\hat{y})",
                ylabel = L"\log(y)",
-               title = L"\text{Mean deviance:} %$dev",
+               title = L"\text{Mean deviance:} %$(quick.deviance)",
                aspect = DataAspect())
     plotfit!(ax1, df.flows, df.preds)
 
     ax2 = Axis(fig[1, 2],
                xlabel = L"(\hat{i} - \hat{o}) / (\hat{i} + \hat{o})",
                ylabel = L"(i - o) / (i + o)",
-               title = L"\frac{\textrm{MAE}}{\textrm{SD}} = %$err",
+               title = L"\frac{\textrm{MAE}}{\textrm{SD}} = %$(quick.asymerr)",
                aspect = DataAspect())
     Makie.ylims!(ax2, (-1, 1))
     Makie.xlims!(ax2, (-1, 1))
@@ -41,10 +29,42 @@ function analyze(r::EstimationResult)
                xlabel = L"\log(A_o  P_d)",
                ylabel = L"\log(y / \hat{y})")
     plotpop!(ax4, df.flows, df.preds, df.A, df.P)
-    quick = DataFrame(agegroup = a, year = y, deviance = dev,
-                      asymerr = err, asymtriv = trivial)
+
     return (; df, net, quick, fig)
 end
+
+function modeldf(r::EstimationResult)
+    a, y = getageyear(r)
+    data = r.mdl.mdl.args
+    df = DataFrame(
+        fromdist = data.from,
+        todist = data.to,
+        flows = data.Y,
+        preds = r.prd,
+        dist = 100data.D, ## scaling back to original, better grab ds?
+        A = data.A,
+        P = exp.(data.P[data.to]) ## bec log(P) is saved
+    )
+    return df
+end
+
+function netdf(r::EstimationResult)
+        return add_age_year(r, calc_net_df(modeldf(r)))
+end
+
+function quickdf(r::EstimationResult)
+    a, y = getageyear(r)
+    df = modeldf(r)
+    net = netdf(r)
+    dev = round(deviance2(df.flows, df.preds), digits = 2)
+    net = add_age_year(r, calc_net_df(df));
+    err = round(asymerr(net.asym, net.asymp), digits = 2)
+    trivial = round(asymerr(net.asym, 0), digits = 2)
+    quick = DataFrame(agegroup = a, year = y, deviance = dev,
+                      asymerr = err, asymtriv = trivial)
+    return quick
+end
+
 
 function calc_net(df, col)
     netf = combine(DataFrames.groupby(df, :fromdist), col => sum)
