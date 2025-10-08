@@ -1,4 +1,4 @@
-function coefplot(r::EstimationResult)
+function seplot(r::EstimationResult)
     df = r.ses
     xs = 1:nrow(df)
     a, y = getageyear(r)
