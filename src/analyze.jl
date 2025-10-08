@@ -7,27 +7,31 @@ function analyze(r::EstimationResult)
     ax1 = Axis(fig[1, 1],
                xlabel = L"\log(\hat{y})",
                ylabel = L"\log(y)",
-               title = L"\text{Mean deviance:} %$(quick.deviance)",
-               aspect = DataAspect())
+               title = L"\text{Mean deviance:} %$(quick.deviance[1])",
+               aspect = DataAspect(),
+               xgridvisible = false, ygridvisible = false)
     plotfit!(ax1, df.flows, df.preds)
 
     ax2 = Axis(fig[1, 2],
                xlabel = L"(\hat{i} - \hat{o}) / (\hat{i} + \hat{o})",
                ylabel = L"(i - o) / (i + o)",
-               title = L"\frac{\textrm{MAE}}{\textrm{SD}} = %$(quick.asymerr)",
-               aspect = DataAspect())
+               title = L"\frac{\textrm{MAE}}{\textrm{SD}} = %$(quick.asymerr[1])",
+               aspect = DataAspect(),
+               xgridvisible = false, ygridvisible = false)
     Makie.ylims!(ax2, (-1, 1))
     Makie.xlims!(ax2, (-1, 1))
     plotasym!(ax2, net)
 
     ax3 = Axis(fig[2, 1],
                xlabel = L"\text{Distance (km)}",
-               ylabel = L"\log(y / \hat{y})")
+               ylabel = L"\log(y / \hat{y})",
+               xgridvisible = false, ygridvisible = false)
     plotdist!(ax3, df.flows, df.preds, df.dist)
 
     ax4 = Axis(fig[2, 2],
                xlabel = L"\log(A_o  P_d)",
-               ylabel = L"\log(y / \hat{y})")
+               ylabel = L"\log(y / \hat{y})",
+               xgridvisible = false, ygridvisible = false)
     plotpop!(ax4, df.flows, df.preds, df.A, df.P)
 
     return (; df, net, quick, fig)
@@ -54,17 +58,16 @@ end
 
 function quickdf(r::EstimationResult)
     a, y = getageyear(r)
+    m = getmodel(r)
     df = modeldf(r)
     net = netdf(r)
     dev = round(deviance2(df.flows, df.preds), digits = 2)
-    net = add_age_year(r, calc_net_df(df));
     err = round(asymerr(net.asym, net.asymp), digits = 2)
     trivial = round(asymerr(net.asym, 0), digits = 2)
-    quick = DataFrame(agegroup = a, year = y, deviance = dev,
+    quick = DataFrame(model = m, agegroup = a, year = y, deviance = dev,
                       asymerr = err, asymtriv = trivial)
     return quick
 end
-
 
 function calc_net(df, col)
     netf = combine(DataFrames.groupby(df, :fromdist), col => sum)
