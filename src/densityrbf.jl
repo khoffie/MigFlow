@@ -31,8 +31,9 @@ function dtfmat(r::EstimationResult)
     scale = data.rbf_scale
     R = data.R
     Rmin, Rmax = extrema(R)
+    anchor = median(R)
     vals = range(Rmin, Rmax, 100)
-    m = [interp(Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale)
+    m = [interp_anchor(Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale, anchor)
          for Rto in vals, Rfrom in vals]';
     return m .- mean(m), a, y
 end
