@@ -53,7 +53,7 @@ function modeldf(r::EstimationResult)
 end
 
 function netdf(r::EstimationResult)
-        return add_age_year(r, calc_net_df(modeldf(r)))
+        return add_meta(r, calc_net_df(modeldf(r)))
 end
 
 function quickdf(r::EstimationResult)
@@ -95,11 +95,12 @@ function calc_net_df(df)
     return net
 end
 
-function add_age_year(r, df)
+function add_meta(r, df)
     a, y = getageyear(r)
     df.agegroup .= a
     df.year .= y
-    first = ["agegroup", "year"]
+    df.model .= getmodel(r)
+    first = ["model","agegroup", "year"]
     last = setdiff(names(df), first)
     select!(df, vcat(first, last))
 end
