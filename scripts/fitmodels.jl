@@ -1,5 +1,6 @@
 using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
-    CategoricalArrays, NamedArrays, ADTypes, DynamicPPL, Serialization
+    CategoricalArrays, NamedArrays, ADTypes, DynamicPPL, Serialization,
+    SpecialFunctions, LogExpFunctions
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
