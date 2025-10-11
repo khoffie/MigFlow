@@ -27,13 +27,13 @@ function truncated(data::NamedTuple; ds = 100)
         ϕ_raw ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
 
         T = eltype(γ)  # to get dual data type for AD
-        ps = Vector{T}(undef, N)
+        λ = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
-            ps[i] = A[i] * exp(α + P[to[i]] + log(ϕ + (1 - ϕ) / (D[i] + .01) ^ γ))
+            λ[i] = A[i] * exp(α + P[to[i]] + log(ϕ + (1 - ϕ) / (D[i] + .01) ^ γ))
         end
-        Y ~ product_distribution(Poisson.(ps))
-        return ps
+        Y ~ product_distribution(TruncatedPoisson.(λ))
+        return λ ./ (1 .- exp.(-λ))
     end
 
     mdl = model(Y, from, to, A, P, D, N)
