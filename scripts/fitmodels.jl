@@ -6,10 +6,12 @@ include("../src/loadgermdata.jl")
 include("../src/modelutils.jl")
 include("../src/utils.jl")
 
+include("../models/TruncatedPoisson.jl")
 include("../models/baseflow.jl")
 include("../models/fundamental.jl")
 include("../models/gravity.jl")
 include("../models/norm.jl")
+include("../models/truncated.jl")
 
 outp = "./output/"
 
@@ -38,6 +40,6 @@ end
 
 ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 years = vcat(2000:2002, 2004:2017)
-models =  [baseflow, fundamental, norm, gravity]
+models =  [baseflow, fundamental, norm, gravity, truncated]
 
-fitmodels([baseflow], ages, years, "./output_trunc")
+fitmodels([truncated], ages, years, "./output")
