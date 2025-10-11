@@ -16,7 +16,7 @@ function truncated(data::NamedTuple; ds = 100)
     D          = fdist.(df.dist, ds)
     Ndist      = length(districts.distcode)
     N          = length(Y)
-    meta       = MetaData(model = "fundamental", age = age, year = year)
+    meta       = MetaData(model = "truncated", age = age, year = year)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
