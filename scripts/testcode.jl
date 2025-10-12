@@ -11,9 +11,10 @@ include("../src/results.jl")
 include("../src/modelutils.jl")
 include("../src/plotutils.jl")
 include("../src/utils.jl")
-include("../src/coefplot.jl")
+include("../src/seplot.jl")
 
 include("../models/baseflow.jl")
+include("../models/baseflownormalized.jl")
 include("../models/fundamental.jl")
 include("../models/gravity.jl")
 
@@ -21,3 +22,6 @@ shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp");
 
 results, ages = readresults(["fundamental", "norm", "gravity"]);
+
+mdl = baseflownormalized(load_data("18-25", 2010, 1.0, "../data/"; only_positive = true))
+out = estimate(mdl)
