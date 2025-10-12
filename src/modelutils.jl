@@ -114,10 +114,10 @@ function geo_ratio(xcoord, ycoord, xlim, ylim)
 end
 
 function bound(a, ndc, ngcx, ngcy)
-    lbdensity = fill(-100.0, ndc)
-    lbgeo = fill(-100.0, ngcx * ngcy)
-    ubdensity = fill(100.0, ndc)
-    ubgeo = fill(100.0, ngcx * ngcy)
+    lbdensity = fill(-200.0, ndc)
+    lbgeo = fill(-200.0, ngcx * ngcy)
+    ubdensity = fill(200.0, ndc)
+    ubgeo = fill(200.0, ngcx * ngcy)
 
     pastelb(c) = vcat(c, lbdensity..., lbgeo...)
     pasteub(c) = vcat(c, ubdensity..., ubgeo...)
