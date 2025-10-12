@@ -32,17 +32,7 @@ function truncated(data::NamedTuple; ds = 100, type)
         @inbounds for i in 1:N
             λ[i] = A[i] * exp(α + P[to[i]] + log(ϕ + (1 - ϕ) / (D[i] + .01) ^ γ))
         end
-        if type == 1
             Y ~ product_distribution(TruncatedPoisson.(λ))
-        elseif type == 2
-            for i in 1:N
-                # Zero-truncated Poisson log likelihood
-                logp = Y[i]*log(λ[i]) - λ[i] - logfactorial(Y[i]) - log1mexp(-λ[i])
-                Turing.@addlogprob! logp
-            end
-        elseif type == 3
-            Y ~ product_distribution(Distributions.truncated.(Poisson.(λ); lower = 1))
-        end
         return λ ./ (1 .- exp.(-λ))
     end
 
