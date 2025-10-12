@@ -1,6 +1,7 @@
 using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
     CategoricalArrays, NamedArrays, LaTeXStrings, Loess, ADTypes, KernelDensity,
-    IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization
+    IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization, SpecialFunctions,
+    LogExpFunctions
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
