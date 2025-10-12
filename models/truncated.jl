@@ -1,4 +1,4 @@
-function truncated(data::NamedTuple; ds = 100)
+function truncated(data::NamedTuple; ds = 100, type)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -20,7 +20,7 @@ function truncated(data::NamedTuple; ds = 100)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
-                          N::Int)
+                          N::Int, type)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
@@ -32,11 +32,21 @@ function truncated(data::NamedTuple; ds = 100)
         @inbounds for i in 1:N
             λ[i] = A[i] * exp(α + P[to[i]] + log(ϕ + (1 - ϕ) / (D[i] + .01) ^ γ))
         end
-        Y ~ product_distribution(TruncatedPoisson.(λ))
+        if type == 1
+            Y ~ product_distribution(TruncatedPoisson.(λ))
+        elseif type == 2
+            for i in 1:N
+                # Zero-truncated Poisson log likelihood
+                logp = Y[i]*log(λ[i]) - λ[i] - logfactorial(Y[i]) - log1mexp(-λ[i])
+                Turing.@addlogprob! logp
+            end
+        elseif type == 3
+            Y ~ product_distribution(Distributions.truncated.(Poisson.(λ); lower = 1))
+        end
         return λ ./ (1 .- exp.(-λ))
     end
 
-    mdl = model(Y, from, to, A, P, D, N)
+    mdl = model(Y, from, to, A, P, D, N, type)
     lb = [-12.0, 10.0, 1.0]
     ub = [-5.0 , 40.0, 50.0]
     return ModelWrapper(mdl, lb, ub, meta)
