@@ -1,6 +1,6 @@
 using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
     CategoricalArrays, NamedArrays, LaTeXStrings, Loess, ADTypes, KernelDensity,
-    IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization
+    IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization, StatProfilerHTML
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
@@ -23,5 +23,21 @@ st = GeoIO.load("../data/clean/shapes/states.shp");
 
 results, ages = readresults(["fundamental", "norm", "gravity"]);
 
-mdl = baseflownormalized(load_data("18-25", 2010, 1.0, "../data/"; only_positive = true))
-out = estimate(mdl)
+mdl = baseflownormalized(load_data("18-25", 2010, 1.0, "../data/"; only_positive = true);
+                         ndc = 16, ngcx = 5)
+## mdl = fundamental(load_data("18-25", 2010, 1.0, "../data/"; only_positive = true))
+
+@profilehtml estimate(mdl)
+
+# ana = analyze(out)
+# m, p = plotdtf(out)
+# m, p = plotgeo(out, shp, st)
+# p
+# ana.fig
+
+
+# results, ages = readresults(["baseflownorm"]);
+# r = results.baseflownormalized.agealized_below18.y2010
+# m, p = plotdtf(r)
+# m, p = plotgeo(r, shp, st)
+# p
