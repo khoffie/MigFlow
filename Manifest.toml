@@ -2,7 +2,7 @@
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "1ef2f7955c36bc3dbb778948e05f68454efbd137"
+project_hash = "1497337748b1077945474c2ccd5f59c71ca57bba"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "be7ae030256b8ef14a441726c4c37766b90b93a3"
@@ -1182,6 +1182,12 @@ git-tree-sha1 = "05882d6995ae5c12bb5f36dd2ed3f61c98cbb172"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
 version = "0.8.5"
 
+[[deps.FlameGraphs]]
+deps = ["AbstractTrees", "Colors", "FileIO", "FixedPointNumbers", "IndirectArrays", "LeftChildRightSiblingTrees", "Profile"]
+git-tree-sha1 = "0166baf81babb91cf78bfcc771d8e87c43d568df"
+uuid = "08572546-2f56-4bcf-ba4e-bab62c3a3f89"
+version = "1.1.0"
+
 [[deps.Fontconfig_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Expat_jll", "FreeType2_jll", "JLLWrappers", "Libdl", "Libuuid_jll", "Zlib_jll"]
 git-tree-sha1 = "301b5d5d731a0654825f1f2e906990f7141a106b"
@@ -1506,6 +1512,12 @@ deps = ["DelimitedFiles", "GeoTables", "Meshes", "Printf", "Tables", "Unitful"]
 git-tree-sha1 = "97061105c71d6cccdefa994e42c6ded76f750e0a"
 uuid = "4610876b-9b01-57c8-9ad9-06315f1a66a5"
 version = "1.5.13"
+
+[[deps.HAML]]
+deps = ["DataStructures", "Markdown", "Requires"]
+git-tree-sha1 = "0e2bbef3c669498254a034394d6dd809e7a97ad6"
+uuid = "0bc81568-2411-4001-9bf1-c899fa54f385"
+version = "0.3.5"
 
 [[deps.HDF4_jll]]
 deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Zlib_jll", "libaec_jll"]
@@ -3153,6 +3165,12 @@ deps = ["OffsetArrays"]
 git-tree-sha1 = "be1cf4eb0ac528d96f5115b4ed80c26a8d8ae621"
 uuid = "cae243ae-269e-4f55-b966-ac2d0dc13c15"
 version = "0.1.2"
+
+[[deps.StatProfilerHTML]]
+deps = ["DataStructures", "Dates", "FlameGraphs", "HAML", "OrderedCollections", "Profile", "Random", "SHA", "StableRNGs", "Test"]
+git-tree-sha1 = "548c8268e32d405f0d9e7233833c4cee6427bbe8"
+uuid = "a8a75453-ed82-57c9-9e16-4cd1196ecbf5"
+version = "1.6.0"
 
 [[deps.Static]]
 deps = ["CommonWorldInvalidations", "IfElse", "PrecompileTools"]
