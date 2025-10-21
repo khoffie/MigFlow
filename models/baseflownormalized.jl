@@ -49,15 +49,15 @@ function baseflownormalized(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, 
                           xmin::Float64, xmax::Float64, ymin::Float64, ymax::Float64,
                           Rmin::Float64, Rmax::Float64,
                           ndc::Int, ngcx::Int, ngcy::Int,
-                          cx, cy, rbf_scale, cxgeo, cygeo, geo_scale, anchor)
+                          cx, cy, rbf_scale, cxgeo, cygeo, geo_scale, anchor, trunc)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
         β_raw ~ Gamma(1, 1);     β = β_raw
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
         # δ_raw ~ Gamma(10, 1.0);  δ = δ_raw / 100
-        ζ_raw ~ StMvN(ndc, 10.0);  ζ = coefmat(ζ_raw)
-        η_raw ~ StMvN(ngcx * ngcy, 10.0);  η = coefmat(η_raw, ngcx, ngcy)
+        ζ_raw ~ StMvN(ndc, 10.0);  ζ = coefmat(ζ_raw / 10)
+        η_raw ~ StMvN(ngcx * ngcy, 10.0);  η = coefmat(η_raw / 10, ngcx, ngcy)
 
         T = eltype(γ)  # to get dual data type for AD
         ps = Vector{T}(undef, N)
