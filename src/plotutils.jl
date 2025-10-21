@@ -64,7 +64,7 @@ end
 function axlims(x)
     min = minimum(x)
     max = maximum(x)
-    return min - .1min, max + .1max
+    return min - .1abs(min), max + .1abs(max)
 end
 
 function diagonal!(ax, x, y)

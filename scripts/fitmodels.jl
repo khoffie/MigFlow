@@ -1,16 +1,19 @@
 using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
-    CategoricalArrays, NamedArrays, ADTypes, DynamicPPL, Serialization
+    CategoricalArrays, NamedArrays, ADTypes, DynamicPPL, Serialization,
+    SpecialFunctions, LogExpFunctions
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
 include("../src/modelutils.jl")
 include("../src/utils.jl")
 
+include("../models/TruncatedPoisson.jl")
 include("../models/baseflow.jl")
 include("../models/baseflownormalized.jl")
 include("../models/fundamental.jl")
 include("../models/gravity.jl")
 include("../models/norm.jl")
+include("../models/truncated.jl")
 
 outp = "./output/"
 
