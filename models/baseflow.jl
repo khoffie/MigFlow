@@ -98,15 +98,8 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
                            interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
                            γ, ϕ)  - Ω[from[i]])
         end
-
-        if !trunc
-            Y ~ product_distribution(Poisson.(λ))
-            preds = λ
-        elseif trunc
-            Y ~ product_distribution(TruncatedPoisson.(λ))
-            preds = λ ./ (1 .- exp.(-λ))
-        end
-        return preds
+        Y ~ product_distribution(trunc ? TruncatedPoisson.(λ) : Poisson.(λ))
+        return trunc ? λ ./ (1 .- exp.(-λ)) : λ
     end
 
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
