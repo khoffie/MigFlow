@@ -84,7 +84,6 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
                                  interp_anchor(R[i], R[i], ζ, cx, cy, rbf_scale, anchor),
                                  0, 0, γ, ϕ))
             end
-
             for o in 1:Ndist
                 Ω[o] = logsumexp(Ω_origin[o])
             end
