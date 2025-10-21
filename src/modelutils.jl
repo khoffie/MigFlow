@@ -120,7 +120,7 @@ function bound(a, ndc, ngcx, ngcy, norm::Bool)
     ubgeo = fill(100.0, ngcx * ngcy)
 
     if norm
-        lbc = [-11.0, 0.0,  10.0,  1.0]
+        lbc = [-11.0, 0.1,  10.0,  1.0]
         ubc = [-3.0,  50.0, 40.0, 50.0]
     else
         lbc = [-11.0, 10.0,  1.0]
