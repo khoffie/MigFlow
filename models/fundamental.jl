@@ -14,8 +14,9 @@ function fundamental(data::NamedTuple; ds = 100, trunc, norm)
     P          = log.((districts.pop .+ 1000) ./ 153000)
     poporig    = districts.pop
     D          = fdist.(df.dist, ds)
-    Ndist      = length(districts.distcode)
     N          = length(Y)
+    Ndist      = length(districts.distcode)
+    radius     = fradius.(districts.pop, districts.density, ds)
     meta       = MetaData(model = modelname("fundamental", trunc, norm),
                           age = age, year = year)
 
@@ -23,7 +24,7 @@ function fundamental(data::NamedTuple; ds = 100, trunc, norm)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
-                          N::Int, trunc::Bool, norm)
+                          N::Int, Ndist::Int, radius::Vector{Float64}, trunc::Bool, norm)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
         if norm
@@ -53,14 +54,13 @@ function fundamental(data::NamedTuple; ds = 100, trunc, norm)
         end
 
         @inbounds for i in 1:N
-            λ[i] = A[i] * exp(α + transition(P[to[i]], D[i], γ, ϕ) - Ω)
+            λ[i] = A[i] * exp(α + transition(P[to[i]], D[i], γ, ϕ) - Ω[from[i]])
         end
         Y ~ product_distribution(trunc ? TruncatedPoisson.(λ) : Poisson.(λ))
         return trunc ? λ ./ (1 .- exp.(-λ)) : λ
     end
 
-    mdl = model(Y, from, to, A, P, D, N, trunc, norm)
-    lb = [-12.0, 10.0, 1.0]
-    ub = [-5.0 , 40.0, 50.0]
+    mdl = model(Y, from, to, A, P, D, N, Ndist, radius, trunc, norm)
+    lb, ub = bound(age, 0, 0, 0, norm)
     return ModelWrapper(mdl, lb, ub, meta)
 end
