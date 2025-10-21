@@ -1,4 +1,4 @@
-function baseflownormalized(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, ds = 100)
+function baseflownormalized(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, ds = 100, trunc)
     ## why sort?
     ## Ndist and radius not needed anymore
     ## poporig also not needed?
@@ -98,14 +98,20 @@ function baseflownormalized(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, 
                              interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
                               γ, ϕ)  - logden[from[i]])
         end
-        Y ~ product_distribution(Poisson.(ps))
-        return ps
+        if !trunc
+            Y ~ product_distribution(Poisson.(ps))
+            preds = ps
+        elseif trunc
+            Y ~ product_distribution(TruncatedPoisson.(ps))
+            preds = ps ./ (1 .- exp.(-ps))
+        end
+        return preds
     end
 
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 ndc, ngcx, ngcy, cx, cy, rbf_scale, cxgeo, cygeo,
-                geo_scale, anchor)
+                geo_scale, anchor, trunc)
     lb, ub = boundbeta(age, ndc, ngcx, ngcy)
     return ModelWrapper(mdl, lb, ub, meta)
 end
