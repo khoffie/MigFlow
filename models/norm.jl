@@ -1,4 +1,4 @@
-function norm(data::NamedTuple; ds = 100)
+function normalized(data::NamedTuple; ds = 100, trunc = false)
     ## this normalization here will only work with full data, so use
     ## p=1.0 if generating the data
     df        = sort(data.df, [:fromdist, :todist])
@@ -23,7 +23,7 @@ function norm(data::NamedTuple; ds = 100)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
-                          Ndist::Int, N::Int, radius::Vector{Float64})
+                          Ndist::Int, N::Int, radius::Vector{Float64}, trunc)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
         β_raw ~ Gamma(1, 1);     β = β_raw
@@ -53,11 +53,17 @@ function norm(data::NamedTuple; ds = 100)
         @inbounds for i in 1:N
             ps[i] = A[i] * exp(α + desirability(P[to[i]], D[i], γ, ϕ) - logden[from[i]])
         end
-        Y ~ product_distribution(Poisson.(ps))
-        return ps
+        if !trunc
+            Y ~ product_distribution(Poisson.(ps))
+            preds = ps
+        elseif trunc
+            Y ~ product_distribution(TruncatedPoisson.(ps))
+            preds = ps ./ (1 .- exp.(-ps))
+        end
+        return preds
     end
 
-    mdl = model(Y, from, to, A, P, D, Ndist, N, radius)
+    mdl = model(Y, from, to, A, P, D, Ndist, N, radius, trunc)
     lb = [-12.0, 0.0, 10.0, 1.0]
     ub = [0.0,   100.0, 40.0, 50.0]
     return ModelWrapper(mdl, lb, ub, meta)
