@@ -1,4 +1,5 @@
-function baseflownormalized(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, ds = 100, trunc)
+function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, ds = 100,
+                            trunc, norm)
     ## why sort?
     ## Ndist and radius not needed anymore
     ## poporig also not needed?
@@ -36,9 +37,9 @@ function baseflownormalized(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, 
     cxgeo      = [range(xlim[1], xlim[2], ngcx);]
     cygeo      = [range(ylim[1], ylim[2], ngcy);]
     geo_scale  = rbfscale(cxgeo, cygeo, kgeo)
-    meta       = MetaData(model = "baseflownormalized", age = age, year = year)
+    meta       = MetaData(model = modelname("baseflow", trunc, norm), age = age, year = year)
 
-    function desirability(P, D, Q, Gfrom, Gto, γ, ϕ)
+    function transition(P, D, Q, Gfrom, Gto, γ, ϕ)
         P + log(ϕ + (1 - ϕ) / ((D + 0.01) ^ γ)) + Q + (Gto - Gfrom)
     end
 
@@ -49,61 +50,61 @@ function baseflownormalized(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, 
                           xmin::Float64, xmax::Float64, ymin::Float64, ymax::Float64,
                           Rmin::Float64, Rmax::Float64,
                           ndc::Int, ngcx::Int, ngcy::Int,
-                          cx, cy, rbf_scale, cxgeo, cygeo, geo_scale, anchor, trunc)
+                          cx, cy, rbf_scale, cxgeo, cygeo, geo_scale, anchor, trunc, norm)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
-        β_raw ~ Gamma(1, 1);     β = β_raw
+        if norm
+            β_raw ~ Gamma(1, 1); β = β_raw
+        end
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
-        # δ_raw ~ Gamma(10, 1.0);  δ = δ_raw / 100
         ζ_raw ~ StMvN(ndc, 10.0);  ζ = coefmat(ζ_raw / 10)
         η_raw ~ StMvN(ngcx * ngcy, 10.0);  η = coefmat(η_raw / 10, ngcx, ngcy)
 
-        T = eltype(γ)  # to get dual data type for AD
-        ps = Vector{T}(undef, N)
+        T = eltype(γ)
+        λ = Vector{T}(undef, N)
+        Ω = zeros(T, Ndist)
 
-        des_by_origin = Vector{Vector{T}}(undef, Ndist)
-        logden = zeros(T, Ndist)
+        if norm
+            Ω_origin = Vector{Vector{T}}(undef, Ndist)
+            for o in 1:Ndist
+                Ω_origin[o] = Vector{T}()
+            end
+            @inbounds for i in 1:N
+                push!(Ω_origin[from[i]],
+                      transition(P[to[i]], D[i],
+                                 interp_anchor(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale, anchor),
+                                 interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
+                                 interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
+                                 γ, ϕ))
+            end
+            @inbounds for i in 1:Ndist
+                push!(Ω_origin[i],
+                      transition(P[i], β * radius[i],
+                                 interp_anchor(R[i], R[i], ζ, cx, cy, rbf_scale, anchor),
+                                 0, 0, γ, ϕ))
+            end
 
-        for o in 1:Ndist
-            des_by_origin[o] = Vector{T}()
-        end
-        @inbounds for i in 1:N
-            push!(des_by_origin[from[i]],
-                  desirability(P[to[i]], D[i],
-                               interp_anchor(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale, anchor),
-                               interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
-                               interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
-                               γ, ϕ))
-        end
-        @inbounds for i in 1:Ndist
-            push!(des_by_origin[i],
-                  desirability(P[i], β * radius[i],
-                               interp_anchor(R[i], R[i], ζ, cx, cy, rbf_scale, anchor),
-                               0, 0,
-                               # interp(xcoord[i], ycoord[i], η, cxgeo, cygeo, geo_scale),
-                               # interp(xcoord[i], ycoord[i], η, cxgeo, cygeo, geo_scale),
-                               γ, ϕ))
-        end
-
-        for o in 1:Ndist
-            logden[o] = logsumexp(des_by_origin[o])
+            for o in 1:Ndist
+                Ω[o] = logsumexp(Ω_origin[o])
+            end
         end
 
         @inbounds for i in 1:N
-            ps[i] = A[i] * exp(α +
-                desirability(P[to[i]], D[i],
-                             interp_anchor(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale, anchor),
-                             interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
-                             interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
-                              γ, ϕ)  - logden[from[i]])
+            λ[i] = A[i] * exp(α +
+                transition(P[to[i]], D[i],
+                           interp_anchor(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale, anchor),
+                           interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
+                           interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
+                           γ, ϕ)  - Ω[from[i]])
         end
+
         if !trunc
-            Y ~ product_distribution(Poisson.(ps))
-            preds = ps
+            Y ~ product_distribution(Poisson.(λ))
+            preds = λ
         elseif trunc
-            Y ~ product_distribution(TruncatedPoisson.(ps))
-            preds = ps ./ (1 .- exp.(-ps))
+            Y ~ product_distribution(TruncatedPoisson.(λ))
+            preds = λ ./ (1 .- exp.(-λ))
         end
         return preds
     end
@@ -111,7 +112,7 @@ function baseflownormalized(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, 
     mdl = model(Y, from, to, A, P, D, R, Ndist, N, radius,
                 xcoord, ycoord, xmin, xmax, ymin, ymax, Rmin, Rmax,
                 ndc, ngcx, ngcy, cx, cy, rbf_scale, cxgeo, cygeo,
-                geo_scale, anchor, trunc)
-    lb, ub = boundbeta(age, ndc, ngcx, ngcy)
+                geo_scale, anchor, trunc, norm)
+    lb, ub = bound(age, ndc, ngcx, ngcy, norm)
     return ModelWrapper(mdl, lb, ub, meta)
 end
