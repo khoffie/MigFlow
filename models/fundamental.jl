@@ -1,4 +1,4 @@
-function fundamental(data::NamedTuple; ds = 100)
+function fundamental(data::NamedTuple; ds = 100, trunc, norm)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -16,27 +16,50 @@ function fundamental(data::NamedTuple; ds = 100)
     D          = fdist.(df.dist, ds)
     Ndist      = length(districts.distcode)
     N          = length(Y)
-    meta       = MetaData(model = "fundamental", age = age, year = year)
+    meta       = MetaData(model = modelname("fundamental", trunc, norm),
+                          age = age, year = year)
+
+    transition(P, D, γ, ϕ) = P + log(ϕ + (1 - ϕ) / (D + .01) ^ γ)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
-                          N::Int)
+                          N::Int, trunc::Bool, norm)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
+        if norm
+            β_raw ~ Gamma(1, 1); β = β_raw
+        end
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
         ϕ_raw ~ Gamma(10, 1.0);  ϕ = ϕ_raw / 100
 
-        T = eltype(γ)  # to get dual data type for AD
-        ps = Vector{T}(undef, N)
+        T = eltype(γ)
+        λ = Vector{T}(undef, N)
+        Ω = zeros(T, Ndist)
+
+        if norm
+            Ω_origin = Vector{Vector{T}}(undef, Ndist)
+            for o in 1:Ndist
+                Ω_origin[o] = Vector{T}()
+            end
+            @inbounds for i in 1:N
+                push!(Ω_origin[from[i]], transition(P[to[i]], D[i], γ, ϕ))
+            end
+            @inbounds for i in 1:Ndist
+                push!(Ω_origin[i], transition(P[i], β * radius[i], γ, ϕ))
+            end
+            for o in 1:Ndist
+                Ω[o] = logsumexp(Ω_origin[o])
+            end
+        end
 
         @inbounds for i in 1:N
-            ps[i] = A[i] * exp(α + P[to[i]] + log(ϕ + (1 - ϕ) / (D[i] + .01) ^ γ))
+            λ[i] = A[i] * exp(α + transition(P[to[i]], D[i], γ, ϕ) - Ω)
         end
-        Y ~ product_distribution(Poisson.(ps))
-        return ps
+        Y ~ product_distribution(trunc ? TruncatedPoisson.(λ) : Poisson.(λ))
+        return trunc ? λ ./ (1 .- exp.(-λ)) : λ
     end
 
-    mdl = model(Y, from, to, A, P, D, N)
+    mdl = model(Y, from, to, A, P, D, N, trunc, norm)
     lb = [-12.0, 10.0, 1.0]
     ub = [-5.0 , 40.0, 50.0]
     return ModelWrapper(mdl, lb, ub, meta)
