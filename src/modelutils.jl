@@ -121,10 +121,10 @@ function bound(a, ndc, ngcx, ngcy, norm::Bool)
 
     if norm
         lbc = [-11.0, 0.1,  10.0,  1.0]
-        ubc = [-3.0,  50.0, 40.0, 50.0]
+        ubc = [-2.0,  50.0, 40.0, 50.0]
     else
         lbc = [-11.0, 10.0,  1.0]
-        ubc = [-3.0,  40.0, 50.0]
+        ubc = [-2.0,  40.0, 50.0]
     end
     pastelb() = vcat(lbc, lbdensity..., lbgeo...)
     pasteub() = vcat(ubc, ubdensity..., ubgeo...)
