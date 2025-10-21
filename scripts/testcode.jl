@@ -19,8 +19,6 @@ include("../src/plotcovcor.jl")
 include("../models/fundamental.jl")
 include("../models/baseflow.jl")
 include("../models/gravity.jl")
-include("../models/baseflownormalized.jl")
-include("../models/baseflowtruncated.jl")
 include("../models/TruncatedPoisson.jl")
 
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
@@ -32,8 +30,12 @@ r = results.baseflow.age_50to65.y2017;
 mdl = fundamental(load_data("50-65", 2017, 1.0, "../data/"; only_positive = true);
                   trunc = true, norm = true);
 out = @time estimate(mdl);
+out.ses
 
-
-mdl = baseflow(load_data("50-65", 2017, .1, "../data/"; only_positive = true);
+mdl = baseflow(load_data("18-25", 2017, 0.1, "../data/"; only_positive = true);
                   ndc = 16, ngcx = 5, trunc = false, norm = false);
 out = @time estimate(mdl);
+inits = vcat(out.ses.coef[1], 1.0, out.ses.coef[2:end])
+mdl = baseflow(load_data("18-25", 2017, 1.0, "../data/"; only_positive = true);
+                  ndc = 16, ngcx = 5, trunc = true, norm = true);
+out = @time estimate(mdl, optim_kwargs = (; inits = ));
