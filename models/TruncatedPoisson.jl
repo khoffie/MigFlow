@@ -18,11 +18,13 @@ function Distributions.rand(rng::AbstractRNG, d::TruncatedPoisson)
     return k
 end
 
+# not mathematical support but reasonable range for plotting
 Distributions.support(d::TruncatedPoisson) = 1:ceil(Int, d.λ + 5√(d.λ))
 Distributions.minimum(::TruncatedPoisson) = 1
 Distributions.maximum(::TruncatedPoisson) = Inf
 
 function Statistics.quantile(d::TruncatedPoisson, p::Real)
+    # used by Makie
     λ = d.λ
     P0 = pdf(Poisson(λ), 0)
     # Transform back to untruncated Poisson quantile
