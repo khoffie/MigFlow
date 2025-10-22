@@ -2,7 +2,7 @@ function analyze(r::EstimationResult)
     df = modeldf(r)
     net = netdf(r)
     quick = quickdf(r)
-
+    asym = asymdf(df)
     fig = Figure(size = (700, 700), fontsize = 12);
     ax1 = Axis(fig[1, 1],
                xlabel = L"\log(\hat{y})",
@@ -34,7 +34,7 @@ function analyze(r::EstimationResult)
                xgridvisible = false, ygridvisible = false)
     plotpop!(ax4, df.flows, df.preds, df.A, df.P)
 
-    return (; df, net, quick, fig)
+    return (; df, net, quick, asym, fig)
 end
 
 function modeldf(r::EstimationResult)
@@ -169,3 +169,17 @@ function deviance2(y, p)
 end
 
 asymerr(y, p) = mean(abs.(y .- p)) / std(y)
+
+function asymdf(df)
+    dfod = select(df, :fromdist, :todist, :flows => :outflux,
+                  :preds => :outpreds)
+    dfdo = select(df, :fromdist => :todist, :todist => :fromdist,
+                  :flows => :influx, :preds => :inpreds)
+    df1 = leftjoin(dfod, dfdo, on = [:fromdist, :todist])
+
+    df1.total = df1.influx .+ df1.outflux
+    df1.totalp = df1.inpreds .+ df1.outpreds
+    df1.asym = (df1.influx .- df1.outflux) ./ df1.total
+    df1.asymp = (df1.inpreds .- df1.outpreds) ./ df1.totalp
+    return dropmissing!(df1)
+end
