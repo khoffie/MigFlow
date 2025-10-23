@@ -31,8 +31,8 @@ function fitmodels(models, ages, years, trunc, norm, outp = "./output",
         for a in ages
 
             name = "$(m)_$(a)"
-            if !trunc; name * "_nontruncated"; end
-            if norm; name * "normalized"; end
+            if !trunc; name = name * "_nontruncated"; end
+            if norm; name = name * "normalized"; end
             if !isnothing(suffix); name = name * "_suffix"; end
 
             results = Vector{EstimationResult}(undef, length(years))
