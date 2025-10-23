@@ -24,18 +24,14 @@ function defmodel(m, age, year, p, trunc, norm)
     return mdl
 end
 
-function fitmodels(models, ages, years, trunc, norm, outp = "./output",
-                   prefit = false, suffix = nothing)
+function fitmodels(models, ages, years, trunc, norm, outp = "./output", prefit = false)
     if !isdir(outp); mkdir(outp); end
     for  m in models
         for a in ages
 
-            name = "$(m)_$(a)"
-            if !trunc; name = name * "_nontruncated"; end
-            if norm; name = name * "normalized"; end
-            if !isnothing(suffix); name = name * "_suffix"; end
-
+            name = modelname("$(m)_$(a)", trunc, norm)
             results = Vector{EstimationResult}(undef, length(years))
+
             Threads.@threads for i in eachindex(years)
                 if prefit
                     mdl = defmodel(m, a, years[i], .1, false, false)
