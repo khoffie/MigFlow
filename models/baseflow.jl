@@ -40,7 +40,7 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
     meta       = MetaData(model = modelname("baseflow", trunc, norm), age = age, year = year)
 
     function transition(P, D, Q, Gfrom, Gto, γ, ϕ)
-        P + log(ϕ + (1 - ϕ) / ((D + 0.01) ^ γ)) + Q + (Gto - Gfrom)
+        P + log(ϕ + (1 - ϕ) / ((D + .01) ^ γ)) + Q + (Gto - Gfrom)
     end
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
