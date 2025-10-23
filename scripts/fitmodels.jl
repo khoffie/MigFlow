@@ -18,7 +18,7 @@ function defmodel(m, age, year, p, trunc, norm)
     data = load_data(age, year, p, "../data/"; only_positive = true)
     if m == baseflow
         mdl = m(data; ndc = 16, ngcx = 5, trunc = trunc, norm = norm)
-    elseif m == fundamental
+    else
         mdl = m(data; trunc = trunc, norm = norm)
     end
     return mdl
@@ -59,5 +59,5 @@ ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 years = vcat(2000:2002, 2004:2017)
 ## models =  [baseflow, fundamental, norm, gravity, baseflownormalized]
 
-fitmodels([fundamental], ages, years, true, false, "./output", false)
+fitmodels([fundamental, gravity], ages, years, true, false, "./output", false)
 fitmodels([fundamental], ages, years, true, true, "./output", false)

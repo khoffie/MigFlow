@@ -1,4 +1,4 @@
-function gravity(data::NamedTuple; ds = 100, trunc)
+function gravity(data::NamedTuple; ds = 100, trunc, norm = false)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
