@@ -18,6 +18,8 @@ function gravity(data::NamedTuple; ds = 100, trunc, norm = false)
     N          = length(Y)
     meta       = MetaData(model = "gravity", age = age, year = year)
 
+    transition(P, D, δ, κ, γ) = κ * P + log(1 / (D + .01) ^ γ
+
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
                           N::Int, trunc::Bool)
@@ -27,11 +29,11 @@ function gravity(data::NamedTuple; ds = 100, trunc, norm = false)
         κ_raw ~ Gamma(10, 1);    κ = κ_raw / 10
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
 
-        T = eltype(γ)  # to get dual data type for AD
+        T = eltype(γ)
         λ = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
-            λ[i] = A[i]^δ * exp(α + κ * P[to[i]] + log(1 / (D[i] + .01) ^ γ))
+            λ[i] = A[i]^δ * exp(α + transition(P[to[i]], D[i], δ, κ, γ))
         end
         Y ~ product_distribution(trunc ? TruncatedPoisson.(λ) : Poisson.(λ))
         return trunc ? λ ./ (1 .- exp.(-λ)) : λ
