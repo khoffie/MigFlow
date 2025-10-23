@@ -152,7 +152,7 @@ end
 
 function modelname(base, trunc, norm)
     n = base
-    n = trunc ? n * "_truncated" : n
-    n = norm ? n * "_normalized" : n
+    if !trunc; n = n * "_nontruncated"; end
+    if norm; n = n * "_normalized"; end
     return n
 end
