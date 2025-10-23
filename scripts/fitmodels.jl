@@ -26,13 +26,15 @@ end
 
 function fitmodels(models, ages, years, trunc, norm, outp = "./output",
                    prefit = false, suffix = nothing)
-    if !isdir(outp)
-        mkdir(outp)
-    end
+    if !isdir(outp); mkdir(outp); end
     for  m in models
         for a in ages
-            name = "$(m)_$(a)_$(trunc)_$(norm)"
+
+            name = "$(m)_$(a)"
+            if !trunc; name * "_nontruncated"; end
+            if norm; name * "normalized"; end
             if !isnothing(suffix); name = name * "_suffix"; end
+
             results = Vector{EstimationResult}(undef, length(years))
             Threads.@threads for i in eachindex(years)
                 if prefit
