@@ -1,4 +1,4 @@
-function gravity(data::NamedTuple; ds = 100)
+function gravity(data::NamedTuple; ds = 100, trunc)
 
     df        = sort(data.df, [:fromdist, :todist])
     districts = sort(data.districts, :distcode)
@@ -20,7 +20,7 @@ function gravity(data::NamedTuple; ds = 100)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
-                          N::Int)
+                          N::Int, trunc::Bool)
 
         α_raw ~ Normal(-5, 1);   α = α_raw
         δ_raw ~ Gamma(10, 1);    δ = δ_raw / 10
@@ -28,16 +28,16 @@ function gravity(data::NamedTuple; ds = 100)
         γ_raw ~ Gamma(15, 0.2);  γ = γ_raw / 10
 
         T = eltype(γ)  # to get dual data type for AD
-        ps = Vector{T}(undef, N)
+        λ = Vector{T}(undef, N)
 
         @inbounds for i in 1:N
-            ps[i] = A[i]^δ * exp(α + κ * P[to[i]] + log(1 / (D[i] + .01) ^ γ))
+            λ[i] = A[i]^δ * exp(α + κ * P[to[i]] + log(1 / (D[i] + .01) ^ γ))
         end
-        Y ~ product_distribution(Poisson.(ps))
-        return ps
+        Y ~ product_distribution(trunc ? TruncatedPoisson.(λ) : Poisson.(λ))
+        return trunc ? λ ./ (1 .- exp.(-λ)) : λ
     end
 
-    mdl = model(Y, from, to, A, P, D, N)
+    mdl = model(Y, from, to, A, P, D, N, trunc)
     lb = [-12.0, 1.0, 1.0, 10.0]
     ub = [-0.0 , 40.0, 40.0, 40.0]
     return ModelWrapper(mdl, lb, ub, meta)
