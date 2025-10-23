@@ -16,7 +16,8 @@ function gravity(data::NamedTuple; ds = 100, trunc, norm = false)
     D          = fdist.(df.dist, ds)
     Ndist      = length(districts.distcode)
     N          = length(Y)
-    meta       = MetaData(model = "gravity", age = age, year = year)
+    meta       = MetaData(model = modelname("gravity", trunc, norm),
+                          age = age, year = year)
 
     transition(P, D, δ, κ, γ) = κ * P + log(1 / (D + .01) ^ γ
 
