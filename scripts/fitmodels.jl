@@ -29,15 +29,22 @@ function fitmodels(models, ages, years, trunc, norm, outp = "./output", prefit =
     for  m in models
         for a in ages
 
-            name = modelname("$(m)_$(a)", trunc, norm)
+            name = modelname(m, trunc, norm, a)
             results = Vector{EstimationResult}(undef, length(years))
 
             Threads.@threads for i in eachindex(years)
                 if prefit
+                    ## we prefit with 10% of rows, no truncation, no
+                    ## normalization. Both cause problems with full
+                    ## model
                     mdl = defmodel(m, a, years[i], .1, false, false)
                     out = estimate(mdl)
-                    ## we need to smuggle in an init for beta
-                    inits = vcat(out.ses.coef[1], 1.0, out.ses.coef[2:end])
+                    if norm
+                        ## we need to smuggle in an init for beta
+                        inits = vcat(out.ses.coef[1], 1.0, out.ses.coef[2:end])
+                    else
+                        inits = out.ses.coef
+                    end
                     mdl = defmodel(m, a, years[i], 1.0, trunc, norm)
                     results[i] = @time estimate(mdl, optim_kwargs = (; inits = inits))
                 else
@@ -55,5 +62,6 @@ ages = ["below18", "18-25", "25-30", "30-50", "50-65", "above65"]
 years = vcat(2000:2002, 2004:2017)
 ## models =  [baseflow, fundamental, norm, gravity, baseflownormalized]
 
-fitmodels([fundamental, gravity], ages, years, true, false, "./output", false)
-fitmodels([fundamental], ages, years, true, true, "./output", false)
+# fitmodels([fundamental, gravity], ages, years, true, false, "./output", false)
+# fitmodels([fundamental], ages, years, true, true, "./output", false)
+fitmodels([baseflow], ages, years, true, false, "./output", true)
