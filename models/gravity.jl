@@ -19,7 +19,7 @@ function gravity(data::NamedTuple; ds = 100, trunc, norm = false)
     meta       = MetaData(model = modelname("gravity", trunc, norm),
                           age = age, year = year)
 
-    transition(P, D, δ, κ, γ) = κ * P + log(1 / (D + .01) ^ γ
+    transition(P, D, δ, κ, γ) = κ * P + log(1 / (D + .01) ^ γ)
 
     @model function model(Y::Vector{Int}, from::Vector{Int}, to::Vector{Int},
                           A::Vector{Int}, P::Vector{Float64}, D::Vector{Float64},
