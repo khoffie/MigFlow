@@ -12,7 +12,12 @@ end
 function readresults(pattern::AbstractString, path = "./output")
     years = Symbol.("y" .* string.(vcat(2000:2002, 2004:2017)))
     files = readdir(path; join = true)
-    files = files[contains.(files, pattern)]
+
+    ## prevent fundamental from matching fundamental_normalized
+    regex = Regex("^" * pattern * raw"(?!_normalized)(?:_|$)")
+    files = filter(f -> occursin(regex, basename(f)), files)
+
+    ## files = files[contains.(files, pattern)]
     ## extracting age group
     ages = string.([s[end] for s in split.(files, "/")])
     ages = "age" .* ([s[2] for s in split.(ages, pattern)])
@@ -39,7 +44,7 @@ function loopstruct(s, f, models = nothing, ages = nothing, years = nothing)
         m = models[k]
         for i in eachindex(ages)
             a = ages[i]
-            for j in eachindex(years)
+            Threads.@threads for j in eachindex(years)
                 y = years[j]
                 res[k, i, j] = f(getfield(getfield(getfield(s, m), a), y))
             end
