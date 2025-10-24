@@ -36,24 +36,12 @@ function estimate(mdl::ModelWrapper; ret_maps = false, optim_kwargs = (;))
     return res
 end
 
-function runoptim(mdl::ModelWrapper;
-                  ad = ADTypes.AutoMooncake(),
-                  inits = nothing,
-                  reltol = nothing,
-                  maxiters = nothing,
-                  maxtime = nothing,
-                  show_trace = false)
+function runoptim(mdl::ModelWrapper; ad = ADTypes.AutoMooncake(), kwargs...)
     attempt = 0
     while attempt < 5
         try
             mles = Turing.maximum_a_posteriori(mdl.mdl; lb = mdl.lb, ub = mdl.ub,
-                                             adtype = ad,
-                                             initial_params = inits,
-                                             maxiters = maxiters,
-                                             maxtime = maxtime,
-                                             reltol = reltol,
-                                             show_trace = show_trace,
-                                             store_trace = false)
+                                             adtype = ad, kwargs...)
 ##            mles = @time(Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub))
             return mles
         catch e
