@@ -150,9 +150,10 @@ function initialize(m::ModelWrapper)
     a == "above65" && return [-7.5, 23.0, 30.0, density..., geo...]
 end
 
-function modelname(base, trunc, norm)
-    n = base
+function modelname(base, trunc, norm, age = nothing)
+    n = string(base)
     if !trunc; n = n * "_nontruncated"; end
     if norm; n = n * "_normalized"; end
+    if !isnothing(age); n = n * "_$(age)"; end
     return n
 end
