@@ -30,7 +30,7 @@ function fitmodels(models, ages, years, trunc, norm, outp = "./output", prefit =
         for a in ages
 
             name = modelname(m, trunc, norm, a)
-            results = Vector{EstimationResult}(undef, length(years))
+            rs = Vector{EstimationResult}(undef, length(years))
 
             Threads.@threads for i in eachindex(years)
                 if prefit
@@ -46,13 +46,13 @@ function fitmodels(models, ages, years, trunc, norm, outp = "./output", prefit =
                         inits = out.ses.coef
                     end
                     mdl = defmodel(m, a, years[i], 1.0, trunc, norm)
-                    results[i] = @time estimate(mdl, optim_kwargs = (; inits = inits))
+                    rs[i] = @time estimate(mdl, optim_kwargs = (; initial_params = inits, maxtime = 200))
                 else
                     mdl = defmodel(m, a, years[i], 1.0, trunc, norm)
-                    results[i] = @time estimate(mdl)
+                    rs[i] = @time estimate(mdl, optim_kwargs = (; initial_params = inits, maxtime = 200))
                 end
             end
-            serialize(joinpath(outp, name), results)
+            serialize(joinpath(outp, name), rs)
             println("$name done")
         end
     end
@@ -64,4 +64,5 @@ years = vcat(2000:2002, 2004:2017)
 
 # fitmodels([fundamental, gravity], ages, years, true, false, "./output", false)
 # fitmodels([fundamental], ages, years, true, true, "./output", false)
-fitmodels([baseflow], ages, years, true, false, "./output", true)
+## fitmodels([baseflow], ages, years, true, false, "./output", true)
+fitmodels([baseflow], ages, years, true, true, "./output", true)
