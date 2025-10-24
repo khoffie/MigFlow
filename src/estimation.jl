@@ -24,8 +24,8 @@ struct EstimationResult
     cvm::NamedMatrix ## covariance matrix
 end
 
-function estimate(mdl::ModelWrapper; ret_maps = false, optim_kwargs = (;))
-    maps = runoptim(mdl; optim_kwargs...)
+function estimate(mdl::ModelWrapper, method=Optim.LBFGS(); ret_maps = false, optim_kwargs = (;))
+    maps = runoptim(mdl, method; optim_kwargs...)
     mdl.meta.lp = maps.lp
     chn = makechain(maps)
     prd = Turing.returned(mdl.mdl, chn)[1]
@@ -36,22 +36,22 @@ function estimate(mdl::ModelWrapper; ret_maps = false, optim_kwargs = (;))
     return res
 end
 
-function runoptim(mdl::ModelWrapper;
+function runoptim(mdl::ModelWrapper, method;
                   ad = ADTypes.AutoMooncake(),
                   inits = nothing,
-                  reltol = nothing,
+                  reltol = nothing, abstol = nothing,
                   maxiters = nothing,
                   maxtime = nothing,
                   show_trace = false)
     attempt = 0
     while attempt < 5
         try
-            mles = Turing.maximum_a_posteriori(mdl.mdl; lb = mdl.lb, ub = mdl.ub,
+            mles = Turing.maximum_a_posteriori(mdl.mdl, method; lb = mdl.lb, ub = mdl.ub,
                                              adtype = ad,
                                              initial_params = inits,
                                              maxiters = maxiters,
                                              maxtime = maxtime,
-                                             reltol = reltol,
+                                             reltol = reltol, abstol=abstol,
                                              show_trace = show_trace,
                                              store_trace = false)
 ##            mles = @time(Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub))
