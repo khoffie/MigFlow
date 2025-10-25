@@ -1,7 +1,7 @@
 using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
     CategoricalArrays, NamedArrays, LaTeXStrings, Loess, ADTypes, KernelDensity,
     IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization, SpecialFunctions,
-    LogExpFunctions, StatProfilerHTML
+    LogExpFunctions, StatProfilerHTML, OptimizationOptimJL
 
 
 include("../src/estimation.jl")
@@ -39,7 +39,9 @@ rm2, rp2 = plotgeo(r, shp, st);
 
 mdl = baseflow(load_data("18-25", 2017, 0.1, "../data/"; only_positive = true);
                   ndc = 25, ngcx = 5, trunc = false, norm = false);
-out = @time estimate(mdl);
+out = @time estimate(mdl; optim_kwargs = (;abstol=100.0, maxtime=200));
+
+
 inits = vcat(out.ses.coef[1], 1.0, out.ses.coef[2:end])
 mdl = baseflow(load_data("18-25", 2017, 1.0, "../data/"; only_positive = true);
                   ndc = 25, ngcx = 5, trunc = true, norm = true);

@@ -1,4 +1,6 @@
- Base.@kwdef mutable struct MetaData
+using OptimizationOptimJL
+
+Base.@kwdef mutable struct MetaData
      ## mutable because age and year are assigned before fitting and
      ## lp can only be assigned afterwards
      model:: String # model, on of [baseflow, fundamental, normalized, gravity]
