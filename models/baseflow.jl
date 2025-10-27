@@ -65,6 +65,8 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
         λ = Vector{T}(undef, N)
         Ω = zeros(T, Ndist)
 
+        ρ_anchor = interp(anchor, anchor, ζ, cx, cy, rbf_scale)
+
         if norm
             Ω_origin = Vector{Vector{T}}(undef, Ndist)
             for o in 1:Ndist
@@ -73,7 +75,7 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
             @inbounds for i in 1:N
                 push!(Ω_origin[from[i]],
                       transition(P[to[i]], D[i],
-                                 interp_anchor(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale, anchor),
+                                 interp(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale) - ρ_anchor,
                                  interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
                                  interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
                                  γ, ϕ))
@@ -81,7 +83,7 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
             @inbounds for i in 1:Ndist
                 push!(Ω_origin[i],
                       transition(P[i], β * radius[i],
-                                 interp_anchor(R[i], R[i], ζ, cx, cy, rbf_scale, anchor),
+                                 interp(R[i], R[i], ζ, cx, cy, rbf_scale) - ρ_anchor,
                                  0, 0, γ, ϕ))
             end
             for o in 1:Ndist
@@ -92,7 +94,7 @@ function baseflow(data::NamedTuple; kdens = 1.5, kgeo = 1.5, ndc = 4, ngcx = 2, 
         @inbounds for i in 1:N
             λ[i] = A[i] * exp(α +
                 transition(P[to[i]], D[i],
-                           interp_anchor(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale, anchor),
+                           interp(R[from[i]], R[to[i]], ζ, cx, cy, rbf_scale) - ρ_anchor,
                            interp(xcoord[from[i]], ycoord[from[i]], η, cxgeo, cygeo, geo_scale),
                            interp(xcoord[to[i]], ycoord[to[i]], η, cxgeo, cygeo, geo_scale),
                            γ, ϕ)  - Ω[from[i]])
