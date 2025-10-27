@@ -38,7 +38,7 @@ function fitmodels(models, ages, years, trunc, norm, outp = "./output", prefit =
                     ## normalization. Both cause problems with full
                     ## model
                     mdl = defmodel(m, a, years[i], .1, false, false)
-                    out = estimate(mdl)
+                    out = estimate(mdl; calcvcov = false)
                     if norm
                         ## we need to smuggle in an init for beta
                         inits = vcat(out.ses.coef[1], 1.0, out.ses.coef[2:end])
@@ -46,10 +46,10 @@ function fitmodels(models, ages, years, trunc, norm, outp = "./output", prefit =
                         inits = out.ses.coef
                     end
                     mdl = defmodel(m, a, years[i], 1.0, trunc, norm)
-                    rs[i] = @time estimate(mdl, optim_kwargs = (; initial_params = inits, maxtime = 200))
+                    rs[i] = @time estimate(mdl; calcvcov = false, optim_kwargs = (; initial_params = inits, maxtime = 200))
                 else
                     mdl = defmodel(m, a, years[i], 1.0, trunc, norm)
-                    rs[i] = @time estimate(mdl, optim_kwargs = (; initial_params = inits, maxtime = 200))
+                    rs[i] = @time estimate(mdl; calcvcov = false, optim_kwargs = (; initial_params = inits, maxtime = 200))
                 end
             end
             serialize(joinpath(outp, name), rs)

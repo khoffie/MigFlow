@@ -24,13 +24,13 @@ struct EstimationResult
     cvm::NamedMatrix ## covariance matrix
 end
 
-function estimate(mdl::ModelWrapper; ret_maps = false, optim_kwargs = (;))
+function estimate(mdl::ModelWrapper; ret_maps = false, calcvcov = true, optim_kwargs = (;))
     maps = runoptim(mdl; optim_kwargs...)
     mdl.meta.lp = maps.lp
     chn = makechain(maps)
     prd = Turing.returned(mdl.mdl, chn)[1]
     ses = setable(maps)
-    cvm = vcov(maps)
+    cvm = calcvcov ? vcov(maps) : NamedArray(zeros(1, 1))
     res = EstimationResult(chn, mdl, prd, ses, cvm)
     if ret_maps; res = res, maps; end
     return res
@@ -40,7 +40,7 @@ function runoptim(mdl::ModelWrapper; ad = ADTypes.AutoMooncake(), kwargs...)
     attempt = 0
     while attempt < 5
         try
-            mles = Turing.maximum_a_posteriori(mdl.mdl; lb = mdl.lb, ub = mdl.ub,
+            mles = @time Turing.maximum_a_posteriori(mdl.mdl; lb = mdl.lb, ub = mdl.ub,
                                              adtype = ad, kwargs...)
 ##            mles = @time(Turing.maximum_a_posteriori(mdl; lb = lb, ub = ub))
             return mles
