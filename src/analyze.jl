@@ -3,14 +3,15 @@ function analyze(r::EstimationResult)
     net = netdf(r)
     quick = quickdf(r)
     asym = asymdf(df)
-    fig = Figure(size = (700, 700), fontsize = 12);
+    fig = Figure(size = (1000, 400), fontsize = 20);
+    pointsize = 6
     ax1 = Axis(fig[1, 1],
-               xlabel = L"\log(\hat{y})",
-               ylabel = L"\log(y)",
-               title = L"\text{Mean deviance:} %$(quick.deviance[1])",
+               xlabel = L"\log \hat{y}",
+               ylabel = L"\log y",
+               title = L"\text{Mean deviance:}%$(quick.deviance[1])",
                aspect = DataAspect(),
                xgridvisible = false, ygridvisible = false)
-    plotfit!(ax1, df.flows, df.preds)
+    plotfit!(ax1, df.flows, df.preds, pointsize)
 
     ax2 = Axis(fig[1, 2],
                xlabel = L"(\hat{i} - \hat{o}) / (\hat{i} + \hat{o})",
@@ -20,20 +21,19 @@ function analyze(r::EstimationResult)
                xgridvisible = false, ygridvisible = false)
     Makie.ylims!(ax2, (-1, 1))
     Makie.xlims!(ax2, (-1, 1))
-    plotasym!(ax2, net)
+    plotasym!(ax2, net, pointsize)
 
-    ax3 = Axis(fig[2, 1],
+    ax3 = Axis(fig[1, 3],
                xlabel = L"\text{Distance (km)}",
                ylabel = L"\log(y / \hat{y})",
                xgridvisible = false, ygridvisible = false)
-    plotdist!(ax3, df.flows, df.preds, df.dist)
+    plotdist!(ax3, df.flows, df.preds, df.dist, pointsize)
 
-    ax4 = Axis(fig[2, 2],
+    ax4 = Axis(fig[1, 4],
                xlabel = L"\log(A_o  P_d)",
                ylabel = L"\log(y / \hat{y})",
                xgridvisible = false, ygridvisible = false)
-    plotpop!(ax4, df.flows, df.preds, df.A, df.P)
-
+    plotpop!(ax4, df.flows, df.preds, df.A, df.P, pointsize)
     return (; df, net, quick, asym, fig)
 end
 
@@ -124,38 +124,38 @@ function extract_sample(chn, type = "best")
     return chn
 end
 
-function plotfit!(ax, flows, preds)
+function plotfit!(ax, flows, preds, size)
     idx = subset(flows, 10^3)
     x = log.(preds)[idx]
     y = log.(flows)[idx]
     df = DataFrame(; x, y)
-    Makie.scatter!(ax, df.x, df.y, alpha = .5)
+    Makie.scatter!(ax, df.x, df.y, alpha = .5, markersize = size)
     diagonal!(ax, df.x, df.y)
     smoother!(ax, df.x, df.y)
 end
 
-function plotasym!(ax, net)
-    Makie.scatter!(ax, net.asymp, net.asym, alpha = .5)
+function plotasym!(ax, net, size)
+    Makie.scatter!(ax, net.asymp, net.asym, alpha = .5, markersize = size)
     diagonal!(ax, net.asymp, net.asym)
     smoother!(ax, net.asymp, net.asym)
 end
 
-function plotdist!(ax, flows, preds, dist)
+function plotdist!(ax, flows, preds, dist, size)
     idx = subset(flows, 10^3)
     y = log.(flows ./ preds)[idx]
     x = dist[idx]
     df = sort(DataFrame(; x, y), :x)
-    Makie.scatter!(ax, df.x, df.y, alpha = .5)
+    Makie.scatter!(ax, df.x, df.y, alpha = .5, markersize = size)
     Makie.hlines!(ax, [0], color = :darkred, linewidth = 2)
     smoother!(ax, df.x, df.y)
 end
 
-function plotpop!(ax, flows, preds, frompop, topop)
+function plotpop!(ax, flows, preds, frompop, topop, size)
     idx = subset(flows, 10^3)
     x = (log.(frompop) .+ log.(topop))[idx]
     y = (log.(flows ./ preds))[idx]
     df = sort(DataFrame(; x, y), :x)
-    Makie.scatter!(ax, x, y, alpha = .5)
+    Makie.scatter!(ax, x, y, alpha = .5, markersize = size)
     Makie.hlines!(ax, [0], color = :darkred, linewidth = 2)
     smoother!(ax, x, y)
 end
