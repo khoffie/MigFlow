@@ -46,9 +46,9 @@ function grid_position(k::Int, ncols::Int=2)
     return (i, j)
 end
 
-function prettytitle!(f, title, row = 0)
+function prettytitle!(f, title, row = 0, size = 15)
     titlelayout = GridLayout(f[row, 1:end], tellwidth = false)
-    Label(titlelayout[1, 1], title, fontsize = 15,
+    Label(titlelayout[1, 1], title, fontsize = size,
           font = "TeX Gyre Heros Bold Makie", halign = :center)
     rowgap!(titlelayout, 0)
     # rowgap!(f.layout, 0)
