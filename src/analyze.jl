@@ -16,7 +16,7 @@ function analyze(r::EstimationResult)
     ax2 = Axis(fig[1, 2],
                xlabel = L"(\hat{i} - \hat{o}) / (\hat{i} + \hat{o})",
                ylabel = L"(i - o) / (i + o)",
-               title = L"\frac{\textrm{MAE}}{\textrm{SD}} = %$(quick.asymerr[1])",
+               title = L"\textrm{skillscore} = %$(round(quick.skillscore[1], digits = 2))",
                aspect = DataAspect(),
                xgridvisible = false, ygridvisible = false)
     Makie.ylims!(ax2, (-1, 1))
@@ -62,10 +62,11 @@ function quickdf(r::EstimationResult)
     df = modeldf(r)
     net = netdf(r)
     dev = round(deviance2(df.flows, df.preds), digits = 2)
-    err = round(asymerr(net.asym, net.asymp), digits = 2)
-    trivial = round(asymerr(net.asym, 0), digits = 2)
+    err = 100mae(net.asym, net.asymp)
+    trivial = 100mae(net.asym, 0)
+    skill = skillscore(net.asym, net.asymp)
     quick = DataFrame(model = m, agegroup = a, year = y, deviance = dev,
-                      asymerr = err, asymtriv = trivial)
+                      mae = err, mae0 = trivial, skillscore = skill)
     return quick
 end
 
@@ -168,7 +169,10 @@ function deviance2(y, p)
     return 2mean(loss)
 end
 
-asymerr(y, p) = mean(abs.(y .- p)) / std(y)
+# mse(y, p) = mean((y .- p) .^ 2)
+mae(y, p) = mean(abs.(y .- p))
+## skillscore(y, p) = 1 - (mse(y, p) / mse(y, 0))
+skillscore(y, p) = 1 - (mae(y, p) / mae(y, 0))
 
 function asymdf(df)
     dfod = select(df, :fromdist, :todist, :flows => :outflux,
