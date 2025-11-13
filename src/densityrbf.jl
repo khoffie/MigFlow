@@ -30,10 +30,10 @@ function dtfmat(r::EstimationResult)
     cy = data.cy
     scale = data.rbf_scale
     R = data.R
-    Rmin, Rmax = extrema(R)
-    anchor = median(R)
+    Rmin, Rmax = data.Rmin, data.Rmax
+    anchor = data.anchor
     vals = range(Rmin, Rmax, 100)
     m = [interp_anchor(Rfrom, Rto, coefmat(coefs ./ 10), cx, cy, scale, anchor)
-         for Rto in vals, Rfrom in vals]';
-    return m .- mean(m), a, y
+         for Rto in vals, Rfrom in vals]'
+    return m, a, y
 end
