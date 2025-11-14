@@ -3,7 +3,6 @@ using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
     IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization, SpecialFunctions,
     LogExpFunctions, StatProfilerHTML
 
-
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
 include("../src/analyze.jl")
@@ -22,35 +21,20 @@ include("../models/gravity.jl")
 include("../models/TruncatedPoisson.jl")
 
 
-mdl = baseflow(load_data("18-25", 2017, 0.1, "../data/"; only_positive = true);
+mdl = baseflow(load_data("25-30", 2017, .1, "../data/"; only_positive = true);
                   ndc = 25, ngcx = 5, trunc = false, norm = false);
-@time maximum_a_posteriori(mdl.mdl; maxtime = 10)
+out = @time estimate(mdl; optim_kwargs = (; maxtime = 100))
+## inits = vcat(out.ses.coef[1], 1.0, out.ses.coef[2:end])
+inits = out.ses.coef
+mdl = baseflow(load_data("25-30", 2017, 1.0, "../data/"; only_positive = true);
+                  ndc = 25, ngcx = 5, trunc = true, norm = false);
 
-out = @time estimate(mdl; optim_kwargs = (; maxtime = 100));
+out = @time estimate(mdl; optim_kwargs = (; maxtime = 200, initial_params = inits))
+out = @time estimate(mdl; optim_kwargs = (; maxtime = 200))
+
+out = @time estimate(mdl; optim_kwargs = (; maxtime = 600, initial_params = out.ses.coef))
 out.mdl.meta
-
-net = vcat(ana.net, rana.net)
-crange = extrema(vcat(net.asym, net.asymp))
-
-function plotmap(ax, df, shp, st, col, crange = nothing)
-    if isnothing(crange); crange = extrema(df[!, col]); end
-    viz!(ax, shp.geometry, color = df[!, col], colorrange = crange);
-    hideall!(ax)
-    overlay_states(ax, st)
-end
-
-btn = "baseflow_truncated_normalized"
-fig = Figure((size = (1200, 400)));
-ax1 = Axis(fig[1, 1], aspect=DataAspect(), title = "normalized")
-plotmap(ax1, selmodel(net, btn), shp, st, :asymp, crange);
-ax2 = Axis(fig[1, 2], aspect=DataAspect(), title = "actual")
-plotmap(ax2, selmodel(net, btn), shp, st, :asym, crange);
-ax3 = Axis(fig[1, 3], aspect=DataAspect(), title = "non-normalized")
-plotmap(ax3, selmodel(net, "baseflow"), shp, st, :asymp, crange);
-Colorbar(fig[1, 4], limits = crange)
-rowgap!(fig.layout, -50)
-colgap!(fig.layout, -100)
-fig
-
-r.mdl.meta
-out.mdl.meta
+out.ses
+mdl.ub
+a = analyze(out)
+a.fig
