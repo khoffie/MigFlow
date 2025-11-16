@@ -134,12 +134,16 @@ function extract_sample(chn, type = "best")
 end
 
 function plotfit!(ax, flows, preds, size)
-    idx = subset(flows, 10^3)
-    x = log.(preds)[idx]
-    y = log.(flows)[idx]
-    df = DataFrame(; x, y)
+    function sub(df, N)
+        idx = subset(flows, N)
+        x = log.(preds)[idx]
+        y = log.(flows)[idx]
+        return DataFrame(; x, y)
+    end
+    df = sub(flows, 10^3)
     Makie.scatter!(ax, df.x, df.y, alpha = .5, markersize = size)
     diagonal!(ax, df.x, df.y)
+    df = sub(flows, 10^4)
     smoother!(ax, df.x, df.y)
 end
 
@@ -150,23 +154,31 @@ function plotasym!(ax, net, size)
 end
 
 function plotdist!(ax, flows, preds, dist, size)
-    idx = subset(flows, 10^3)
-    y = log.(flows ./ preds)[idx]
-    x = dist[idx]
-    df = sort(DataFrame(; x, y), :x)
+    function sub(df, N)
+        idx = subset(flows, N)
+        y = log.(flows ./ preds)[idx]
+        x = dist[idx]
+        return sort(DataFrame(; x, y), :x)
+    end
+    df = sub(flows, 10^3)
     Makie.scatter!(ax, df.x, df.y, alpha = .5, markersize = size)
     Makie.hlines!(ax, [0], color = :darkred, linewidth = 2)
+    df = sub(flows, 10^4)
     smoother!(ax, df.x, df.y)
 end
 
 function plotpop!(ax, flows, preds, frompop, topop, size)
-    idx = subset(flows, 10^3)
-    x = (log.(frompop) .+ log.(topop))[idx]
-    y = (log.(flows ./ preds))[idx]
-    df = sort(DataFrame(; x, y), :x)
-    Makie.scatter!(ax, x, y, alpha = .5, markersize = size)
+    function sub(df, N)
+        idx = subset(flows, 10^3)
+        x = (log.(frompop) .+ log.(topop))[idx]
+        y = (log.(flows ./ preds))[idx]
+        return sort(DataFrame(; x, y), :x)
+    end
+    df = sub(flows, 10^3)
+    Makie.scatter!(ax, df.x, df.y, alpha = .5, markersize = size)
     Makie.hlines!(ax, [0], color = :darkred, linewidth = 2)
-    smoother!(ax, x, y)
+    df = sub(flows, 10^4)
+    smoother!(ax, df.x, df.y)
 end
 
 function deviance2(y, p)
