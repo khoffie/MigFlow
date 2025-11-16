@@ -1,3 +1,11 @@
+struct AnalysisResult
+    df::DataFrame ## flows df with predictions
+    net::DataFrame ## net, nmr, asymmetries
+    quick::DataFrame ## deviance, MAE, MAE0, Skillscore
+    asym::DataFrame ## bivariate asymmetries
+    fig::Figure ## Main analysis plot
+end
+
 function analyze(r::EstimationResult)
     df = modeldf(r)
     net = netdf(r)
@@ -34,7 +42,7 @@ function analyze(r::EstimationResult)
                ylabel = L"\log(y / \hat{y})",
                xgridvisible = false, ygridvisible = false)
     plotpop!(ax4, df.flows, df.preds, df.A, df.P, pointsize)
-    return (; df, net, quick, asym, fig)
+    return AnalysisResult(df, net, quick, asym, fig)
 end
 
 function modeldf(r::EstimationResult)
