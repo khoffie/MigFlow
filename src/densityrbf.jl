@@ -21,10 +21,11 @@ function plotdtf(m::LinearAlgebra.Adjoint{Float64, Matrix{Float64}},
                  districts = nothing, legend = true)
     if !isnothing(districts)
         di = year(districts, yr)
-        l, h = Int.(round.(extrema(di.density), digits = 0))
-        l = string(l); h = string(h)
-        xt = ([1, 100], [l, h])
-        yt = ([1, 100], [l, h])
+        qs = [.01, .25, .5, .75, 1]
+        xs = quantile(di.density, qs)
+        xs = string.(Int.(round.(xs, digits = 0)))
+        xt = (100qs, xs)
+        yt = (100qs, xs)
     else
         xt = ([1, 100], ["low", "high"])
         yt = ([1, 100], ["low", "high"])
