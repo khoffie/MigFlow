@@ -7,8 +7,8 @@ function plotdtf(r::EstimationResult, crange = nothing,
     return m, fig
 end
 
-function plotdtf(m::Matrix{Float64}, age::String, year::Int, crange,
-                 fig, x, y, legend = true)
+function plotdtf(m::LinearAlgebra.Adjoint{Float64, Matrix{Float64}},
+                 age::String, year::Int, crange, fig, x, y, legend = true)
     ax = Axis(fig[x, y],
               xlabel = "Origin density",
               ylabel = "Destination density",
