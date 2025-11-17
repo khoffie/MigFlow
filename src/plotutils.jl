@@ -81,3 +81,8 @@ function smoother!(ax, x, y, col = "red", span = .5)
     vs = Loess.predict(loess(x, y; span = span), us)
     return Makie.lines!(ax, us, vs, color = col, linewidth = 4)
 end
+
+function calc_crange(x)
+    m = maximum(abs.(x))
+    return -m, m
+end

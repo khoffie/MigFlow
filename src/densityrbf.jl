@@ -2,7 +2,7 @@ function plotdtf(r::EstimationResult, crange = nothing,
                  fig = Figure(size=(400, 400), fontsize = 10),
                  x = 1, y = 1, legend = true)
     m, a, yr = dtfmat(r)
-    if isnothing(crange); crange = extrema(m); end
+    if isnothing(crange); crange = calc_crange(m); end
     plotdtf(m, a, yr, crange, fig, x, y, nothing, legend)
     return m, fig
 end
@@ -11,7 +11,7 @@ function plotdtf(r::EstimationResult, districts::DataFrame, crange = nothing,
                  fig = Figure(size=(400, 400), fontsize = 10),
                  x = 1, y = 1, legend = true)
     m, a, yr = dtfmat(r)
-    if isnothing(crange); crange = extrema(m); end
+    if isnothing(crange); crange = calc_crange(m); end
     plotdtf(m, a, yr, crange, fig, x, y, districts, legend)
     return m, fig
 end

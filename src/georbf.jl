@@ -4,7 +4,7 @@ function plotgeo(r::EstimationResult, shp::GeoTable, st::GeoTable,
                  x = 1, y = 1, legend = true)
     geodf = getgeo(r)
     a, yr = getageyear(r)
-    if isnothing(crange); crange = extrema(geodf.geo); end
+    if isnothing(crange); crange = calc_crange(geodf.geo); end
     plotgeo(geodf, shp, st, crange, a, yr, fig, x, y, legend)
     return geodf, fig
 end
