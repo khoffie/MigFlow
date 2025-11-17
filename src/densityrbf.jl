@@ -21,9 +21,8 @@ function plotdtf(m::LinearAlgebra.Adjoint{Float64, Matrix{Float64}},
                  districts = nothing, legend = true)
     if !isnothing(districts)
         di = year(districts, yr)
-        qs = [.01, .25, .5, .75, 1]
-        xs = quantile(di.density, qs)
-        xs = string.(Int.(round.(xs, digits = 0)))
+        qs = [.01, .25, .5, .75, .9, 1]
+        xs = string.(Int.(round.(quantile(di.density, qs), digits = 0)))
         xt = (100qs, xs)
         yt = (100qs, xs)
     else
@@ -31,12 +30,13 @@ function plotdtf(m::LinearAlgebra.Adjoint{Float64, Matrix{Float64}},
         yt = ([1, 100], ["low", "high"])
     end
     ax = Axis(fig[x, y],
-              xlabel = "Origin density",
-              ylabel = "Destination density",
+              xlabel = L"\textrm{Origin} $\mathrm{pop} / \mathrm{km}^2$",
+              ylabel = L"\textrm{Destination} $\mathrm{pop} / \mathrm{km}^2$",
               xticks = xt,
               yticks = yt,
-              title = string(yr), aspect = DataAspect())
-    hm = Makie.heatmap!(ax, m, colorrange = crange)
+              title = string(yr), aspect = DataAspect(),
+              xticklabelrotation = 1.0)
+    hm = Makie.heatmap!(ax, m, colorrange = crange, colormap = :roma)
     if legend
         Colorbar(fig[:, y + 1], hm, vertical = true, width = 5)
         prettytitle!(fig, "Density Transition Function, $a")
