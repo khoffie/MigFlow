@@ -14,12 +14,13 @@ function plotgeo(df::DataFrame, shp, st, crange, a, yr, fig,
     df = year(age(df, a), yr)
     df = joingeometry(df, DataFrame(shp))
     ax = Axis(fig[x, y], aspect=DataAspect(), title = "$yr")
-    viz!(ax, df.geometry, color = df.geo, colorrange = crange);
+    viz!(ax, df.geometry, color = df.geo, colorrange = crange,
+         colormap = :roma);
     hideall!(ax)
     overlay_states(ax, st)
     if legend
         prettytitle!(fig, "Locational Asymmetries, $a")
-        Colorbar(fig[end + 1, :], colorrange = crange,
+        Colorbar(fig[end + 1, :], colorrange = crange, colormap = :roma,
                  vertical = false, height = 3, width = Relative(.5))
     end
 end
