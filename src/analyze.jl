@@ -6,12 +6,11 @@ struct AnalysisResult
     fig::Figure ## Main analysis plot
 end
 
-function analyze(r::EstimationResult)
+function analyze(r::EstimationResult, fig = genfig((20, 6)))
     df = modeldf(r)
     net = netdf(r)
     quick = quickdf(r)
     asym = asymdf(df)
-    fig = Figure(size = (1000, 400), fontsize = 20);
     pointsize = 6
     ax1 = Axis(fig[1, 1],
                xlabel = L"\log \hat{y}",
