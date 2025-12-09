@@ -1,7 +1,7 @@
 using CSV, DataFrames, Turing, Mooncake, StatsBase, Random, Distributions,
     CategoricalArrays, NamedArrays, LaTeXStrings, Loess, ADTypes, KernelDensity,
     IterTools, GeoStats, GeoIO, CairoMakie, DynamicPPL, Serialization, SpecialFunctions,
-    LogExpFunctions, StatProfilerHTML
+    LogExpFunctions, LinearAlgebra
 
 include("../src/estimation.jl")
 include("../src/loadgermdata.jl")
@@ -20,21 +20,26 @@ include("../models/baseflow.jl")
 include("../models/gravity.jl")
 include("../models/TruncatedPoisson.jl")
 
+include("./maplots.jl")
 
-mdl = baseflow(load_data("25-30", 2017, .1, "../data/"; only_positive = true);
-                  ndc = 25, ngcx = 5, trunc = false, norm = false);
-out = @time estimate(mdl; optim_kwargs = (; maxtime = 100))
-## inits = vcat(out.ses.coef[1], 1.0, out.ses.coef[2:end])
-inits = out.ses.coef
-mdl = baseflow(load_data("25-30", 2017, 1.0, "../data/"; only_positive = true);
-                  ndc = 25, ngcx = 5, trunc = true, norm = false);
+results, ages = readresults(["fundamental", "gravity", "fundamental_normalized"], "./output");
 
-out = @time estimate(mdl; optim_kwargs = (; maxtime = 200, initial_params = inits))
-out = @time estimate(mdl; optim_kwargs = (; maxtime = 200))
+mdl = fundamental(load_data("25-30", 2017, 1.0, "../data/"; only_positive = true);
+                  trunc = true, norm = false);
+mdl = fundamental(load_data("25-30", 2017, 1.0, "../data/"; only_positive = true);
+                  trunc = false, norm = false);
+out = estimate(mdl)
+ana = analyze(out)
+ana.fig
+df = ana.df
 
-out = @time estimate(mdl; optim_kwargs = (; maxtime = 600, initial_params = out.ses.coef))
-out.mdl.meta
-out.ses
-mdl.ub
-a = analyze(out)
-a.fig
+
+res = results.gravity.age_18to25.y2000;
+res = results.gravity.age_30to50.y2017;
+res = results.fundamental.age_18to25.y2000;
+res = results.fundamental.age_30to50.y2017;
+
+analyze(res).fig
+plotmflows(res)
+predhist(res, 2)
+plotmdist(res)
