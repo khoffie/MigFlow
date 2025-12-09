@@ -20,20 +20,22 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
                xgridvisible = false, ygridvisible = false)
     plotfit!(ax1, df.flows, df.preds, pointsize)
 
+    tks = ([-1.0, -.5, 0.0, .5, 1.0], ["-1", "-.5", "0", ".5", "1"])
     ax2 = Axis(fig[1, 2],
                xlabel = L"(\hat{i} - \hat{o}) / (\hat{i} + \hat{o})",
                ylabel = L"(i - o) / (i + o)",
                title = L"\textrm{skillscore} = %$(round(quick.skillscore[1], digits = 2))",
                aspect = DataAspect(),
-               xgridvisible = false, ygridvisible = false)
+               xgridvisible = false, ygridvisible = false, xticks = tks, yticks = tks)
     Makie.ylims!(ax2, (-1, 1))
     Makie.xlims!(ax2, (-1, 1))
     plotasym!(ax2, net, pointsize)
 
+    tks = ([0, 200, 400, 600, 800], string.([0, 2, 4, 6, 8]))
     ax3 = Axis(fig[1, 3],
-               xlabel = L"\text{Distance (km)}",
+               xlabel = L"\text{Distance (100km)}",
                ylabel = L"\log(y / \hat{y})",
-               xgridvisible = false, ygridvisible = false)
+               xgridvisible = false, ygridvisible = false, xticks = tks)
     plotdist!(ax3, df.flows, df.preds, df.dist, pointsize)
 
     ax4 = Axis(fig[1, 4],
