@@ -78,10 +78,6 @@ include("../src/coefplot.jl")
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp")
 
-districts = CSV.read("../data/districts.csv", DataFrame)
-districts.area = districts.pop ./ districts.density;
-districts.lrd = log.(districts.density ./ median(districts.density));
-
 ```
 
 #### Fit baseflow model
