@@ -116,6 +116,23 @@ pcoefs = seplot(res)
 ![Estimates](./docs/pcoefs.png)
 
 ## Issues
+- Without `maxtime` fitting takes about 10x longer with only slightly
+  larger LP, which is not worth the time. Setting `abstol` does not
+  work reliably, see
+  [here](https://discourse.julialang.org/t/maximum-a-posteriori-not-honoring-abstol-and-reltol-turing-jl/133402/6).
+  Nevertheless, `maxtime = 200` or `maxtime = 300` seems to work well.
+  If you want to increase, do slowly and check if fit improves.
+- The model is difficult to sample, with about 60 thousands rows per
+  data set and very small standard errors.
+- The truncated Poisson distribution is difficult to fit without good
+  inits. Doing a small prefit without truncation and using inits from
+  that works well.
+- The argument `norm = true` allows to fit a normalized version of the
+  `baseflow`and the `fundamental` model. Essentially that turns the
+  model into a discrete choice model and normalizes desirabilities.
+  This model seems to make theoretically more sense but fails
+  empirically: Predictions of asymmetries are notably worse.
+
 
 ## Additional Data
 This repository contains only a sample dataset (18–25, 2017) as well
