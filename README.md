@@ -8,7 +8,7 @@ The model provides:
 - good predictions that can be aggregated to quantities such as net migration
 - flexible yet regularized estimates of the effect of population density
 - flexible yet regularized estimates of geographical asymmetries
-  (i.e., factors influencing migration that are not related to
+  (i.e. factors influencing migration that are not related to
   density).
 
 ## Usage
@@ -78,29 +78,25 @@ include("../src/coefplot.jl")
 shp = GeoIO.load("../data/clean/shapes/districts_ext.shp");
 st = GeoIO.load("../data/clean/shapes/states.shp")
 
+districts = CSV.read("../data/districts.csv", DataFrame)
+districts.area = districts.pop ./ districts.density;
+districts.lrd = log.(districts.density ./ median(districts.density));
+
 ```
 
 #### Fit baseflow model
 
 ```
 
-mdl = baseflow(
-    load_data(
-        "18-25", # age group
-        2017, # year
-        0.1, # Fraction of rows to use, e.g. 10%
-        "../data/"; ## path of FlowDataGermans.csv and districts.csv
-        only_positive = true, # use only positive flows / drop zero flows
-        seed = 1234, # for reproducibility
-    ),
-    ndc = 16, # number of radial basis centers for density transition function
-    ngcx = 5 # number of radial basis centers for geographical
-             # asymmetries in x direction. y direction is set
-             # automatically
-);
+## we prefit with 10 % of rows and no truncation to get inits. Fitting
+## with truncation right away fails
+mdl = baseflow(load_data("18-25", 2017, 0.1, "../data/"; only_positive = true);
+               ndc = 25, ngcx = 5, trunc = false, norm = false);
+res = estimate(mdl; optim_kwargs = (; maxtime = 100));
 
-inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.args.ngcy);
-@time out = estimate(mdl, optim_kwargs = (; show_trace = false, inits = inits));
+mdl = baseflow(load_data("18-25", 2017, 1.0, "../data/"; only_positive = true);
+               ndc = 25, ngcx = 5, trunc = true, norm = false);
+res = estimate(mdl; optim_kwargs = (; maxtime = 200, initial_params = res.ses.coef))
 
 ```
 
@@ -108,13 +104,13 @@ inits = initialize(mdl.data.age, mdl.mdl.args.ndc, mdl.mdl.args.ngcx, mdl.mdl.ar
 ```
 
 ## diagnostic plots
-post = analyze(out)
+post = analyze(res)
 ## heatmap of density transition function
-m, pdtf = plotdtf(out)
+m, pdtf = plotdtf(res)
 ## Map of Germany showing locational asymmetries
-geo, pgeo = plotgeo(out, shp, st)
+geo, pgeo = plotgeo(res, shp, st)
 ## plotting estimates with standard errors
-pcoefs = coefplot(out)
+pcoefs = coefplot(res)
 
 ```
 
