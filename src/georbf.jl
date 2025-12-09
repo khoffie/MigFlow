@@ -1,6 +1,5 @@
 function plotgeo(r::EstimationResult, shp::GeoTable, st::GeoTable,
-                 crange = nothing,
-                 fig = Figure(size = (400, 400), fontsize = 10),
+                 crange = nothing, genfig(),
                  x = 1, y = 1, legend = true)
     geodf = getgeo(r)
     a, yr = getageyear(r)
@@ -21,7 +20,7 @@ function plotgeo(df::DataFrame, shp, st, crange, a, yr, fig,
     if legend
         prettytitle!(fig, "Locational Asymmetries, $a")
         Colorbar(fig[end + 1, :], colorrange = crange, colormap = :roma,
-                 vertical = false, height = 3, width = Relative(.5))
+                 vertical = false)
     end
 end
 
