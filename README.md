@@ -45,9 +45,8 @@ $ julia --project=. -e 'using Pkg; Pkg.instantiate()'
 This will install all libraries needed in the correct version.
 
 ### Fitting the model
-First extract the archive with the data. Mainly, the archive contains
-flows of the age group 18-25 in 2017. Shapefiles and additional data
-about districts is provided as well.
+First extract the data-archive. The archive contains flows of
+the age group 18-25 in 2017, shapefiles and additional data about.
 
 ```
 $ tar -xvf data/data.tar.gz -C data
@@ -106,11 +105,11 @@ res = estimate(mdl; optim_kwargs = (; maxtime = 200, initial_params = res.ses.co
 ## diagnostic plots
 post = analyze(res)
 ## heatmap of density transition function
-m, pdtf = plotdtf(res)
+m, pdtf = plotdtf(res, districts)
 ## Map of Germany showing locational asymmetries
 geo, pgeo = plotgeo(res, shp, st)
 ## plotting estimates with standard errors
-pcoefs = coefplot(res)
+pcoefs = seplot(res)
 
 ```
 
