@@ -96,3 +96,12 @@ function calc_crange(x)
     m = maximum(abs.(x))
     return -m, m
 end
+
+function genfig(size = (16, 10), m = 1)
+    if maximum(size) > 50
+        throw(DomainError(size, "too large, specify figure size in cm not css pixels"))
+    end
+    cm = 96 / 2.54 # one inch has 96 css pixels
+    pt = 4 / 3 # one pt has 4/3 css pixels
+    return Figure(size = cm .* size, fontsize = 12pt * m)
+end
