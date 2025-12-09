@@ -111,8 +111,8 @@ pcoefs = seplot(res)
 
 
 ![check fit](./docs/pcheck.png)
-![Density transition function](./docs/pdtf.png)
-![Locational Asymmetries](./docs/pgeo.png)
+[<img src="./docs/pdtf.png" width="400"/>](./docs/pdtf.png)
+[<img src="./docs/pgeo.png" width="400"/>](./docs/pgeo.png)
 ![Estimates](./docs/pcoefs.png)
 
 ## Issues
