@@ -20,7 +20,7 @@ function plotgeo(df::DataFrame, shp, st, crange, a, yr, fig,
     if legend
         prettytitle!(fig, "Locational Asymmetries, $a")
         Colorbar(fig[end + 1, :], colorrange = crange, colormap = :roma,
-                 vertical = false)
+                 vertical = false, height = 3, width = Relative(.5))
     end
 end
 
