@@ -46,10 +46,11 @@ function fitmodels(models, ages, years, trunc, norm, outp = "./output", prefit =
                         inits = out.ses.coef
                     end
                     mdl = defmodel(m, a, years[i], 1.0, trunc, norm)
-                    rs[i] = @time estimate(mdl; calcvcov = false, optim_kwargs = (; initial_params = inits, maxtime = 200))
+                    kwargs = (; initial_params = inits, maxtime = 200)
+                    rs[i] = estimate(mdl; calcvcov = false, optim_kwargs = kwargs)
                 else
                     mdl = defmodel(m, a, years[i], 1.0, trunc, norm)
-                    rs[i] = @time estimate(mdl; calcvcov = false, optim_kwargs = (; initial_params = inits, maxtime = 200))
+                    rs[i] = estimate(mdl; calcvcov = true, optim_kwargs = (; maxtime = 200))
                 end
             end
             serialize(joinpath(outp, name), rs)
