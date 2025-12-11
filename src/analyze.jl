@@ -208,3 +208,9 @@ function asymdf(df)
     df1.asymp = (df1.inpreds .- df1.outpreds) ./ df1.totalp
     return dropmissing!(df1)
 end
+
+function getmeta(r::EstimationResult)
+    a, y = getageyear(r)
+    m = getmodel(r)
+    return (; m, a, y)
+end
