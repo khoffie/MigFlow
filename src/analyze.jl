@@ -36,6 +36,7 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
                xlabel = L"\text{Distance (100km)}",
                ylabel = L"\log(y / \hat{y})",
                xgridvisible = false, ygridvisible = false, xticks = tks)
+##    ylims!(ax3, -2, 2)
     plotdist!(ax3, df.flows, df.preds, df.dist, pointsize)
 
     ax4 = Axis(fig[1, 4],
@@ -157,7 +158,8 @@ end
 function plotdist!(ax, flows, preds, dist, size)
     function sub(df, N)
         idx = subset(flows, N)
-        y = log.(flows ./ preds)[idx]
+        y = pearres.(flows, preds)[idx]
+##        y = log.(flows ./ preds)[idx]
         x = dist[idx]
         return sort(DataFrame(; x, y), :x)
     end
