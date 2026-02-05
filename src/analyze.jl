@@ -196,6 +196,9 @@ end
 mae(y, p) = mean(abs.(y .- p))
 ## skillscore(y, p) = 1 - (mse(y, p) / mse(y, 0))
 skillscore(y, p) = 1 - (mae(y, p) / mae(y, 0))
+multires(y, p) = log(y / p)
+devres(y, p) = sqrt((y * log(y / p)) - (y - p))
+pearres(y, p) = (y - p) / sqrt(p)
 
 function asymdf(df)
     dfod = select(df, :fromdist, :todist, :flows => :outflux,
