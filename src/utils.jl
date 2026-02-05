@@ -8,5 +8,6 @@ origin(df, o::Int64) = filter(:fromdist => n -> n == o, df)
 destination(df, d) = filter(:todist => n -> n ∈ d, df)
 code(df, c) = filter(:distcode => n -> n ∈ c, df)
 pos(df) = df[df.flows .> 0.0, :]
+dens(df, dmin = -Inf, dmax = Inf) = filter(:density => x -> (x > dmin && x < dmax), df)
 
 uniqueN(x) = length(unique(x))
