@@ -1,5 +1,5 @@
 function plotgeo(r::EstimationResult, shp::GeoTable, st::GeoTable,
-                 crange = nothing, genfig(),
+                 fig = genfig(), crange = nothing,
                  x = 1, y = 1, legend = true)
     geodf = getgeo(r)
     a, yr = getageyear(r)
