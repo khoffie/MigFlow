@@ -13,7 +13,11 @@ function rbfscale(cx, cy, k)
     ## then two elements, but because the coordinates are equidistantly
     ## spaced we can calculate the distance between centers based on
     ## first two entries only
-    return k * (sqrt((cx[1] - cx[2])^2 + (cy[1] - cy[2])^2))
+    if iszero(length(cx))
+        return nothing
+    else
+        return k * (sqrt((cx[1] - cx[2])^2 + (cy[1] - cy[2])^2))
+    end
 end
 
 function interp(x, y, w, cx, cy, scale)
