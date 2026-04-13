@@ -9,5 +9,5 @@ destination(df, d) = filter(:todist => n -> n ∈ d, df)
 code(df, c) = filter(:distcode => n -> n ∈ c, df)
 pos(df) = df[df.flows .> 0.0, :]
 dens(df, dmin = -Inf, dmax = Inf) = filter(:density => x -> (x > dmin && x < dmax), df)
-
+round2(x) = round(x, digits = 2)
 uniqueN(x) = length(unique(x))
