@@ -63,7 +63,7 @@ function modeldf(r::EstimationResult)
 end
 
 function netdf(r::EstimationResult)
-        return add_meta(r, calc_net_df(modeldf(r)))
+    return add_meta(r, calc_net_df(modeldf(r)))
 end
 
 function quickdf(r::EstimationResult)
