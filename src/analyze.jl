@@ -90,7 +90,7 @@ function calc_net(df, col)
     net = innerjoin(net, pop, on = [:fromdist])
     net.net = net.influx .- net.outflux
     net.total = net.influx .+ net.outflux
-    net.asym = net.net ./ net.total
+    net.asyma = net.net ./ net.total
     net.nmra = net.net ./ net.A
     return net
 end
@@ -103,7 +103,7 @@ function calc_net_df(df)
     names(netp)
     rename!(netp, names(netp) .=> new)
     net = innerjoin(net, netp, on = :fromdist => :fromdistp)
-    return net
+    return net[!, Not(:Ap)]
 end
 
 function add_meta(r, df)
@@ -150,9 +150,9 @@ function plotfit!(ax, flows, preds, size)
 end
 
 function plotasym!(ax, net, size)
-    Makie.scatter!(ax, net.asymp, net.asym, alpha = .5, markersize = size)
-    diagonal!(ax, net.asymp, net.asym)
-    smoother!(ax, net.asymp, net.asym)
+    Makie.scatter!(ax, net.asymap, net.asyma, alpha = .5, markersize = size)
+    diagonal!(ax, net.asymap, net.asyma)
+    smoother!(ax, net.asymap, net.asyma)
 end
 
 function plotdist!(ax, flows, preds, dist, size)
@@ -209,8 +209,8 @@ function asymdf(df)
 
     df1.total = df1.influx .+ df1.outflux
     df1.totalp = df1.inpreds .+ df1.outpreds
-    df1.asym = (df1.influx .- df1.outflux) ./ df1.total
-    df1.asymp = (df1.inpreds .- df1.outpreds) ./ df1.totalp
+    df1.asyma = (df1.influx .- df1.outflux) ./ df1.total
+    df1.asymap = (df1.inpreds .- df1.outpreds) ./ df1.totalp
     return dropmissing!(df1)
 end
 
