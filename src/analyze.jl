@@ -103,6 +103,12 @@ function netdf(r::EstimationResult)
     return addmeta(r, addnetcols(calcnet(r)))
 end
 
+function netdf(r::EstimationResult, shp::Geo)
+    net = addmeta(r, addnetcols(calcnet(r)))
+    net = innerjoin(net.df, DataFrame(shp.shp)[!, [:lc, :geometry]], on = :lc)
+    return Net(net)
+end
+
 function addmeta(r::EstimationResult, df::T) where {T<:AbstractDataSet}
     df = df.df
     m, a, y = getmeta(r)
@@ -137,6 +143,7 @@ function addnetcols(df::Net)
     net.totalp = net.influxp .+ net.outfluxp
     net.asymap = net.netp ./ net.totalp
     net.nmrap = net.netp ./ net.A
+    net.diff = net.nmra .- net.nmrap
     return Net(net)
 end
 
