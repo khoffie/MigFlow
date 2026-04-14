@@ -1,10 +1,32 @@
+abstract type AbstractDataSet end
+
+struct Flows <: AbstractDataSet
+    df::DataFrame
+end
+
+struct Net <: AbstractDataSet
+    df::DataFrame
+end
+
 struct AnalysisResult
-    df::DataFrame ## flows df with predictions
-    net::DataFrame ## net, nmr, asymmetries
+    df::Flows ## flows df with predictions
+    net::Net ## net, nmr, asymmetries
     quick::DataFrame ## deviance, MAE, MAE0, Skillscore
     asym::DataFrame ## bivariate asymmetries
     fig::Figure ## Main analysis plot
 end
+
+function Base.vcat(x::T, y::T) where {T<:AbstractDataSet}
+    T(vcat(x.df, y.df))
+end
+
+function DataFrames.filter(f, x::T; kwargs...) where {T<:AbstractDataSet}
+    T(DataFrames.filter(f, x.df; kwargs...))
+end
+
+DataFrames.groupby(x::AbstractDataSet, cols) = DataFrames.groupby(x.df, cols)
+Base.names(x::AbstractDataSet) = Base.names(x.df)
+Base.sort(x::AbstractDataSet, c) = Base.sort(x.df, c)
 
 function analyze(r::EstimationResult, fig = genfig((20, 6)))
     df = modeldf(r)
@@ -18,7 +40,7 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
                title = L"\text{Mean deviance:}%$(quick.deviance[1])",
                aspect = DataAspect(),
                xgridvisible = false, ygridvisible = false)
-    plotfit!(ax1, df.flows, df.preds, pointsize)
+    plotfit!(ax1, df.df.flows, df.df.preds, pointsize)
 
     tks = ([-1.0, -.5, 0.0, .5, 1.0], ["-1", "-.5", "0", ".5", "1"])
     ax2 = Axis(fig[1, 2],
@@ -37,13 +59,14 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
                ylabel = L"\log(y / \hat{y})",
                xgridvisible = false, ygridvisible = false, xticks = tks)
 ##    ylims!(ax3, -2, 2)
-    plotdist!(ax3, df.flows, df.preds, df.dist, pointsize)
+    plotdist!(ax3, df.df.flows, df.df.preds, df.df.dist, pointsize)
 
     ax4 = Axis(fig[1, 4],
                xlabel = L"\log(A_o  P_d)",
                ylabel = L"\log(y / \hat{y})",
                xgridvisible = false, ygridvisible = false)
-    plotpop!(ax4, df.flows, df.preds, df.A, df.P, pointsize)
+    plotpop!(ax4, df.df.flows, df.df.preds, df.df.A, df.df.P, pointsize)
+    println(typeof(df))
     return AnalysisResult(df, net, quick, asym, fig)
 end
 
@@ -59,18 +82,13 @@ function modeldf(r::EstimationResult)
         A = data.A,
         P = exp.(data.P[data.to]) ## bec log(P) is saved
     )
-    return df
-end
-
-function netdf(r::EstimationResult)
-    return add_meta(r, calc_net_df(modeldf(r)))
+    return Flows(df)
 end
 
 function quickdf(r::EstimationResult)
-    a, y = getageyear(r)
-    m = getmodel(r)
-    df = modeldf(r)
-    net = netdf(r)
+    m, a, y = getmeta(r)
+    df = modeldf(r).df
+    net = netdf(r).df
     dev = round2(deviance2(df.flows, df.preds))
     err = 100mae(net.asyma, net.asymap)
     trivial = 100mae(net.asyma, 0)
@@ -80,40 +98,46 @@ function quickdf(r::EstimationResult)
     return quick
 end
 
-function calc_net(df, col)
-    netf = combine(DataFrames.groupby(df, :fromdist), col => sum)
-    rename!(netf, string(col) * "_sum" => :outflux)
-    nett = combine(DataFrames.groupby(df, :todist), col => sum)
-    rename!(nett, string(col) * "_sum" => :influx)
-    net = innerjoin(netf, nett, on = [:fromdist => :todist])
-    pop = unique(df, :fromdist)[!, [:fromdist, :A]]
-    net = innerjoin(net, pop, on = [:fromdist])
+
+function netdf(r::EstimationResult)
+    return addmeta(r, addnetcols(calcnet(r)))
+end
+
+function addmeta(r::EstimationResult, df::T) where {T<:AbstractDataSet}
+    df = df.df
+    m, a, y = getmeta(r)
+    df.agegroup .= a
+    df.year .= y
+    df.model .= m
+    first = ["model","agegroup", "year"]
+    last = setdiff(names(df), first)
+    return T(select(df, vcat(first, last)))
+end
+
+function calcnet(r::EstimationResult)
+    df = modeldf(r)
+    dfout = combine(DataFrames.groupby(df, [:fromdist]),
+                    :flows => sum => :outflux,
+                    :preds => sum => :outfluxp)
+    dfin = combine(DataFrames.groupby(df, [:todist]),
+                   :flows => sum => :influx,
+                   :preds => sum => :influxp)
+    net = innerjoin(dfout, dfin, on = :fromdist => :todist)
+    net = innerjoin(net, unique(df.df, :fromdist)[!, [:fromdist, :A]], on = :fromdist)
+    return Net(rename!(net, :fromdist => :lc))
+end
+
+function addnetcols(df::Net)
+    net = df.df
     net.net = net.influx .- net.outflux
     net.total = net.influx .+ net.outflux
     net.asyma = net.net ./ net.total
     net.nmra = net.net ./ net.A
-    return net
-end
-
-function calc_net_df(df)
-    net = calc_net(df, :flows)
-    netp = calc_net(df, :preds)
-
-    new = names(netp) .* "p"
-    names(netp)
-    rename!(netp, names(netp) .=> new)
-    net = innerjoin(net, netp, on = :fromdist => :fromdistp)
-    return net[!, Not(:Ap)]
-end
-
-function add_meta(r, df)
-    a, y = getageyear(r)
-    df.agegroup .= a
-    df.year .= y
-    df.model .= getmodel(r)
-    first = ["model","agegroup", "year"]
-    last = setdiff(names(df), first)
-    select!(df, vcat(first, last))
+    net.netp = net.influxp .- net.outfluxp
+    net.totalp = net.influxp .+ net.outfluxp
+    net.asymap = net.netp ./ net.totalp
+    net.nmrap = net.netp ./ net.A
+    return Net(net)
 end
 
 subset(x, n) = StatsBase.sample(1:length(x), n)
@@ -149,7 +173,8 @@ function plotfit!(ax, flows, preds, size)
     smoother!(ax, df.x, df.y)
 end
 
-function plotasym!(ax, net, size)
+function plotasym!(ax, net::Net, size)
+    net = net.df
     Makie.scatter!(ax, net.asymap, net.asyma, alpha = .5, markersize = size)
     diagonal!(ax, net.asymap, net.asyma)
     smoother!(ax, net.asymap, net.asyma)
@@ -200,7 +225,8 @@ multires(y, p) = log(y / p)
 devres(y, p) = sqrt((y * log(y / p)) - (y - p))
 pearres(y, p) = (y - p) / sqrt(p)
 
-function asymdf(df)
+function asymdf(df::Flows)
+    df = df.df
     dfod = select(df, :fromdist, :todist, :flows => :outflux,
                   :preds => :outpreds)
     dfdo = select(df, :fromdist => :todist, :todist => :fromdist,
