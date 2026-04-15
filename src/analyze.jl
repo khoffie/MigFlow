@@ -42,26 +42,35 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
                xgridvisible = false, ygridvisible = false)
     plotfit!(ax1, df.df.flows, df.df.preds, pointsize)
 
-    tks = ([-1.0, -.5, 0.0, .5, 1.0], ["-1", "-.5", "0", ".5", "1"])
-    ax2 = Axis(fig[1, 2],
-               xlabel = L"(\hat{i} - \hat{o}) / (\hat{i} + \hat{o})",
-               ylabel = L"(i - o) / (i + o)",
-               title = L"\textrm{skillscore} = %$(round(quick.skillscore[1], digits = 2))",
-               aspect = DataAspect(),
-               xgridvisible = false, ygridvisible = false, xticks = tks, yticks = tks)
-    Makie.ylims!(ax2, (-1, 1))
-    Makie.xlims!(ax2, (-1, 1))
-    plotasym!(ax2, net, pointsize)
+    # tks = ([-1.0, -.5, 0.0, .5, 1.0], ["-1", "-.5", "0", ".5", "1"])
+    # ax2 = Axis(fig[1, 2],
+    #            xlabel = L"(\hat{i} - \hat{o}) / (\hat{i} + \hat{o})",
+    #            ylabel = L"(i - o) / (i + o)",
+    #            title = L"\textrm{skillscore} = %$(round(quick.skillscore[1], digits = 2))",
+    #            aspect = DataAspect(),
+    #            xgridvisible = false, ygridvisible = false, xticks = tks, yticks = tks)
+    # Makie.ylims!(ax2, (-1, 1))
+    # Makie.xlims!(ax2, (-1, 1))
+    # plotasym!(ax2, net, pointsize)
 
+    res = pearres.(df.df.flows, df.df.preds)
+    ax2 = Axis(fig[1, 4], xlabel = L"(y - \hat{y}) / σ")
+    xlims!(ax2, (-10, 10))
+    density!(ax2, res)
+    lines!(ax2, Normal(mean(res), std(res)), color = :red)
+    hidexdecorations!(ax2, ticks = false, label = false, ticklabels = false)
+    hideydecorations!(ax2)
+
+    
     tks = ([0, 200, 400, 600, 800], string.([0, 2, 4, 6, 8]))
-    ax3 = Axis(fig[1, 3],
+    ax3 = Axis(fig[1, 2],
                xlabel = L"\text{Distance (100km)}",
                ylabel = L"(y - \hat{y}) / σ",
                xgridvisible = false, ygridvisible = false, xticks = tks)
 ##    ylims!(ax3, -2, 2)
     plotdist!(ax3, df.df.flows, df.df.preds, df.df.dist, pointsize)
 
-    ax4 = Axis(fig[1, 4],
+    ax4 = Axis(fig[1, 3],
                xlabel = L"\log(A_o  P_d)",
                ylabel = L"(y - \hat{y}) / σ",
                xgridvisible = false, ygridvisible = false)
@@ -190,6 +199,7 @@ function plotdist!(ax, flows, preds, dist, size)
     function sub(df, N)
         idx = subset(flows, N)
         y = pearres.(flows, preds)[idx]
+        y = devres.(flows, preds)[idx]
 ##        y = log.(flows ./ preds)[idx]
         x = dist[idx]
         return sort(DataFrame(; x, y), :x)
@@ -229,9 +239,10 @@ mae(y, p) = mean(abs.(y .- p))
 ## skillscore(y, p) = 1 - (mse(y, p) / mse(y, 0))
 skillscore(y, p) = 1 - (mae(y, p) / mae(y, 0))
 multires(y, p) = log(y / p)
-devres(y, p) = sqrt((y * log(y / p)) - (y - p))
-pearres(y, p) = (y - p) / sqrt(p)
 
+pearres(y, p) = (y - p) / sqrt(p)
+unitdeviance(y, p) = 2(y * log(y / p)  - (y - p))
+devianceresid(y, p) = sign(y - p) * sqrt(unitdeviance(y, p))
 function asymdf(df::Flows)
     df = df.df
     dfod = select(df, :fromdist, :todist, :flows => :outflux,
