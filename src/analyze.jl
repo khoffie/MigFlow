@@ -53,11 +53,11 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
     # Makie.xlims!(ax2, (-1, 1))
     # plotasym!(ax2, net, pointsize)
 
-    res = pearres.(df.df.flows, df.df.preds)
-    ax2 = Axis(fig[1, 4], xlabel = L"(y - \hat{y}) / σ")
-    xlims!(ax2, (-10, 10))
+    res = devianceresid.(df.df.flows, df.df.preds)
+    ax2 = Axis(fig[1, 4], xlabel = L"r_D")
     density!(ax2, res)
-    lines!(ax2, Normal(mean(res), std(res)), color = :red)
+    lines!(ax2, Normal(), color = :red)
+    xlims!(ax2, (-10, 10))
     hidexdecorations!(ax2, ticks = false, label = false, ticklabels = false)
     hideydecorations!(ax2)
 
@@ -65,14 +65,14 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
     tks = ([0, 200, 400, 600, 800], string.([0, 2, 4, 6, 8]))
     ax3 = Axis(fig[1, 2],
                xlabel = L"\text{Distance (100km)}",
-               ylabel = L"(y - \hat{y}) / σ",
+               ylabel = L"r_D",
                xgridvisible = false, ygridvisible = false, xticks = tks)
 ##    ylims!(ax3, -2, 2)
     plotdist!(ax3, df.df.flows, df.df.preds, df.df.dist, pointsize)
 
     ax4 = Axis(fig[1, 3],
                xlabel = L"\log(A_o  P_d)",
-               ylabel = L"(y - \hat{y}) / σ",
+               ylabel = L"r_D",
                xgridvisible = false, ygridvisible = false)
     plotpop!(ax4, df.df.flows, df.df.preds, df.df.A, df.df.P, pointsize)
     println(typeof(df))
@@ -198,9 +198,7 @@ end
 function plotdist!(ax, flows, preds, dist, size)
     function sub(df, N)
         idx = subset(flows, N)
-        y = pearres.(flows, preds)[idx]
-        y = devres.(flows, preds)[idx]
-##        y = log.(flows ./ preds)[idx]
+        y = devianceresid.(flows, preds)[idx]
         x = dist[idx]
         return sort(DataFrame(; x, y), :x)
     end
@@ -215,8 +213,7 @@ function plotpop!(ax, flows, preds, frompop, topop, size)
     function sub(df, N)
         idx = subset(flows, 10^3)
         x = (log.(frompop) .+ log.(topop))[idx]
-        y = pearres.(flows, preds)[idx]
-        ## y = (log.(flows ./ preds))[idx]
+        y = devianceresid.(flows, preds)[idx]
         return sort(DataFrame(; x, y), :x)
     end
     df = sub(flows, 10^3)
