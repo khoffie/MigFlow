@@ -98,14 +98,19 @@ function quickdf(r::EstimationResult)
     df = modeldf(r).df
     net = netdf(r).df
     dev = round2(deviance2(df.flows, df.preds))
-    err = 100mae(net.asyma, net.asymap)
-    trivial = 100mae(net.asyma, 0)
-    skill = skillscore(net.asyma, net.asymap)
-    quick = DataFrame(model = m, agegroup = a, year = y, deviance = dev,
-                      mae = err, mae0 = trivial, skillscore = skill)
+    errasym = 100mae(net.asyma, net.asymap)
+    trivialasym = 100mae(net.asyma, 0)
+    skillasym = skillscore(net.asyma, net.asymap)
+    quick = DataFrame(model = m, agegroup = a, year = y,
+                      deviance = round2(deviance2(df.flows, df.preds)),
+                      maeasym = 100mae(net.asyma, net.asymap),
+                      mae0asym = 100mae(net.asyma, 0),
+                      skillscoreasym = skillscore(net.asyma, net.asymap),
+                      maenmra = 100mae(net.nmra, net.nmrap),
+                      mae0nmra = 100mae(net.nmra, 0),
+                      skillscorenmra = skillscore(net.nmra, net.nmrap))
     return quick
 end
-
 
 function netdf(r::EstimationResult)
     return addmeta(r, addnetcols(calcnet(r)))
