@@ -71,7 +71,6 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
 end
 
 function modeldf(r::EstimationResult)
-    a, y = getageyear(r)
     data = r.mdl.mdl.args
     df = DataFrame(
         fromdist = data.from,
@@ -82,7 +81,7 @@ function modeldf(r::EstimationResult)
         A = data.A,
         P = exp.(data.P[data.to]) ## bec log(P) is saved
     )
-    return Flows(df)
+    return addmeta(r, Flows(df))
 end
 
 function quickdf(r::EstimationResult)
@@ -105,7 +104,7 @@ end
 
 function netdf(r::EstimationResult, shp::Geo)
     net = addmeta(r, addnetcols(calcnet(r)))
-    net = innerjoin(net.df, DataFrame(shp.shp)[!, [:lc, :geometry]], on = :lc)
+    net = innerjoin(net.df, DataFrame(shp.geo)[!, [:lc, :geometry]], on = :lc)
     return Net(net)
 end
 
