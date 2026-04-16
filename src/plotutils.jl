@@ -3,21 +3,10 @@ getmodel(r) = r.mdl.meta.model
 
 function addlines!(ax, df, group, xcol, ycol, lw = 1)
     groups = unique(df[!, group])
-    for g in groups
+    for (i, g) in enumerate(groups)
         foo = df[df[!, group] .== g, :]
-        kwargs = Dict{Symbol, Any}()
-        if "col" in names(foo)
-            kwargs[:color] = foo.col
-        end
-        if "lw" in names(foo)
-            kwargs[:linewidth] = foo.lw
-        end
         lines!(ax, foo[!, xcol], foo[!, ycol], label = g, linewidth = lw; kwargs...)
     end
-end
-
-function addlines!(ax, df, group, xcol, ycol, lw = 1)
-    return addgroups!(ax, lines!, df, group, xcol, ycol, lw)
 end
 
 function addgroups!(ax, f, df, group, xcol, ycol, lw = 1; kwargs...)
