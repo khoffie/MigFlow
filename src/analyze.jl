@@ -99,10 +99,6 @@ function quickdf(r::EstimationResult)
     return quick
 end
 
-function netdf(r::EstimationResult)
-    return addmeta(r, addnetcols(calcnet(r)))
-end
-
 function addmeta(r::EstimationResult, df::DataFrame)
     m, a, y = getmeta(r)
     df.agegroup .= a
@@ -111,41 +107,6 @@ function addmeta(r::EstimationResult, df::DataFrame)
     first = ["model","agegroup", "year"]
     last = setdiff(names(df), first)
     return select(df, vcat(first, last))
-end
-
-calcnet(r::EstimationResult) = calcnet(modeldf(r))
-
-function calcnet(df::DataFrame)
-    dfout = combine(DataFrames.groupby(df, [:fromdist]),
-                    :flows => sum => :outflux,
-                    :preds => sum => :outfluxp)
-    dfin = combine(DataFrames.groupby(df, [:todist]),
-                   :flows => sum => :influx,
-                   :preds => sum => :influxp)
-    net = innerjoin(dfout, dfin, on = :fromdist => :todist)
-    net = innerjoin(net, unique(df, :fromdist)[!, [:fromdist, :A]], on = :fromdist)
-    return rename!(net, :fromdist => :lc)
-end
-
-function calcnet(df::DataFrame, type::Flows)
-    df2 = calcnet(df)
-    df2.agegroup .= unique(df.agegroup)[1]
-    df2.year .= unique(df.year)[1]
-    return df2
-end
-
-function addnetcols(df::DataFrame)
-    net = df
-    net.net = net.influx .- net.outflux
-    net.total = net.influx .+ net.outflux
-    net.asyma = net.net ./ net.total
-    net.nmra = net.net ./ net.A
-    net.netp = net.influxp .- net.outfluxp
-    net.totalp = net.influxp .+ net.outfluxp
-    net.asymap = net.netp ./ net.totalp
-    net.nmrap = net.netp ./ net.A
-    net.diff = net.nmra .- net.nmrap
-    return net
 end
 
 subset(x, n) = StatsBase.sample(1:length(x), n)
