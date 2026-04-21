@@ -1,32 +1,22 @@
-abstract type AbstractDataSet end
-
-struct Flows <: AbstractDataSet
-    df::DataFrame
+struct Flows
 end
 
-struct Net <: AbstractDataSet
-    df::DataFrame
+struct Net
+end
+
+struct Pop
+end
+
+struct Shape
 end
 
 struct AnalysisResult
-    df::Flows ## flows df with predictions
-    net::Net ## net, nmr, asymmetries
+    df::DataFrame ## flows df with predictions
+    net::DataFrame ## net, nmr, asymmetries
     quick::DataFrame ## deviance, MAE, MAE0, Skillscore
     asym::DataFrame ## bivariate asymmetries
     fig::Figure ## Main analysis plot
 end
-
-function Base.vcat(x::T, y::T) where {T<:AbstractDataSet}
-    T(vcat(x.df, y.df))
-end
-
-function DataFrames.filter(f, x::T; kwargs...) where {T<:AbstractDataSet}
-    T(DataFrames.filter(f, x.df; kwargs...))
-end
-
-DataFrames.groupby(x::AbstractDataSet, cols) = DataFrames.groupby(x.df, cols)
-Base.names(x::AbstractDataSet) = Base.names(x.df)
-Base.sort(x::AbstractDataSet, c) = Base.sort(x.df, c)
 
 function analyze(r::EstimationResult, fig = genfig((20, 6)))
     df = modeldf(r)
@@ -90,7 +80,7 @@ function modeldf(r::EstimationResult)
         A = data.A,
         P = exp.(data.P[data.to]) ## bec log(P) is saved
     )
-    return addmeta(r, Flows(df))
+    return addmeta(r, df)
 end
 
 function quickdf(r::EstimationResult)
@@ -113,25 +103,19 @@ function netdf(r::EstimationResult)
     return addmeta(r, addnetcols(calcnet(r)))
 end
 
-function netdf(r::EstimationResult, shp::Geo)
-    net = addmeta(r, addnetcols(calcnet(r)))
-    net = innerjoin(net.df, DataFrame(shp.geo)[!, [:lc, :geometry]], on = :lc)
-    return Net(net)
-end
-
-function addmeta(r::EstimationResult, df::T) where {T<:AbstractDataSet}
-    df = df.df
+function addmeta(r::EstimationResult, df::DataFrame)
     m, a, y = getmeta(r)
     df.agegroup .= a
     df.year .= y
     df.model .= m
     first = ["model","agegroup", "year"]
     last = setdiff(names(df), first)
-    return T(select(df, vcat(first, last)))
+    return select(df, vcat(first, last))
 end
 
-function calcnet(r::EstimationResult)
-    df = modeldf(r)
+calcnet(r::EstimationResult) = calcnet(modeldf(r))
+
+function calcnet(df::DataFrame)
     dfout = combine(DataFrames.groupby(df, [:fromdist]),
                     :flows => sum => :outflux,
                     :preds => sum => :outfluxp)
@@ -139,12 +123,19 @@ function calcnet(r::EstimationResult)
                    :flows => sum => :influx,
                    :preds => sum => :influxp)
     net = innerjoin(dfout, dfin, on = :fromdist => :todist)
-    net = innerjoin(net, unique(df.df, :fromdist)[!, [:fromdist, :A]], on = :fromdist)
-    return Net(rename!(net, :fromdist => :lc))
+    net = innerjoin(net, unique(df, :fromdist)[!, [:fromdist, :A]], on = :fromdist)
+    return rename!(net, :fromdist => :lc)
 end
 
-function addnetcols(df::Net)
-    net = df.df
+function calcnet(df::DataFrame, type::Flows)
+    df2 = calcnet(df)
+    df2.agegroup .= unique(df.agegroup)[1]
+    df2.year .= unique(df.year)[1]
+    return df2
+end
+
+function addnetcols(df::DataFrame)
+    net = df
     net.net = net.influx .- net.outflux
     net.total = net.influx .+ net.outflux
     net.asyma = net.net ./ net.total
@@ -154,7 +145,7 @@ function addnetcols(df::Net)
     net.asymap = net.netp ./ net.totalp
     net.nmrap = net.netp ./ net.A
     net.diff = net.nmra .- net.nmrap
-    return Net(net)
+    return net
 end
 
 subset(x, n) = StatsBase.sample(1:length(x), n)
@@ -190,7 +181,7 @@ function plotfit!(ax, flows, preds, size)
     smoother!(ax, df.x, df.y)
 end
 
-function plotasym!(ax, net::Net, size)
+function plotasym!(ax, net::DataFrame, size)
     net = net.df
     Makie.scatter!(ax, net.asymap, net.asyma, alpha = .5, markersize = size)
     diagonal!(ax, net.asymap, net.asyma)
@@ -242,7 +233,7 @@ multires(y, p) = log(y / p)
 pearres(y, p) = (y - p) / sqrt(p)
 unitdeviance(y, p) = 2(y * log(y / p)  - (y - p))
 devianceresid(y, p) = sign(y - p) * sqrt(unitdeviance(y, p))
-function asymdf(df::Flows)
+function asymdf(df::DataFrame)
     df = df.df
     dfod = select(df, :fromdist, :todist, :flows => :outflux,
                   :preds => :outpreds)
