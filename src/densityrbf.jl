@@ -2,8 +2,8 @@ function plotdtf(r::EstimationResult, crange = nothing, fig = genfig((10, 10)),
                  x = 1, y = 1, legend = true)
     m, a, yr = dtfmat(r)
     if isnothing(crange); crange = calc_crange(m); end
-    plotdtf(m, a, yr, crange, fig, x, y, legend)
-    return m, fig
+    ax = plotdtf(m, a, yr, crange, fig, x, y, legend)
+    return m, fig, ax
 end
 
 function plotdtf(m::LinearAlgebra.Adjoint{Float64, Matrix{Float64}},
@@ -24,6 +24,7 @@ function plotdtf(m::LinearAlgebra.Adjoint{Float64, Matrix{Float64}},
         Colorbar(fig[:, y + 1], hm)
         prettytitle!(fig, "Density Transition Function, $a")
     end
+    return ax
 end
 
 function dtfmat(r::EstimationResult)
