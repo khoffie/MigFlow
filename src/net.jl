@@ -1,4 +1,10 @@
-netdf(r::EstimationResult) = addmeta(r, addnetcols(calcnet(modeldf(r))))
+function netdf(r::EstimationResult, percent = true)
+    return addmeta(r, addnetcols(calcnet(modeldf(r)), percent))
+end
+
+function netdf(df::DataFrame, percent = true)
+    return addnetcols(calcnet(df, Flows()), percent)
+end
 
 function calcnet(df::DataFrame)
     dfout = combine(DataFrames.groupby(df, [:fromdist]),
