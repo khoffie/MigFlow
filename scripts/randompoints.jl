@@ -25,14 +25,6 @@ function sequential(points, p = .1; start_idx = nothing)
     return (NaN, nothing, length(order))
 end
 
-function target_decline(points, γ = 2, start_idx = nothing)
-    N = size(points, 1)
-    i = isnothing(start_idx) ? rand(1:N) : start_idx
-    dists = pairwise(Euclidean(), points', points[i:i, :]', dims=2)
-    dists = dists[dists .> 0]
-    return StatsBase.sample(dists, Weights(1 ./ dists .^γ))
-end
-
 function radial(points, m, ϕ, i = nothing)
     i = isnothing(i) ? rand(1:size(points, 1)) : i
     ds = pairwise(Euclidean(), points', points[i:i, :]', dims=2)[:]
@@ -50,15 +42,12 @@ function radial(points, m, ϕ, i = nothing)
     end
 end
 
-function simulate_radial(points, m, i = nothing)
-    i = isnothing(i) ? rand(1:size(points, 1)) : i
-    ds = pairwise(Euclidean(), points', points[i:i, :]', dims=2)[:]
-    ds = ds[ds .> 0 .&& ds .< m]
-    if length(ds) > 0
-        return rand(ds)
-    else
-        return NaN
-    end
+function target_decline(points, γ = 2, start_idx = nothing)
+    N = size(points, 1)
+    i = isnothing(start_idx) ? rand(1:N) : start_idx
+    dists = pairwise(Euclidean(), points', points[i:i, :]', dims=2)
+    dists = dists[dists .> 0]
+    return StatsBase.sample(dists, Weights(1 ./ dists .^γ))
 end
 
 function simulate(N, dist, P, p1 = .2, p2 = .5, ϕ = .1, γ = 2)
