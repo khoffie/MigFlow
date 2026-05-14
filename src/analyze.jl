@@ -30,7 +30,7 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
                title = L"\text{Mean deviance:}%$(quick.deviance[1])",
                aspect = DataAspect(),
                xgridvisible = false, ygridvisible = false)
-    plotfit!(ax1, df.df.flows, df.df.preds, pointsize)
+    plotfit!(ax1, df.flows, df.preds, pointsize)
 
     # tks = ([-1.0, -.5, 0.0, .5, 1.0], ["-1", "-.5", "0", ".5", "1"])
     # ax2 = Axis(fig[1, 2],
@@ -43,7 +43,7 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
     # Makie.xlims!(ax2, (-1, 1))
     # plotasym!(ax2, net, pointsize)
 
-    res = devianceresid.(df.df.flows, df.df.preds)
+    res = devianceresid.(df.flows, df.preds)
     ax2 = Axis(fig[1, 4], xlabel = L"r_D")
     density!(ax2, res)
     lines!(ax2, Normal(), color = :red)
@@ -58,13 +58,13 @@ function analyze(r::EstimationResult, fig = genfig((20, 6)))
                ylabel = L"r_D",
                xgridvisible = false, ygridvisible = false, xticks = tks)
 ##    ylims!(ax3, -2, 2)
-    plotdist!(ax3, df.df.flows, df.df.preds, df.df.dist, pointsize)
+    plotdist!(ax3, df.flows, df.preds, df.dist, pointsize)
 
     ax4 = Axis(fig[1, 3],
                xlabel = L"\log(A_o  P_d)",
                ylabel = L"r_D",
                xgridvisible = false, ygridvisible = false)
-    plotpop!(ax4, df.df.flows, df.df.preds, df.df.A, df.df.P, pointsize)
+    plotpop!(ax4, df.flows, df.preds, df.A, df.P, pointsize)
     println(typeof(df))
     return AnalysisResult(df, net, quick, asym, fig)
 end
@@ -78,15 +78,15 @@ function modeldf(r::EstimationResult)
         preds = r.prd,
         dist = 100data.D, ## scaling back to original, better grab ds?
         A = data.A,
-        P = exp.(data.P[data.to]) ## bec log(P) is saved
+        P = 153000exp.(data.P[data.to]) .- 1000
     )
     return addmeta(r, df)
 end
 
 function quickdf(r::EstimationResult)
     m, a, y = getmeta(r)
-    df = modeldf(r).df
-    net = netdf(r).df
+    df = modeldf(r)
+    net = netdf(r)
     quick = DataFrame(model = m, agegroup = a, year = y,
                       deviance = round2(deviance2(df.flows, df.preds)),
                       maeasym = 100mae(net.asyma, net.asymap),
@@ -143,7 +143,7 @@ function plotfit!(ax, flows, preds, size)
 end
 
 function plotasym!(ax, net::DataFrame, size)
-    net = net.df
+    net = net
     Makie.scatter!(ax, net.asymap, net.asyma, alpha = .5, markersize = size)
     diagonal!(ax, net.asymap, net.asyma)
     smoother!(ax, net.asymap, net.asyma)
@@ -195,7 +195,7 @@ pearres(y, p) = (y - p) / sqrt(p)
 unitdeviance(y, p) = 2(y * log(y / p)  - (y - p))
 devianceresid(y, p) = sign(y - p) * sqrt(unitdeviance(y, p))
 function asymdf(df::DataFrame)
-    df = df.df
+    df = df
     dfod = select(df, :fromdist, :todist, :flows => :outflux,
                   :preds => :outpreds)
     dfdo = select(df, :fromdist => :todist, :todist => :fromdist,
