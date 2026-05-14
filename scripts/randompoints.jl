@@ -8,7 +8,7 @@ function generate_points(N, a, b)
     return hcat(x, y)
 end
 
-function simulate_move(points, p = .1; start_idx = nothing)
+function sequential(points, p = .1; start_idx = nothing)
     N = size(points, 1)
     i = isnothing(start_idx) ? rand(1:N) : start_idx
 
@@ -33,24 +33,43 @@ function target_decline(points, γ = 2, start_idx = nothing)
     return StatsBase.sample(dists, Weights(1 ./ dists .^γ))
 end
 
+function radial(points, m, ϕ, i = nothing)
+    i = isnothing(i) ? rand(1:size(points, 1)) : i
+    ds = pairwise(Euclidean(), points', points[i:i, :]', dims=2)[:]
+    ds = ds[ds .> 0]
+
+    if rand() < ϕ
+        return rand(ds)
+    else
+        ds = ds[ds .< m]
+        if length(ds) > 0
+            return rand(ds)
+        else
+            return NaN
+        end
+    end
+end
+
+function simulate_radial(points, m, i = nothing)
+    i = isnothing(i) ? rand(1:size(points, 1)) : i
+    ds = pairwise(Euclidean(), points', points[i:i, :]', dims=2)[:]
+    ds = ds[ds .> 0 .&& ds .< m]
+    if length(ds) > 0
+        return rand(ds)
+    else
+        return NaN
+    end
+end
+
 function simulate(N, dist, P, p1 = .2, p2 = .5, ϕ = .1, γ = 2)
     points = generate_points(N, a, b)
     D = pairwise(Euclidean(), points')
     S = 10^3
-    sd = [simulate_move(points, p1)[1] for _ in 1:S];
-    md = [simulate_move(generate_points(P, a, b), p2)[1] for _ in 1:S];
+    sd = [sequential(points, p1)[1] for _ in 1:S];
+    md = [sequential(generate_points(P, a, b), p2)[1] for _ in 1:S];
     md = md[.!isnan.(md)]
     td = [target_decline(points, γ)[1] for _ in 1:S];
 
-    rd = zeros(S)
-    for i in 1:S
-        if rand() < (1-ϕ)
-            m = rand(dist)
-        else
-            m = 821
-        end
-        rd[i] = simulate_radial(points, m)
-    end
 
     fig = genfig();
     ax = Axis(fig[1, 1], xlabel = "Distance (km)",
@@ -71,19 +90,9 @@ function simulate(N, dist, P, p1 = .2, p2 = .5, ϕ = .1, γ = 2)
     return (; d = fig, g = fig2)
 end
 
-function simulate_radial(points, m, i = nothing)
-    i = isnothing(i) ? rand(1:size(points, 1)) : i
-    ds = pairwise(Euclidean(), points', points[i:i, :]', dims=2)[:]
-    ds = ds[ds .> 0 .&& ds .< m]
-    if length(ds) > 0
-        return rand(ds)
-    else
-        return NaN
-    end
-end
-
 N = 10^3
 A = 357000
 a = sqrt(A / 1.33)
 b = 1.33a
+lines(Gamma(5, 40/4))
 simulate(400, Gamma(5, 40/4), 10, .2, .9, .15, 2).d
