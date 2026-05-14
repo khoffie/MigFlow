@@ -5,7 +5,7 @@ function addlines!(ax, df, group, xcol, ycol, lw = 1)
     groups = unique(df[!, group])
     for (i, g) in enumerate(groups)
         foo = df[df[!, group] .== g, :]
-        lines!(ax, foo[!, xcol], foo[!, ycol], label = g, linewidth = lw; kwargs...)
+        lines!(ax, foo[!, xcol], foo[!, ycol], label = g, linewidth = lw)
     end
 end
 
@@ -70,13 +70,15 @@ function diagonal!(ax, x, y)
           color = :darkred, linewidth = 2)
 end
 
-function smoother!(ax, x, y, col = "red", crange = nothing, span = .5)
+function smoother!(ax, x, y, color = "red", crange = nothing,
+                   span = .5, label = "")
     us = range(extrema(x)...; step = .1)
     vs = Loess.predict(loess(x, y; span = span), us)
     if !isnothing(crange)
-        f = Makie.lines!(ax, us, vs, color = col, colorrange = crange, linewidth = 4)
+        f = Makie.lines!(ax, us, vs, color = color,
+                         colorrange = crange, linewidth = 4, label = label)
     else
-        f = Makie.lines!(ax, us, vs, color = col, linewidth = 4)
+        f = Makie.lines!(ax, us, vs, color = color, linewidth = 4, label = label)
     end
     return f
 end
