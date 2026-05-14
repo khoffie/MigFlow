@@ -25,7 +25,7 @@ function calcnet(df::DataFrame, type::Flows)
     return df2
 end
 
-function addnetcols(df::DataFrame)
+function addnetcols(df::DataFrame, percent)
     net = df
     net.net = net.influx .- net.outflux
     net.total = net.influx .+ net.outflux
@@ -35,6 +35,12 @@ function addnetcols(df::DataFrame)
     net.totalp = net.influxp .+ net.outfluxp
     net.asymap = net.netp ./ net.totalp
     net.nmrap = net.netp ./ net.A
+    if percent
+        net.nmra = 100net.nmra
+        net.nmrap = 100net.nmrap
+        net.asyma = 100net.asyma
+        net.asymap = 100net.asymap
+    end
     net.diff = net.nmra .- net.nmrap
     return net
 end
