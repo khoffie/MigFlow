@@ -2,7 +2,8 @@ using Distances, CairoMakie, Random, StatsBase, Distributions
 include("/home/konstantin/code/src/plotutils.jl") ## helper functions for Makie
 include("/home/konstantin/paper/plotting/utils.jl")
 
-function generate_points(N, a, b)
+function generate_points(N)
+    a, b = genab()
     x = rand(N) .* a
     y = rand(N) .* b
     return hcat(x, y)
@@ -51,37 +52,76 @@ function target_decline(points, γ = 2, start_idx = nothing)
 end
 
 function simulate(N, dist, P, p1 = .2, p2 = .5, ϕ = .1, γ = 2)
-    points = generate_points(N, a, b)
+    points = generate_points(N)
     D = pairwise(Euclidean(), points')
     S = 10^3
-    sd = [sequential(points, p1)[1] for _ in 1:S];
-    md = [sequential(generate_points(P, a, b), p2)[1] for _ in 1:S];
-    md = md[.!isnan.(md)]
     td = [target_decline(points, γ)[1] for _ in 1:S];
+    sd = [sequential(points, p1)[1] for _ in 1:S];
+    md = [sequential(generate_points(P), p2)[1] for _ in 1:S];
+    rd = [radial(points, rand(dist), ϕ)[1] for _ in 1:S]
 
-
-    fig = genfig();
-    ax = Axis(fig[1, 1], xlabel = "Distance (km)",
-              ylabel = "CDF")
-    xs = 1:821
     lbls = ["Insensitive", "Target, γ = $γ", "Sequential, p = $p1",
             "Sequential, N = $P, p = $p2", "Radial, ϕ = $ϕ"]
-    series = [vec(D[D .> 0]), td, sd, md, rd[.!isnan.(rd)]]
+    series = [vec(D[D .> 0]), td, sd, md[.!isnan.(md)], rd[.!isnan.(rd)]]
+    return visualize(series, lbls)
+end
+
+function visualize(series, lbls, main)
+    fig = genfig();
+    ax = Axis(fig[1, 1], xlabel = "Distance (km)",
+              ylabel = "CDF", title = main)
+    xs = 1:821
     for (i, (s, l)) in enumerate(zip(series, lbls))
         lines!(ax, xs, ecdf(s).(xs), label = l, color = Cycled(i))
     end
     axislegend(ax; position = :rb)
-
-    fig2 = genfig();
-    ax = Axis(fig2[1, 1], aspect = DataAspect(), title = "Germany")
-    scatter!(ax, generate_points(80, a, b))
-
-    return (; d = fig, g = fig2)
+    return fig
 end
 
-N = 10^3
-A = 357000
-a = sqrt(A / 1.33)
-b = 1.33a
-lines(Gamma(5, 40/4))
-simulate(400, Gamma(5, 40/4), 10, .2, .9, .15, 2).d
+function simulate_radial(N, D, main = "")
+    points = generate_points(N)
+    S = 10^3
+    ϕ = [.0, .1, .15]
+    td = [target_decline(points, 2)[1] for _ in 1:S];
+    series = [td]
+    lbls = ["Target"]
+    for p in ϕ
+        rd = [radial(points, rand(D), p) for _ in 1:S]
+        lbl = "ϕ = $p"
+        push!(series, rd[.!isnan.(rd)])
+        push!(lbls, lbl)
+    end
+    return visualize(series, lbls, main)
+end
+
+function simulate_sequential(ns, ps, main = "")
+    S = 10^3
+    td = [target_decline(generate_points(400), 2) for _ in 1:S]
+    series = [td]
+    lbls = ["Target"]
+    for n in ns
+        for p in ps
+            points = generate_points(n)
+            sam = [sequential(points, p)[1] for _ in 1:S]
+            lbl = "N = $n, p = $p"
+            push!(series, sam[.!isnan.(sam)])
+            push!(lbls, lbl)
+        end
+    end
+    return visualize(series, lbls, main)
+end
+
+function genab()
+    A = 357000
+    a = sqrt(A / 1.33)
+    b = 1.33a
+    return a, b
+end
+
+simulate_radial(400, Gamma(2, 35/1), "Radial Search, Gamma(2, 35/1)")
+simulate_sequential([10, 30], [.5, .7, .9], "Modified Sequential Search")
+simulate_sequential([400], [.05, .1, .2], "Sequential Search")
+lines(Gamma(4, 30/3))
+
+
+simulate(400, Gamma(5, 40/4), 10, .2, .9, .15, 2)
