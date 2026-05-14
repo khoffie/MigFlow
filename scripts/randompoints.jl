@@ -66,8 +66,7 @@ function simulate(N, dist, P, p1 = .2, p2 = .5, ϕ = .1, γ = 2)
     return visualize(series, lbls)
 end
 
-function visualize(series, lbls, main)
-    fig = genfig();
+function visualize(series, lbls, main, fig = genfig((10, 6)))
     ax = Axis(fig[1, 1], xlabel = "Distance (km)",
               ylabel = "CDF", title = main)
     xs = 1:821
@@ -78,11 +77,11 @@ function visualize(series, lbls, main)
     return fig
 end
 
-function simulate_radial(N, D, main = "")
+function simulate_radial(N, D, main = "", fn = nothing)
     points = generate_points(N)
     S = 10^3
     ϕ = [.0, .1, .15]
-    td = [target_decline(points, 2)[1] for _ in 1:S];
+    td = [target_decline(generate_points(400), 2)[1] for _ in 1:S];
     series = [td]
     lbls = ["Target"]
     for p in ϕ
@@ -91,10 +90,11 @@ function simulate_radial(N, D, main = "")
         push!(series, rd[.!isnan.(rd)])
         push!(lbls, lbl)
     end
+    if !isnothing(fn); save(fn, fig); end
     return visualize(series, lbls, main)
 end
 
-function simulate_sequential(ns, ps, main = "")
+function simulate_sequential(ns, ps, main = "", fn = nothing)
     S = 10^3
     td = [target_decline(generate_points(400), 2) for _ in 1:S]
     series = [td]
@@ -108,6 +108,7 @@ function simulate_sequential(ns, ps, main = "")
             push!(lbls, lbl)
         end
     end
+    if !isnothing(fn); save(fn, fig); end
     return visualize(series, lbls, main)
 end
 
@@ -118,10 +119,16 @@ function genab()
     return a, b
 end
 
+function plotgamma(d, fn = nothing)
+    fig = genfig((6, 5));
+    ax = Axis(fig[1, 1], xlabel = "Distance (km)")
+    lines!(ax, d)
+    hideydecorations!(ax)
+    if !isnothing(fn); save(fn, fig); end
+    return fig
+end
+
+plotgamma(Gamma(2, 35/1))
 simulate_radial(400, Gamma(2, 35/1), "Radial Search, Gamma(2, 35/1)")
-simulate_sequential([10, 30], [.5, .7, .9], "Modified Sequential Search")
+simulate_sequential([10, 30], [.7], "Modified Sequential Search")
 simulate_sequential([400], [.05, .1, .2], "Sequential Search")
-lines(Gamma(4, 30/3))
-
-
-simulate(400, Gamma(5, 40/4), 10, .2, .9, .15, 2)
