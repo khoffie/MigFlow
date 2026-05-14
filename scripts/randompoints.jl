@@ -1,5 +1,6 @@
 using Distances, CairoMakie, Random, StatsBase, Distributions
 include("/home/konstantin/code/src/plotutils.jl") ## helper functions for Makie
+include("/home/konstantin/paper/plotting/utils.jl")
 
 function generate_points(N, a, b)
     x = rand(N) .* a
@@ -34,7 +35,7 @@ end
 
 function simulate(N, p = .2)
     points = generate_points(N, a, b)
-    D = pairwise(Euclidean(), points', dims=2)
+    D = pairwise(Euclidean(), points')
 
     md = [simulate_move(points, p)[1] for _ in 1:10^3];
     md = md[.!isnan.(md)]
@@ -42,12 +43,15 @@ function simulate(N, p = .2)
 
     fig = genfig();
     ax = Axis(fig[1, 1], xlabel = "Distance (km)",
-              title = "Number points = $N, success prob = $p")
-    density!(ax, vec(D[D .> 0]), color = :blue, label = "All")
-    density!(ax, qd, color = :green, label = "Quadratic")
-    density!(ax, md, color = :red, label = "Sequential")
-
-    axislegend(ax; position = :rt)
+              title = "Number points = $N, success prob = $p",
+              yticks = cdfticks(), ylabel = "CDF")
+    xs = 1:821
+    lbls = ["Insensitive", "Quadratic", "Sequential"]
+    series = [vec(D[D .> 0]), qd, md]
+    for (i, (s, l)) in enumerate(zip(series, lbls))
+        lines!(ax, xs, ecdf(s).(xs), label = l, color = Cycled(i))
+    end
+    axislegend(ax; position = :rb)
 
     fig2 = genfig();
     ax = Axis(fig2[1, 1], aspect = DataAspect(), title = "Germany")
@@ -60,14 +64,8 @@ N = 10^3
 A = 357000
 a = sqrt(A / 1.33)
 b = 1.33a
-
-
-points = generate_points(N, a, b)
-dists = pairwise(Euclidean(), points', points[i:i, :]', dims=2)[:]
-sort(dists)
-m = 100
-rand(1:N)
-sample(1:N)
+res = simulate(N)
+res.d
 
 function simulate_radial(points, m, i = nothing)
     i = isnothing(i) ? rand(1:size(points, 1)) : i
@@ -90,4 +88,3 @@ for i in 1:10^3
 end
 
 e = ecdf(moves[.!isnan.(moves)])
-lines(1:821, e.(1:821))
