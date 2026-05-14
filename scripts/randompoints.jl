@@ -1,4 +1,4 @@
-using Distances, CairoMakie, Random, StatsBase
+using Distances, CairoMakie, Random, StatsBase, Distributions
 include("/home/konstantin/code/src/plotutils.jl") ## helper functions for Makie
 
 function generate_points(N, a, b)
@@ -32,15 +32,6 @@ function quadratic_decline(points; start_idx = nothing)
     return StatsBase.sample(dists, Weights(1 ./ dists .^2))
 end
 
-
-N = 100
-
-A = 357000
-a = sqrt(A / 1.33)
-b = 1.33a
-
-
-
 function simulate(N, p = .2)
     points = generate_points(N, a, b)
     D = pairwise(Euclidean(), points', dims=2)
@@ -65,5 +56,38 @@ function simulate(N, p = .2)
     return (; d = fig, g = fig2)
 end
 
+N = 10^3
+A = 357000
+a = sqrt(A / 1.33)
+b = 1.33a
 
-simulate(150, .07)[1]
+
+points = generate_points(N, a, b)
+dists = pairwise(Euclidean(), points', points[i:i, :]', dims=2)[:]
+sort(dists)
+m = 100
+rand(1:N)
+sample(1:N)
+
+function simulate_radial(points, m, i = nothing)
+    i = isnothing(i) ? rand(1:size(points, 1)) : i
+    ds = pairwise(Euclidean(), points', points[i:i, :]', dims=2)[:]
+    ds = ds[ds .> 0 .&& ds .< m]
+    if length(ds) > 0
+        return rand(ds)
+    else
+        return NaN
+    end
+end
+
+m = 7000
+
+
+moves = zeros(10^3)
+for i in 1:10^3
+    m = rand(Gamma(5, 30/4))
+    moves[i] = simulate_radial(points, m)
+end
+
+e = ecdf(moves[.!isnan.(moves)])
+lines(1:821, e.(1:821))
