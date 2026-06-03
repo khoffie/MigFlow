@@ -88,6 +88,13 @@ function calc_crange(x)
     return -m, m
 end
 
+function calc_crange2(x, c = .1)
+##    x = x[.!isnan.(x)]
+    xmin = minimum(x)
+    xmax = maximum(x)
+    return xmin - (c * abs(xmin)), xmax + (c * abs(xmax))
+end
+
 function genfig(size = (16, 10), m = 1)
     if maximum(size) > 50
         throw(DomainError(size, "too large, specify figure size in cm not css pixels"))
