@@ -70,15 +70,15 @@ function diagonal!(ax, x, y)
           color = :darkred, linewidth = 2)
 end
 
-function smoother!(ax, x, y, color = "red", crange = nothing,
+function smoother!(ax, x, y, color = "red", lw = 4, crange = nothing,
                    span = .5, label = "")
     us = range(extrema(x)...; step = .1)
     vs = Loess.predict(loess(x, y; span = span), us)
     if !isnothing(crange)
         f = Makie.lines!(ax, us, vs, color = color,
-                         colorrange = crange, linewidth = 4, label = label)
+                         colorrange = crange, linewidth = lw, label = label)
     else
-        f = Makie.lines!(ax, us, vs, color = color, linewidth = 4, label = label)
+        f = Makie.lines!(ax, us, vs, color = color, linewidth = lw, label = label)
     end
     return f
 end
